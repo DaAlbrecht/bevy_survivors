@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 use enemy::EnemyPlugin;
-
-pub struct AppPlugin;
+use player::PlayerPlugin;
 
 mod enemy;
+mod player;
+
+pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
@@ -20,6 +22,7 @@ impl Plugin for AppPlugin {
                 ..default()
             }),
             EnemyPlugin,
+            PlayerPlugin,
         ));
     }
 }
