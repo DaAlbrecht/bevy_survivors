@@ -9,7 +9,7 @@ pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_camera);
+        app.add_systems(Startup, (spawn_camera));
 
         app.add_plugins((
             DefaultPlugins.set(WindowPlugin {
