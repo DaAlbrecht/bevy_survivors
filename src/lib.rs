@@ -1,12 +1,15 @@
 use bevy::prelude::*;
+use enemy::EnemyPlugin;
 
 pub struct AppPlugin;
+
+mod enemy;
 
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera);
 
-        app.add_plugins(
+        app.add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Window {
                     title: "bevy survivor".to_string(),
@@ -16,7 +19,8 @@ impl Plugin for AppPlugin {
                 .into(),
                 ..default()
             }),
-        );
+            EnemyPlugin,
+        ));
     }
 }
 
