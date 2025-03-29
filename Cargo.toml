@@ -17,6 +17,7 @@ tracing = { version = "0.1", features = [
 
 leafwing-input-manager = { git = "https://github.com/slyedoc/leafwing-input-manager", branch = "bevy_0.16" }
 rand = "0.9.0"
+bevy-inspector-egui = { git = "https://github.com/slyedoc/bevy-inspector-egui", branch = "bevy_0.16" }
 # Idiomatic Bevy code often triggers these lints, and the CI workflow treats them as errors.
 # In some cases they may still signal poor code quality however, so consider commenting out these lines.
 [lints.clippy]
