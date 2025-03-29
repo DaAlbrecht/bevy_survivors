@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use bevy_survivor::AppPlugin;
 
-fn main() {
-    App::new().add_plugins(DefaultPlugins).run();
+fn main() -> AppExit {
+    App::new().add_plugins(AppPlugin).run()
 }
+
