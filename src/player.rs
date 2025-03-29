@@ -92,7 +92,6 @@ fn spawn_player(
         Name::new("Player"),
         Sprite::from_image(asset_server.load("Player.png")),
         Transform::from_xyz(50., 0., 0.),
-        Player,
         PlayerBundle {
             player: Player,
             input_manager: InputManagerBundle::with_map(PlayerBundle::default_input_map()),
