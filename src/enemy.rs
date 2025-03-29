@@ -2,6 +2,8 @@ use std::{f32::consts::PI, time::Duration};
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
 
+use pathfinding::prelude::astar;
+
 use rand::Rng;
 
 use crate::player::Player;
@@ -20,6 +22,12 @@ const SPAWN_RADIUS: f32 = 200.0;
 
 #[derive(Component)]
 pub struct Enemy;
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct Position {
+    x: i32,
+    y: i32,
+}
 
 fn spawn_enemy(
     mut commands: Commands,
@@ -47,4 +55,42 @@ fn spawn_enemy(
     ));
 
     Ok(())
+}
+
+fn heuristic(start: Vec3, dest: Vec3) -> f32 {
+    let dx = (start.x - dest.x).abs();
+    let dy = (start.y - dest.y).abs();
+
+    dx + dy
+}
+
+fn successors(start: Position) -> Vec<Position> {
+    let mut successors = Vec::new();
+
+    for x in -10..=10 {
+        for y in -10..=10 {
+            if x == 0 && y == 0 {
+                continue;
+            }
+
+            let new_pos = Position {
+                x: start.x + x,
+                y: start.y + y,
+            };
+
+            successors.push(new_pos);
+        }
+    }
+    successors
+}
+
+fn pathfind(start: Vec3, dest: Vec3) {
+    let pos = Position {
+        x: start.x as i32,
+        y: start.y as i32,
+    };
+
+    let heuristic = heuristic(start, dest);
+
+    let result = astar(&pos, |p| successors(pos), heuristic, dest);
 }
