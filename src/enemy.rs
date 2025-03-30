@@ -2,8 +2,6 @@ use std::{f32::consts::PI, time::Duration};
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
 
-use pathfinding::prelude::astar;
-
 use rand::Rng;
 
 use crate::player::Player;
@@ -15,19 +13,18 @@ impl Plugin for EnemyPlugin {
             Update,
             spawn_enemy.run_if(on_timer(Duration::from_millis(500))),
         );
+        app.add_systems(Update, enemy_movement);
     }
 }
 
 const SPAWN_RADIUS: f32 = 200.0;
+const SEPARATION_RADIUS: f32 = 40.;
+const SEPARATION_FORCE: f32 = 10.;
+// TODO: this should be a `Component` so different enemies can have different speeds;
+const ENEMY_SPEED: f32 = 50.;
 
 #[derive(Component)]
 pub struct Enemy;
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct Position {
-    x: i32,
-    y: i32,
-}
 
 fn spawn_enemy(
     mut commands: Commands,
@@ -57,40 +54,48 @@ fn spawn_enemy(
     Ok(())
 }
 
-fn heuristic(start: Vec3, dest: Vec3) -> f32 {
-    let dx = (start.x - dest.x).abs();
-    let dy = (start.y - dest.y).abs();
+fn enemy_movement(
+    enemy_transform_q: Query<&mut Transform, With<Enemy>>,
+    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    time: Res<Time>,
+) -> Result {
+    let player_transform = player_query.single()?;
 
-    dx + dy
-}
+    let enemy_positions = enemy_transform_q
+        .iter()
+        .map(|t| t.translation)
+        .collect::<Vec<Vec3>>();
 
-fn successors(start: Position) -> Vec<Position> {
-    let mut successors = Vec::new();
+    for mut transform in enemy_transform_q {
+        let direction = (player_transform.translation - transform.translation).normalize();
 
-    for x in -10..=10 {
-        for y in -10..=10 {
-            if x == 0 && y == 0 {
+        // Separation force calculation for enemies
+        let mut separation_force = Vec3::ZERO;
+        for &other_pos in &enemy_positions {
+            // skip ourselves
+            if other_pos == transform.translation {
                 continue;
             }
-
-            let new_pos = Position {
-                x: start.x + x,
-                y: start.y + y,
-            };
-
-            successors.push(new_pos);
+            // Check if the distance between enemy `A` and all other enemies is less than the
+            // `SEPARATION_RADIUS`. If so, push enemy `A` away from the other enemy to maintain spacing.
+            let distance = transform.translation.distance(other_pos);
+            if distance < SEPARATION_RADIUS {
+                let push_dir = (transform.translation - other_pos).normalize();
+                let push_strength = (SEPARATION_RADIUS - distance) / SEPARATION_RADIUS;
+                separation_force += push_dir * push_strength * SEPARATION_FORCE;
+            }
         }
+        // Separation force calculation for the player
+        let distance_to_player = transform.translation.distance(player_transform.translation);
+        if distance_to_player < SEPARATION_RADIUS {
+            let push_dir = (transform.translation - player_transform.translation).normalize();
+            let push_strength = (SEPARATION_RADIUS - distance_to_player) / SEPARATION_RADIUS;
+            separation_force += push_dir * push_strength * SEPARATION_RADIUS;
+        }
+
+        let movement =
+            (direction + separation_force).normalize() * (ENEMY_SPEED * time.delta_secs());
+        transform.translation += movement;
     }
-    successors
-}
-
-fn pathfind(start: Vec3, dest: Vec3) {
-    let pos = Position {
-        x: start.x as i32,
-        y: start.y as i32,
-    };
-
-    let heuristic = heuristic(start, dest);
-
-    let result = astar(&pos, |p| successors(pos), heuristic, dest);
+    Ok(())
 }
