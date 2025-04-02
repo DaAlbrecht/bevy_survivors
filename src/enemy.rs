@@ -90,7 +90,7 @@ fn enemy_movement(
         if distance_to_player < SEPARATION_RADIUS {
             let push_dir = (transform.translation - player_transform.translation).normalize();
             let push_strength = (SEPARATION_RADIUS - distance_to_player) / SEPARATION_RADIUS;
-            separation_force += push_dir * push_strength * SEPARATION_RADIUS;
+            separation_force += push_dir * push_strength * SEPARATION_FORCE;
         }
 
         let movement =

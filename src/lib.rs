@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use enemy::EnemyPlugin;
 use movement::MovementPlugin;
 use player::PlayerPlugin;
@@ -30,9 +29,6 @@ impl Plugin for AppPlugin {
             MovementPlugin,
             level::plugin,
         ));
-        if cfg!(debug_assertions) {
-            app.add_plugins(WorldInspectorPlugin::default());
-        }
     }
 }
 
