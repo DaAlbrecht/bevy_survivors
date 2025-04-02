@@ -20,8 +20,9 @@ impl Plugin for EnemyPlugin {
 const SPAWN_RADIUS: f32 = 200.0;
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
-// TODO: this should be a `Component` so different enemies can have different speeds;
-const ENEMY_SPEED: f32 = 50.;
+
+#[derive(Component)]
+struct Speed(f32);
 
 #[derive(Component)]
 pub struct Enemy;
@@ -49,24 +50,25 @@ fn spawn_enemy(
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
         Enemy,
+        Speed(50.),
     ));
 
     Ok(())
 }
 
 fn enemy_movement(
-    enemy_transform_q: Query<&mut Transform, With<Enemy>>,
+    enemy_query: Query<(&mut Transform, &Speed), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) -> Result {
     let player_transform = player_query.single()?;
 
-    let enemy_positions = enemy_transform_q
+    let enemy_positions = enemy_query
         .iter()
-        .map(|t| t.translation)
+        .map(|t| t.0.translation)
         .collect::<Vec<Vec3>>();
 
-    for mut transform in enemy_transform_q {
+    for (mut transform, speed) in enemy_query {
         let direction = (player_transform.translation - transform.translation).normalize();
 
         // Separation force calculation for enemies
@@ -93,8 +95,7 @@ fn enemy_movement(
             separation_force += push_dir * push_strength * SEPARATION_FORCE;
         }
 
-        let movement =
-            (direction + separation_force).normalize() * (ENEMY_SPEED * time.delta_secs());
+        let movement = (direction + separation_force).normalize() * (speed.0 * time.delta_secs());
         transform.translation += movement;
     }
     Ok(())
