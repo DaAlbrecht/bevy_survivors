@@ -1,13 +1,16 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use crate::movement::MovementController;
+use crate::{AppSet, movement::MovementController};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, record_player_directional_input);
+        app.add_systems(
+            Update,
+            record_player_directional_input.in_set(AppSet::RecordInput),
+        );
         app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
     }
 }

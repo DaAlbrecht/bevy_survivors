@@ -12,6 +12,8 @@ pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
+        app.configure_sets(Update, (AppSet::RecordInput, AppSet::Update).chain());
+
         app.add_systems(Startup, spawn_camera);
 
         app.add_plugins((
@@ -30,6 +32,15 @@ impl Plugin for AppPlugin {
             level::plugin,
         ));
     }
+}
+
+/// High-level groupings of systems for the app in the `Update` schedule.
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+enum AppSet {
+    /// Record player input.
+    RecordInput,
+    /// Do everything else
+    Update,
 }
 
 fn spawn_camera(mut commands: Commands) {

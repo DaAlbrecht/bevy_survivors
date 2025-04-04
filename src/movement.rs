@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 
+use crate::AppSet;
+
 pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<MovementController>();
-        app.add_systems(FixedUpdate, apply_movement);
+
+        app.add_systems(Update, apply_movement.in_set(AppSet::Update));
     }
 }
 

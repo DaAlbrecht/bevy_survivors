@@ -4,14 +4,16 @@ use bevy::{prelude::*, time::common_conditions::on_timer};
 
 use rand::Rng;
 
-use crate::player::Player;
+use crate::{AppSet, player::Player};
 
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            spawn_enemy.run_if(on_timer(Duration::from_millis(500))),
+            spawn_enemy
+                .run_if(on_timer(Duration::from_millis(500)))
+                .in_set(AppSet::Update),
         );
         app.add_systems(Update, enemy_movement);
     }
