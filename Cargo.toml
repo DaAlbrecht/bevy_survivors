@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
-bevy = "0.16.0-rc.2"
+bevy = "0.16.0-rc.3"
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
 log = { version = "0.4", features = [
     "max_level_debug",
@@ -15,9 +15,16 @@ tracing = { version = "0.1", features = [
     "release_max_level_warn",
 ] }
 
+bevy_rand = { git = "https://github.com/Bluefinger/bevy_rand", branch = "prepare-v0.16", package = "bevy_rand", features = [
+    "wyrand",
+] }
+rand_core = "0.6"
+rand = "0.8"
 
-rand = "0.9.0"
 leafwing-input-manager = { git = "https://github.com/Leafwing-Studios/leafwing-input-manager", branch = "main" }
+
+[target.wasm32-unknown-unknown.dependencies]
+getrandom = { version = "0.3.2", features = ["wasm_js"] }
 
 [workspace.metadata.bevy_lint]
 pedantic = "warn"

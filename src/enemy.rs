@@ -1,7 +1,7 @@
 use std::{f32::consts::PI, time::Duration};
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
-
+use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{AppSet, movement::MovementController, player::Player};
@@ -50,12 +50,12 @@ fn spawn_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_query: Query<&Transform, With<Player>>,
+    mut rng: GlobalEntropy<WyRand>,
 ) -> Result {
     let player_pos = player_query.single()?;
-    let mut rng = rand::rng();
 
-    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    let random_radius: f32 = rng.random_range(0.0..10.);
+    let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
+    let random_radius: f32 = rng.gen_range(0.0..10.);
     let offset_x = (SPAWN_RADIUS + random_radius) * f32::sin(random_angle);
     let offset_y = (SPAWN_RADIUS + random_radius) * f32::cos(random_angle);
 

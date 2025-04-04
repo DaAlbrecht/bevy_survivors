@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use enemy::EnemyPlugin;
 use movement::MovementPlugin;
 use player::PlayerPlugin;
@@ -17,6 +18,7 @@ impl Plugin for AppPlugin {
         app.add_systems(Startup, spawn_camera);
 
         app.add_plugins((
+            EntropyPlugin::<WyRand>::default(),
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Window {
                     title: "bevy survivor".to_string(),
