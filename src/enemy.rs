@@ -12,7 +12,7 @@ impl Plugin for EnemyPlugin {
         app.add_systems(
             Update,
             spawn_enemy
-                .run_if(on_timer(Duration::from_millis(500)))
+                .run_if(on_timer(Duration::from_millis(2000)))
                 .in_set(AppSet::Update),
         );
         app.add_systems(
@@ -23,13 +23,15 @@ impl Plugin for EnemyPlugin {
                 enemy_push_detection,
             ),
         )
-        .add_observer(enemy_pushing);
+        .add_observer(enemy_pushing)
+        .add_observer(enemy_collision_dmg);
     }
 }
 
 const SPAWN_RADIUS: f32 = 200.0;
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
+const ENEMY_DMG_STAT: f32 = 5.;
 
 #[derive(Component)]
 struct Speed(f32);
@@ -38,10 +40,10 @@ struct Speed(f32);
 pub struct Enemy;
 
 #[derive(Component)]
-pub struct Health(f32);
+pub struct Health(pub f32);
 
 #[derive(Event)]
-pub struct PlayerEnemyCollision(pub Entity);
+pub struct PlayerEnemyCollisionEvent(pub Entity);
 
 #[derive(Event)]
 pub struct PlayerPushingEvent(pub Entity);
@@ -75,6 +77,7 @@ fn spawn_enemy(
 
     Ok(())
 }
+
 fn enemy_movement(
     enemy_query: Query<(&mut Transform, &Speed), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
@@ -131,7 +134,7 @@ fn enemy_collision_detection(
         let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
 
         if distance_to_player <= SEPARATION_RADIUS {
-            commands.trigger(PlayerEnemyCollision(enemy));
+            commands.trigger(PlayerEnemyCollisionEvent(enemy));
         }
     }
     Ok(())
@@ -172,6 +175,19 @@ fn enemy_pushing(
             enemy_pos.translation += velocity.extend(0.0) * time.delta_secs();
         }
     }
+
+    Ok(())
+}
+
+fn enemy_collision_dmg(
+    trigger: Trigger<PlayerEnemyCollisionEvent>,
+    mut player_health_q: Query<&mut Health, With<Player>>,
+) -> Result {
+    let mut player_health = player_health_q.single_mut()?;
+
+    player_health.0 -= ENEMY_DMG_STAT;
+
+    info!("{:?}", player_health.0);
 
     Ok(())
 }

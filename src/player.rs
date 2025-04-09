@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 
-use crate::{AppSet, movement::MovementController};
+use crate::{AppSet, enemy::Health, movement::MovementController};
 
 pub struct PlayerPlugin;
 
@@ -103,6 +103,7 @@ fn spawn_player(
                 ..default()
             },
         },
+        Health(100.),
     ));
 }
 
