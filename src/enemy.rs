@@ -21,6 +21,7 @@ impl Plugin for EnemyPlugin {
                 enemy_movement,
                 enemy_collision_detection,
                 enemy_push_detection,
+                update_enemy_timer,
             ),
         )
         .add_observer(enemy_pushing)
@@ -41,6 +42,11 @@ pub struct Enemy;
 
 #[derive(Component)]
 pub struct Health(pub f32);
+
+#[derive(Component)]
+pub struct DamageCooldown {
+    pub timer: Timer,
+}
 
 #[derive(Event)]
 pub struct PlayerEnemyCollisionEvent(pub Entity);
@@ -73,6 +79,9 @@ fn spawn_enemy(
         Enemy,
         Health(10.),
         Speed(50.),
+        DamageCooldown {
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+        },
     ));
 
     Ok(())
@@ -179,15 +188,27 @@ fn enemy_pushing(
     Ok(())
 }
 
+fn update_enemy_timer(time: Res<Time>, mut cooldowns: Query<&mut DamageCooldown>) {
+    for mut cooldown in &mut cooldowns {
+        cooldown.timer.tick(time.delta());
+    }
+}
+
 fn enemy_collision_dmg(
     trigger: Trigger<PlayerEnemyCollisionEvent>,
     mut player_health_q: Query<&mut Health, With<Player>>,
+    mut enemy_dmg_timer_q: Query<&mut DamageCooldown, With<Enemy>>,
 ) -> Result {
     let mut player_health = player_health_q.single_mut()?;
+    let enemy_entity = trigger.0;
 
-    player_health.0 -= ENEMY_DMG_STAT;
-
-    info!("{:?}", player_health.0);
+    if let Ok(mut cooldown) = enemy_dmg_timer_q.get_mut(enemy_entity) {
+        if cooldown.timer.finished() {
+            player_health.0 -= ENEMY_DMG_STAT;
+            info!("{:?}", player_health.0);
+            cooldown.timer.reset();
+        }
+    }
 
     Ok(())
 }
