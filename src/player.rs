@@ -1,7 +1,15 @@
-use bevy::prelude::*;
-use leafwing_input_manager::prelude::*;
+use std::f32::consts::PI;
 
-use crate::{AppSet, enemy::Health, movement::MovementController};
+use bevy::prelude::*;
+use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
+use leafwing_input_manager::prelude::*;
+use rand::Rng;
+
+use crate::{
+    AppSet,
+    enemy::{DamageCooldown, Health, Speed},
+    movement::{MovementController, apply_movement},
+};
 
 pub struct PlayerPlugin;
 
@@ -9,7 +17,12 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            record_player_directional_input.in_set(AppSet::RecordInput),
+            (
+                record_player_directional_input.in_set(AppSet::RecordInput),
+                player_shoot.after(apply_movement),
+                update_player_timer,
+                move_player_spell.after(player_shoot),
+            ),
         );
         app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
     }
@@ -24,6 +37,12 @@ struct PlayerBundle {
     input_manager: InputManagerBundle<PlayerAction>,
     movement_controller: MovementController,
 }
+
+#[derive(Component)]
+pub struct PlayerSpell;
+
+#[derive(Component)]
+pub struct Direction(Vec3);
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
 pub enum PlayerAction {
@@ -104,6 +123,9 @@ fn spawn_player(
             },
         },
         Health(100.),
+        DamageCooldown {
+            timer: Timer::from_seconds(1.0, TimerMode::Once),
+        },
     ));
 }
 
@@ -123,5 +145,56 @@ fn record_player_directional_input(
     let intent = intent.normalize_or_zero();
 
     controller.intent = intent;
+    Ok(())
+}
+
+fn player_shoot(
+    mut player_cd_q: Query<&mut DamageCooldown, With<Player>>,
+    player_pos_q: Query<&Transform, With<Player>>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut rng: GlobalEntropy<WyRand>,
+) -> Result {
+    let player_pos = player_pos_q.single()?;
+    let mut player_cd = player_cd_q.single_mut()?;
+    let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
+
+    if player_cd.timer.finished() {
+        let direction = Vec3::new(f32::sin(random_angle), f32::cos(random_angle), 0.);
+
+        commands.spawn((
+            Sprite {
+                image: asset_server.load("Bullet.png"),
+                ..default()
+            },
+            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
+            PlayerSpell,
+            Speed(600.),
+            Direction(direction),
+        ));
+        player_cd.timer.reset();
+    }
+
+    Ok(())
+}
+
+fn update_player_timer(time: Res<Time>, mut cooldowns: Query<&mut DamageCooldown>) {
+    for mut cooldown in &mut cooldowns {
+        cooldown.timer.tick(time.delta());
+    }
+}
+
+fn move_player_spell(
+    mut bullet_pos_q: Query<
+        (&mut Transform, &Speed, &Direction),
+        (With<PlayerSpell>, Without<Player>),
+    >,
+    time: Res<Time>,
+) -> Result {
+    for (mut bullet_pos, bullet_speed, bullet_direction) in &mut bullet_pos_q {
+        let movement = bullet_direction.0 * bullet_speed.0 * time.delta_secs();
+        bullet_pos.translation += movement;
+    }
+
     Ok(())
 }

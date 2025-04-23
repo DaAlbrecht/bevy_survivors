@@ -34,7 +34,7 @@ impl Default for MovementController {
     }
 }
 
-fn apply_movement(
+pub fn apply_movement(
     time: Res<Time>,
     mut movement_query: Query<(&MovementController, &mut Transform)>,
 ) {

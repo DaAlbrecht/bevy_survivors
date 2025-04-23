@@ -35,7 +35,7 @@ const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
 
 #[derive(Component)]
-struct Speed(f32);
+pub struct Speed(pub f32);
 
 #[derive(Component)]
 pub struct Enemy;
