@@ -4,7 +4,11 @@ use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
-use crate::{AppSet, movement::MovementController, player::Player};
+use crate::{
+    AppSet, PLAYER_DMG_STAT,
+    movement::MovementController,
+    player::{Player, PlayerSpell},
+};
 
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -22,10 +26,12 @@ impl Plugin for EnemyPlugin {
                 enemy_collision_detection,
                 enemy_push_detection,
                 update_enemy_timer,
+                enemy_hit_detection,
             ),
         )
         .add_observer(enemy_pushing)
-        .add_observer(enemy_collision_dmg);
+        .add_observer(enemy_collision_dmg)
+        .add_observer(enemy_take_dmg);
     }
 }
 
@@ -53,6 +59,9 @@ pub struct PlayerEnemyCollisionEvent(pub Entity);
 
 #[derive(Event)]
 pub struct PlayerPushingEvent(pub Entity);
+
+#[derive(Event)]
+pub struct EnemyHitEvent(pub Entity);
 
 fn spawn_enemy(
     mut commands: Commands,
@@ -211,4 +220,30 @@ fn enemy_collision_dmg(
     }
 
     Ok(())
+}
+
+fn enemy_hit_detection(
+    enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerSpell>)>,
+    player_spell_query: Query<&Transform, (With<PlayerSpell>, Without<Player>)>,
+    mut commands: Commands,
+) {
+    for &player_spell_pos in &player_spell_query {
+        for (&enemy_pos, enemy_ent) in &enemy_query {
+            if enemy_pos == player_spell_pos {
+                commands.trigger(EnemyHitEvent(enemy_ent));
+            }
+        }
+    }
+}
+
+fn enemy_take_dmg(
+    trigger: Trigger<EnemyHitEvent>,
+    mut enemy_q: Query<(&mut Health, Entity), With<Enemy>>,
+) {
+    let enemy_ent = trigger.0;
+    for (mut enemy_health, entity) in &mut enemy_q {
+        if enemy_ent == entity {
+            enemy_health.0 -= PLAYER_DMG_STAT;
+        }
+    }
 }

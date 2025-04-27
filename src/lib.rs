@@ -36,6 +36,8 @@ impl Plugin for AppPlugin {
     }
 }
 
+const PLAYER_DMG_STAT: f32 = 10.0;
+
 /// High-level groupings of systems for the app in the `Update` schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 enum AppSet {
