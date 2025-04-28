@@ -5,7 +5,7 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSet, PLAYER_DMG_STAT,
+    AppSet, ENEMY_SIZE, PLAYER_DMG_STAT,
     movement::MovementController,
     player::{Player, PlayerSpell},
 };
@@ -89,7 +89,7 @@ fn spawn_enemy(
         Health(10.),
         Speed(50.),
         DamageCooldown {
-            timer: Timer::from_seconds(1.0, TimerMode::Once),
+            timer: Timer::from_seconds(0.5, TimerMode::Once),
         },
     ));
 
@@ -214,7 +214,6 @@ fn enemy_collision_dmg(
     if let Ok(mut cooldown) = enemy_dmg_timer_q.get_mut(enemy_entity) {
         if cooldown.timer.finished() {
             player_health.0 -= ENEMY_DMG_STAT;
-            info!("{:?}", player_health.0);
             cooldown.timer.reset();
         }
     }
@@ -229,7 +228,7 @@ fn enemy_hit_detection(
 ) {
     for &player_spell_pos in &player_spell_query {
         for (&enemy_pos, enemy_ent) in &enemy_query {
-            if enemy_pos == player_spell_pos {
+            if player_spell_pos.translation.distance(enemy_pos.translation) <= ENEMY_SIZE / 2.0 {
                 commands.trigger(EnemyHitEvent(enemy_ent));
             }
         }
@@ -244,6 +243,7 @@ fn enemy_take_dmg(
     for (mut enemy_health, entity) in &mut enemy_q {
         if enemy_ent == entity {
             enemy_health.0 -= PLAYER_DMG_STAT;
+            info!("{:?}", enemy_health.0);
         }
     }
 }
