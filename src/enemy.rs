@@ -5,7 +5,7 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSet, ENEMY_SIZE, PLAYER_DMG_STAT,
+    AppSet, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
     movement::MovementController,
     player::{Player, PlayerSpell},
 };
@@ -61,7 +61,10 @@ pub struct PlayerEnemyCollisionEvent(pub Entity);
 pub struct PlayerPushingEvent(pub Entity);
 
 #[derive(Event)]
-pub struct EnemyHitEvent(pub Entity);
+pub struct EnemyHitEvent {
+    pub entity_hit: Entity,
+    pub spell_entity: Entity,
+}
 
 fn spawn_enemy(
     mut commands: Commands,
@@ -223,13 +226,18 @@ fn enemy_collision_dmg(
 
 fn enemy_hit_detection(
     enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerSpell>)>,
-    player_spell_query: Query<&Transform, (With<PlayerSpell>, Without<Player>)>,
+    player_spell_query: Query<(&Transform, Entity), (With<PlayerSpell>, Without<Player>)>,
     mut commands: Commands,
 ) {
-    for &player_spell_pos in &player_spell_query {
+    for (&player_spell_pos, spell_ent) in &player_spell_query {
         for (&enemy_pos, enemy_ent) in &enemy_query {
-            if player_spell_pos.translation.distance(enemy_pos.translation) <= ENEMY_SIZE / 2.0 {
-                commands.trigger(EnemyHitEvent(enemy_ent));
+            if (player_spell_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
+                <= ENEMY_SIZE / 2.0
+            {
+                commands.trigger(EnemyHitEvent {
+                    entity_hit: enemy_ent,
+                    spell_entity: spell_ent,
+                });
             }
         }
     }
@@ -238,12 +246,15 @@ fn enemy_hit_detection(
 fn enemy_take_dmg(
     trigger: Trigger<EnemyHitEvent>,
     mut enemy_q: Query<(&mut Health, Entity), With<Enemy>>,
+    mut commands: Commands,
 ) {
-    let enemy_ent = trigger.0;
+    let enemy_ent = trigger.entity_hit;
+    let spell_ent = trigger.spell_entity;
     for (mut enemy_health, entity) in &mut enemy_q {
         if enemy_ent == entity {
             enemy_health.0 -= PLAYER_DMG_STAT;
             info!("{:?}", enemy_health.0);
+            commands.entity(spell_ent).despawn();
         }
     }
 }
