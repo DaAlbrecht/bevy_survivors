@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy::{ecs::query, prelude::*, time::common_conditions::on_timer, transform};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
@@ -65,6 +65,8 @@ pub struct EnemyHitEvent {
     pub entity_hit: Entity,
     pub spell_entity: Entity,
 }
+#[derive(Event)]
+pub struct EnemyDeathEvent(pub Transform);
 
 fn spawn_enemy(
     mut commands: Commands,
@@ -229,14 +231,14 @@ fn enemy_hit_detection(
     player_spell_query: Query<(&Transform, Entity), (With<PlayerSpell>, Without<Player>)>,
     mut commands: Commands,
 ) {
-    for (&player_spell_pos, spell_ent) in &player_spell_query {
-        for (&enemy_pos, enemy_ent) in &enemy_query {
+    for (&player_spell_pos, spell_entity) in &player_spell_query {
+        for (&enemy_pos, enemy_entity) in &enemy_query {
             if (player_spell_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
                 <= ENEMY_SIZE / 2.0
             {
                 commands.trigger(EnemyHitEvent {
-                    entity_hit: enemy_ent,
-                    spell_entity: spell_ent,
+                    entity_hit: enemy_entity,
+                    spell_entity: spell_entity,
                 });
             }
         }
@@ -245,18 +247,18 @@ fn enemy_hit_detection(
 
 fn enemy_take_dmg(
     trigger: Trigger<EnemyHitEvent>,
-    mut enemy_q: Query<(&mut Health, Entity), With<Enemy>>,
+    mut enemy_q: Query<(&mut Health, &Transform), With<Enemy>>,
     mut commands: Commands,
 ) {
-    let enemy_ent = trigger.entity_hit;
-    let spell_ent = trigger.spell_entity;
-    for (mut enemy_health, entity) in &mut enemy_q {
-        if enemy_ent == entity {
-            enemy_health.0 -= PLAYER_DMG_STAT;
-            if enemy_health.0 <= 0.0 {
-                commands.entity(enemy_ent).despawn();
-            }
-            commands.entity(spell_ent).despawn();
+    let enemy_entity = trigger.entity_hit;
+    let spell_entity = trigger.spell_entity;
+
+    if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
+        health.0 -= PLAYER_DMG_STAT;
+        if health.0 <= 0.0 {
+            commands.entity(enemy_entity).despawn();
+            commands.trigger(EnemyDeathEvent(*transform));
         }
+        commands.entity(spell_entity).despawn();
     }
 }

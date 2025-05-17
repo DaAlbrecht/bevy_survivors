@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
-use enemy::EnemyPlugin;
+use enemy::{EnemyDeathEvent, EnemyPlugin};
+use experience::ExperiencePlugin;
 use movement::MovementPlugin;
 use player::PlayerPlugin;
 
 mod enemy;
+mod experience;
 mod level;
 mod movement;
 mod player;
@@ -31,6 +33,7 @@ impl Plugin for AppPlugin {
             EnemyPlugin,
             PlayerPlugin,
             MovementPlugin,
+            ExperiencePlugin,
             level::plugin,
         ));
     }
