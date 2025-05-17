@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::{ecs::query, prelude::*, time::common_conditions::on_timer, transform};
+use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
