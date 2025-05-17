@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{color::palettes::css, prelude::*};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use leafwing_input_manager::prelude::*;
 use rand::Rng;
@@ -8,6 +8,7 @@ use rand::Rng;
 use crate::{
     AppSystem,
     enemy::{DamageCooldown, Health, Speed},
+    healthbar::{HealthBar, HealthBarMaterial},
     movement::{MovementController, apply_movement},
     screens::Screen,
 };
@@ -29,6 +30,7 @@ impl Plugin for PlayerPlugin {
                 player_shoot.after(apply_movement),
                 update_player_timer,
                 move_player_spell.after(player_shoot),
+                update_health_bar,
             )
                 .run_if(in_state(Screen::Gameplay)),
         );
@@ -112,26 +114,61 @@ impl PlayerBundle {
     }
 }
 
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((
-        Name::new("Player"),
-        Sprite::from_image(asset_server.load("Player.png")),
-        Transform::from_xyz(50., 0., 0.),
-        PlayerBundle {
-            player: Player,
-            input_manager: PlayerBundle::default_input_map(),
-            movement_controller: MovementController {
-                max_speed: 100.0,
-                ..default()
+fn spawn_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    mut mesh: ResMut<Assets<Mesh>>,
+) {
+    commands
+        .spawn((
+            Name::new("Player"),
+            Sprite::from_image(asset_server.load("Player.png")),
+            Transform::from_xyz(50., 0., 0.),
+            PlayerBundle {
+                player: Player,
+                input_manager: PlayerBundle::default_input_map(),
+                movement_controller: MovementController {
+                    max_speed: 100.0,
+                    ..default()
+                },
             },
-        },
-        Health(100.),
-        DamageCooldown(Timer::from_seconds(1.0, TimerMode::Once)),
-        XpCollectionRange(150.0),
-        XP(0),
-        Level(1),
-        Visibility::Hidden,
-    ));
+            Health(100.),
+            DamageCooldown(Timer::from_seconds(1.0, TimerMode::Once)),
+            XpCollectionRange(150.0),
+            XP(0),
+            Level(1),
+            Visibility::Hidden,
+        ))
+        .with_child((
+            HealthBar,
+            Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),
+            MeshMaterial2d(health_bar_materials.add(HealthBarMaterial {
+                foreground_color: css::GREEN.into(),
+                background_color: css::RED.into(),
+                percent: 1.,
+            })),
+            Transform::from_xyz(0.0, -25.0, 0.),
+        ));
+}
+
+fn update_health_bar(
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    player_q: Query<(&Health, &Children), With<Player>>,
+    healthbar_material_q: Query<&Handle<HealthBarMaterial>>,
+) -> Result {
+    let (player_health, children) = player_q.single()?;
+
+    Ok(())
+
+    // for (health, children) in player_q.iter() {
+    //     for &child in children.iter() {
+    //         let per = health.current_health as f32 / health.max_health as f32;
+    //         let handle = healthbar_material_q.get(child).unwrap();
+    //         let material = health_bar_materials.get_mut(handle).unwrap();
+    //         material.percent = per;
+    //     }
+    // }
 }
 
 fn record_player_directional_input(

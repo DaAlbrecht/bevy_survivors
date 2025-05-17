@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use enemy::EnemyPlugin;
 use experience::ExperiencePlugin;
+use healthbar::HealthBarPlugin;
 use movement::MovementPlugin;
 use player::{Player, PlayerPlugin};
 
@@ -9,9 +10,9 @@ use player::{Player, PlayerPlugin};
 mod dev_tools;
 mod enemy;
 mod experience;
+mod healthbar;
 mod movement;
 mod player;
-
 mod screens;
 pub mod widgets;
 
@@ -40,6 +41,7 @@ impl Plugin for AppPlugin {
             PlayerPlugin,
             MovementPlugin,
             ExperiencePlugin,
+            HealthBarPlugin,
         ));
 
         #[cfg(feature = "dev")]
