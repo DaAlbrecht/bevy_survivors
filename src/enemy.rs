@@ -253,7 +253,9 @@ fn enemy_take_dmg(
     for (mut enemy_health, entity) in &mut enemy_q {
         if enemy_ent == entity {
             enemy_health.0 -= PLAYER_DMG_STAT;
-            info!("{:?}", enemy_health.0);
+            if enemy_health.0 <= 0.0 {
+                commands.entity(enemy_ent).despawn();
+            }
             commands.entity(spell_ent).despawn();
         }
     }
