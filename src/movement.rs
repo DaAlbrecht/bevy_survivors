@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::AppSet;
+use crate::AppSystem;
 
 pub struct MovementPlugin;
 
@@ -8,7 +8,7 @@ impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<MovementController>();
 
-        app.add_systems(Update, apply_movement.in_set(AppSet::Update));
+        app.add_systems(Update, apply_movement.in_set(AppSystem::Update));
     }
 }
 
@@ -28,7 +28,6 @@ impl Default for MovementController {
     fn default() -> Self {
         Self {
             intent: Vec2::ZERO,
-            // 400 pixels per second is a nice default, but we can still vary this per character.
             max_speed: 400.0,
         }
     }

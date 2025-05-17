@@ -6,27 +6,35 @@ use leafwing_input_manager::prelude::*;
 use rand::Rng;
 
 use crate::{
-    AppSet,
+    AppSystem,
     enemy::{DamageCooldown, Health, Speed},
     movement::{MovementController, apply_movement},
+    screens::Screen,
 };
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
+        app.add_systems(Startup, spawn_player);
+
+        app.add_systems(OnEnter(Screen::Gameplay), show_player);
+
+        app.add_systems(OnExit(Screen::Gameplay), hide_player);
+
         app.add_systems(
             Update,
             (
-                record_player_directional_input.in_set(AppSet::RecordInput),
+                record_player_directional_input.in_set(AppSystem::RecordInput),
                 player_shoot.after(apply_movement),
                 update_player_timer,
                 move_player_spell.after(player_shoot),
-            ),
-        )
-        .register_type::<XP>()
-        .register_type::<Level>()
-        .add_plugins(InputManagerPlugin::<PlayerAction>::default());
+            )
+                .run_if(in_state(Screen::Gameplay)),
+        );
+        app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
+
+        app.register_type::<XP>().register_type::<Level>();
     }
 }
 
@@ -104,23 +112,7 @@ impl PlayerBundle {
     }
 }
 
-#[derive(Debug)]
-pub struct SpawnPlayer {
-    /// See [`MovementController::max_speed`].
-    pub max_speed: f32,
-}
-
-impl Command for SpawnPlayer {
-    fn apply(self, world: &mut World) {
-        let _ = world.run_system_cached_with(spawn_player, self);
-    }
-}
-
-fn spawn_player(
-    In(config): In<SpawnPlayer>,
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Name::new("Player"),
         Sprite::from_image(asset_server.load("Player.png")),
@@ -129,7 +121,7 @@ fn spawn_player(
             player: Player,
             input_manager: PlayerBundle::default_input_map(),
             movement_controller: MovementController {
-                max_speed: config.max_speed,
+                max_speed: 100.0,
                 ..default()
             },
         },
@@ -138,6 +130,7 @@ fn spawn_player(
         XpCollectionRange(150.0),
         XP(0),
         Level(1),
+        Visibility::Hidden,
     ));
 }
 
@@ -208,5 +201,17 @@ fn move_player_spell(
         bullet_pos.translation += movement;
     }
 
+    Ok(())
+}
+
+fn show_player(mut visibility_q: Query<&mut Visibility, With<Player>>) -> Result {
+    let mut visibility = visibility_q.single_mut()?;
+    *visibility = Visibility::Visible;
+    Ok(())
+}
+
+fn hide_player(mut visibility_q: Query<&mut Visibility, With<Player>>) -> Result {
+    let mut visibility = visibility_q.single_mut()?;
+    *visibility = Visibility::Hidden;
     Ok(())
 }

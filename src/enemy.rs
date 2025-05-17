@@ -5,9 +5,10 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSet, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
+    AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
     movement::MovementController,
     player::{Player, PlayerSpell},
+    screens::Screen,
 };
 
 pub struct EnemyPlugin;
@@ -17,7 +18,8 @@ impl Plugin for EnemyPlugin {
             Update,
             spawn_enemy
                 .run_if(on_timer(Duration::from_millis(2000)))
-                .in_set(AppSet::Update),
+                .run_if(in_state(Screen::Gameplay))
+                .in_set(AppSystem::Update),
         );
         app.add_systems(
             Update,
@@ -28,7 +30,8 @@ impl Plugin for EnemyPlugin {
                 enemy_push_detection,
                 enemy_hit_detection,
                 attack,
-            ),
+            )
+                .run_if(in_state(Screen::Gameplay)),
         )
         .add_observer(enemy_pushing)
         .add_observer(enemy_take_dmg);

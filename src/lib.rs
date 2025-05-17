@@ -3,23 +3,27 @@ use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use enemy::EnemyPlugin;
 use experience::ExperiencePlugin;
 use movement::MovementPlugin;
-use player::PlayerPlugin;
+use player::{Player, PlayerPlugin};
 
 #[cfg(feature = "dev")]
 mod dev_tools;
 mod enemy;
 mod experience;
-mod level;
 mod movement;
 mod player;
+
+mod screens;
+pub mod widgets;
 
 pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
-        app.configure_sets(Update, (AppSet::RecordInput, AppSet::Update).chain());
+        app.configure_sets(Update, (AppSystem::RecordInput, AppSystem::Update).chain());
 
         app.add_systems(Startup, spawn_camera);
+
+        app.add_systems(Update, update_camera);
 
         app.add_plugins((
             EntropyPlugin::<WyRand>::default(),
@@ -36,11 +40,12 @@ impl Plugin for AppPlugin {
             PlayerPlugin,
             MovementPlugin,
             ExperiencePlugin,
-            level::plugin,
         ));
 
         #[cfg(feature = "dev")]
         app.add_plugins(dev_tools::plugin);
+
+        app.add_plugins(screens::plugin);
     }
 }
 
@@ -49,9 +54,13 @@ const ENEMY_SIZE: f32 = 30.0;
 const PLAYER_SIZE: f32 = 30.0;
 const SPELL_SIZE: f32 = 16.0;
 const XP_GAIN_GEM: i32 = 10;
+
+/// How quickly should the camera snap to the desired location.
+const CAMERA_DECAY_RATE: f32 = 2.;
+
 /// High-level groupings of systems for the app in the `Update` schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum AppSet {
+enum AppSystem {
     /// Record player input.
     RecordInput,
     /// Do everything else
@@ -70,4 +79,20 @@ fn spawn_camera(mut commands: Commands) {
         // for debugging. So it's good to have this here for future-proofing.
         IsDefaultUiCamera,
     ));
+}
+
+/// Update the camera position by tracking the player.
+fn update_camera(
+    mut camera: Single<&mut Transform, (With<Camera2d>, Without<Player>)>,
+    player: Single<&Transform, (With<Player>, Without<Camera2d>)>,
+    time: Res<Time>,
+) {
+    let Vec3 { x, y, .. } = player.translation;
+    let direction = Vec3::new(x, y, camera.translation.z);
+
+    // Applies a smooth effect to camera movement using stable interpolation
+    // between the camera position and the player position on the x and y axes.
+    camera
+        .translation
+        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
 }
