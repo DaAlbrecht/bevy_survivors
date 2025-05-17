@@ -221,7 +221,7 @@ fn attack(
         if timer.0.tick(time.delta()).just_finished() {
             let mut player_health = player_health_q.single_mut()?;
             player_health.0 -= ENEMY_DMG_STAT;
-            info!("attacking player, player_health: {}", player_health.0);
+            debug!("attacking player, player_health: {}", player_health.0);
         }
     }
 

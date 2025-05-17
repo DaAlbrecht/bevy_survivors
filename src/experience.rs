@@ -1,4 +1,4 @@
-use bevy::{ecs::entity, prelude::*, state::commands};
+use bevy::prelude::*;
 
 use crate::{
     PLAYER_SIZE, XP_GAIN_GEM,
@@ -79,29 +79,23 @@ fn collect_xp_gem(
 }
 
 fn gain_xp(
-    trigger: Trigger<GainXpEvent>,
-    player_q: Query<(&Level, &XP, Entity), With<Player>>,
+    _trigger: Trigger<GainXpEvent>,
+    mut player_q: Query<(&Level, &mut XP, Entity), With<Player>>,
     mut commands: Commands,
 ) -> Result {
-    let (player_level, player_xp, player_entity) = player_q.single()?;
+    let base_xp = 100;
+    let (player_level, mut player_xp, player_entity) = player_q.single_mut()?;
+    let xp_needed = base_xp * player_level.0.pow(2);
 
-    player_xp.0 += XP_GAIN_GEM; //maybe increase with time
+    player_xp.0 += XP_GAIN_GEM; //maybe increase with time   
 
-    if player_xp.0 == xp_for_level_up(player_level.0) {
+    if player_xp.0 >= xp_needed {
         //Level Up
         commands.trigger(LevelUpEvent(player_entity));
         player_xp.0 = 0;
     }
 
     Ok(())
-}
-
-fn xp_for_level_up(current_level: i32) -> i32 {
-    let base_xp = 100;
-
-    let xp_needed = base_xp * current_level.isqrt();
-
-    xp_needed
 }
 
 fn level_up(trigger: Trigger<LevelUpEvent>, mut player_q: Query<&mut Level, With<Player>>) {

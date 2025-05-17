@@ -23,8 +23,10 @@ impl Plugin for PlayerPlugin {
                 update_player_timer,
                 move_player_spell.after(player_shoot),
             ),
-        );
-        app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
+        )
+        .register_type::<XP>()
+        .register_type::<Level>()
+        .add_plugins(InputManagerPlugin::<PlayerAction>::default());
     }
 }
 
@@ -56,10 +58,10 @@ pub enum PlayerAction {
 #[derive(Component)]
 pub struct XpCollectionRange(pub f32);
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct XP(pub i32);
 
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct Level(pub i32);
 
 impl PlayerAction {
