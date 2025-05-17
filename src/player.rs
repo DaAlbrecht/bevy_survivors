@@ -154,21 +154,16 @@ fn spawn_player(
 
 fn update_health_bar(
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
-    player_q: Query<(&Health, &Children), With<Player>>,
-    healthbar_material_q: Query<&Handle<HealthBarMaterial>>,
+    player_q: Query<&Health, With<Player>>,
+    healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>>,
 ) -> Result {
-    let (player_health, children) = player_q.single()?;
+    let health = player_q.single()?;
+    let per = health.0 / 100.;
+    let handle = healthbar_material_q.single()?.clone_weak();
+    let material = health_bar_materials.get_mut(&handle).unwrap();
+    material.percent = per;
 
     Ok(())
-
-    // for (health, children) in player_q.iter() {
-    //     for &child in children.iter() {
-    //         let per = health.current_health as f32 / health.max_health as f32;
-    //         let handle = healthbar_material_q.get(child).unwrap();
-    //         let material = health_bar_materials.get_mut(handle).unwrap();
-    //         material.percent = per;
-    //     }
-    // }
 }
 
 fn record_player_directional_input(
