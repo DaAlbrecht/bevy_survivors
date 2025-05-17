@@ -123,9 +123,7 @@ fn spawn_player(
             },
         },
         Health(100.),
-        DamageCooldown {
-            timer: Timer::from_seconds(1.0, TimerMode::Once),
-        },
+        DamageCooldown(Timer::from_seconds(1.0, TimerMode::Once)),
     ));
 }
 
@@ -159,7 +157,7 @@ fn player_shoot(
     let mut player_cd = player_cd_q.single_mut()?;
     let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
 
-    if player_cd.timer.finished() {
+    if player_cd.0.finished() {
         let direction = Vec3::new(f32::sin(random_angle), f32::cos(random_angle), 0.);
 
         commands.spawn((
@@ -172,7 +170,7 @@ fn player_shoot(
             Speed(600.),
             Direction(direction),
         ));
-        player_cd.timer.reset();
+        player_cd.0.reset();
     }
 
     Ok(())
@@ -180,7 +178,7 @@ fn player_shoot(
 
 fn update_player_timer(time: Res<Time>, mut cooldowns: Query<&mut DamageCooldown>) {
     for mut cooldown in &mut cooldowns {
-        cooldown.timer.tick(time.delta());
+        cooldown.0.tick(time.delta());
     }
 }
 

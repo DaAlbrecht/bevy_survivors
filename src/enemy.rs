@@ -23,14 +23,14 @@ impl Plugin for EnemyPlugin {
             Update,
             (
                 enemy_movement,
-                enemy_collision_detection,
+                enemy_colliding_detection,
+                enemy_stop_colliding_detection,
                 enemy_push_detection,
-                update_enemy_timer,
                 enemy_hit_detection,
+                attack,
             ),
         )
         .add_observer(enemy_pushing)
-        .add_observer(enemy_collision_dmg)
         .add_observer(enemy_take_dmg);
     }
 }
@@ -44,18 +44,14 @@ const ENEMY_DMG_STAT: f32 = 5.;
 pub struct Speed(pub f32);
 
 #[derive(Component)]
+#[require(Health(10.), Speed(50.), DamageCooldown, Sprite, Transform)]
 pub struct Enemy;
 
 #[derive(Component)]
 pub struct Health(pub f32);
 
-#[derive(Component)]
-pub struct DamageCooldown {
-    pub timer: Timer,
-}
-
-#[derive(Event)]
-pub struct PlayerEnemyCollisionEvent(pub Entity);
+#[derive(Component, Default)]
+pub struct DamageCooldown(pub Timer);
 
 #[derive(Event)]
 pub struct PlayerPushingEvent(pub Entity);
@@ -67,6 +63,9 @@ pub struct EnemyHitEvent {
 }
 #[derive(Event)]
 pub struct EnemyDeathEvent(pub Transform);
+
+#[derive(Component)]
+pub struct Colliding;
 
 fn spawn_enemy(
     mut commands: Commands,
@@ -85,17 +84,13 @@ fn spawn_enemy(
     let enemy_pos_y = player_pos.translation.y + offset_y;
 
     commands.spawn((
+        Enemy,
         Sprite {
             image: asset_server.load("Enemy.png"),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
-        Enemy,
-        Health(10.),
-        Speed(50.),
-        DamageCooldown {
-            timer: Timer::from_seconds(0.5, TimerMode::Once),
-        },
+        DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     ));
 
     Ok(())
@@ -146,8 +141,8 @@ fn enemy_movement(
     Ok(())
 }
 
-fn enemy_collision_detection(
-    enemy_query: Query<(&mut Transform, Entity), With<Enemy>>,
+fn enemy_colliding_detection(
+    enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
     player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
@@ -157,7 +152,24 @@ fn enemy_collision_detection(
         let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
 
         if distance_to_player <= SEPARATION_RADIUS {
-            commands.trigger(PlayerEnemyCollisionEvent(enemy));
+            commands.entity(enemy).insert(Colliding);
+        }
+    }
+    Ok(())
+}
+
+fn enemy_stop_colliding_detection(
+    enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, With<Colliding>)>,
+    player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,
+    mut commands: Commands,
+) -> Result {
+    let player_pos = player_query.single()?;
+
+    for (&enemy_pos, enemy) in &enemy_query {
+        let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
+
+        if distance_to_player > SEPARATION_RADIUS {
+            commands.entity(enemy).remove::<Colliding>();
         }
     }
     Ok(())
@@ -191,8 +203,6 @@ fn enemy_pushing(
     let movement_controller = movement_query.single()?;
     let velocity = movement_controller.max_speed * movement_controller.intent;
 
-    // let player_pos = movement_controller.1.translation;
-
     for (mut enemy_pos, enemy_entity) in &mut enemy_query {
         if enemy_entity == push_entity {
             enemy_pos.translation += velocity.extend(0.0) * time.delta_secs();
@@ -202,24 +212,16 @@ fn enemy_pushing(
     Ok(())
 }
 
-fn update_enemy_timer(time: Res<Time>, mut cooldowns: Query<&mut DamageCooldown>) {
-    for mut cooldown in &mut cooldowns {
-        cooldown.timer.tick(time.delta());
-    }
-}
-
-fn enemy_collision_dmg(
-    trigger: Trigger<PlayerEnemyCollisionEvent>,
+fn attack(
+    time: Res<Time>,
     mut player_health_q: Query<&mut Health, With<Player>>,
-    mut enemy_dmg_timer_q: Query<&mut DamageCooldown, With<Enemy>>,
+    mut enemy_dmg_timer_q: Query<&mut DamageCooldown, (With<Enemy>, With<Colliding>)>,
 ) -> Result {
-    let mut player_health = player_health_q.single_mut()?;
-    let enemy_entity = trigger.0;
-
-    if let Ok(mut cooldown) = enemy_dmg_timer_q.get_mut(enemy_entity) {
-        if cooldown.timer.finished() {
+    for mut timer in enemy_dmg_timer_q.iter_mut() {
+        if timer.0.tick(time.delta()).just_finished() {
+            let mut player_health = player_health_q.single_mut()?;
             player_health.0 -= ENEMY_DMG_STAT;
-            cooldown.timer.reset();
+            info!("attacking player, player_health: {}", player_health.0);
         }
     }
 
