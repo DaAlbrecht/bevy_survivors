@@ -20,11 +20,7 @@ fn spawn_title_screen(mut commands: Commands) {
             widgets::button("Exit", exit_app),
         ],
         #[cfg(target_family = "wasm")]
-        children![
-            widgets::button("Play", enter_loading_or_gameplay_screen),
-            widgets::button("Settings", enter_settings_screen),
-            widgets::button("Credits", enter_credits_screen),
-        ],
+        children![widgets::button("Play", enter_loading_or_gameplay_screen),],
     ));
 }
 
