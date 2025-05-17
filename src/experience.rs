@@ -1,9 +1,9 @@
-use bevy::prelude::*;
+use bevy::{ecs::entity, prelude::*, state::commands};
 
 use crate::{
-    PLAYER_SIZE,
+    PLAYER_SIZE, XP_GAIN_GEM,
     enemy::{EnemyDeathEvent, Speed},
-    player::{Player, XpCollectionRange},
+    player::{Level, Player, XP, XpCollectionRange},
 };
 
 pub struct ExperiencePlugin;
@@ -11,7 +11,8 @@ impl Plugin for ExperiencePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, collect_xp_gem)
             .add_observer(spawn_xp_gem)
-            .add_observer(gain_xp);
+            .add_observer(gain_xp)
+            .add_observer(level_up);
     }
 }
 
@@ -20,6 +21,9 @@ pub struct XpGem;
 
 #[derive(Event)]
 pub struct GainXpEvent;
+
+#[derive(Event)]
+pub struct LevelUpEvent(Entity);
 
 fn spawn_xp_gem(
     trigger: Trigger<EnemyDeathEvent>,
@@ -66,13 +70,44 @@ fn collect_xp_gem(
             .distance(gem_position.translation))
             <= PLAYER_SIZE / 2.0
         {
-            info!("Gem Hit");
             commands.trigger(GainXpEvent);
-            commands.entity(gem_entity).despawn_related::<Children>();
+            commands.entity(gem_entity).despawn();
         }
     }
 
     Ok(())
 }
 
-fn gain_xp(trigger: Trigger<GainXpEvent>) {}
+fn gain_xp(
+    trigger: Trigger<GainXpEvent>,
+    player_q: Query<(&Level, &XP, Entity), With<Player>>,
+    mut commands: Commands,
+) -> Result {
+    let (player_level, player_xp, player_entity) = player_q.single()?;
+
+    player_xp.0 += XP_GAIN_GEM; //maybe increase with time
+
+    if player_xp.0 == xp_for_level_up(player_level.0) {
+        //Level Up
+        commands.trigger(LevelUpEvent(player_entity));
+        player_xp.0 = 0;
+    }
+
+    Ok(())
+}
+
+fn xp_for_level_up(current_level: i32) -> i32 {
+    let base_xp = 100;
+
+    let xp_needed = base_xp * current_level.isqrt();
+
+    xp_needed
+}
+
+fn level_up(trigger: Trigger<LevelUpEvent>, mut player_q: Query<&mut Level, With<Player>>) {
+    let player_entity = trigger.0;
+
+    if let Ok(mut player_level) = player_q.get_mut(player_entity) {
+        player_level.0 += 1;
+    }
+}
