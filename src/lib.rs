@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
-use enemy::{EnemyDeathEvent, EnemyPlugin};
+use enemy::EnemyPlugin;
 use experience::ExperiencePlugin;
 use movement::MovementPlugin;
 use player::PlayerPlugin;
 
+#[cfg(feature = "dev")]
+mod dev_tools;
 mod enemy;
 mod experience;
 mod level;
@@ -36,6 +38,9 @@ impl Plugin for AppPlugin {
             ExperiencePlugin,
             level::plugin,
         ));
+
+        #[cfg(feature = "dev")]
+        app.add_plugins((dev_tools::plugin));
     }
 }
 

@@ -240,7 +240,7 @@ fn enemy_hit_detection(
             {
                 commands.trigger(EnemyHitEvent {
                     entity_hit: enemy_entity,
-                    spell_entity: spell_entity,
+                    spell_entity,
                 });
             }
         }

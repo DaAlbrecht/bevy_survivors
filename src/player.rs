@@ -34,7 +34,7 @@ pub struct Player;
 #[derive(Bundle)]
 struct PlayerBundle {
     player: Player,
-    input_manager: InputManagerBundle<PlayerAction>,
+    input_manager: InputMap<PlayerAction>,
     movement_controller: MovementController,
 }
 
@@ -116,7 +116,7 @@ fn spawn_player(
         Transform::from_xyz(50., 0., 0.),
         PlayerBundle {
             player: Player,
-            input_manager: InputManagerBundle::with_map(PlayerBundle::default_input_map()),
+            input_manager: PlayerBundle::default_input_map(),
             movement_controller: MovementController {
                 max_speed: config.max_speed,
                 ..default()

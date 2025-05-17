@@ -20,9 +20,33 @@ rand_core = "0.6"
 rand = "0.8"
 
 leafwing-input-manager = "0.17.0"
+bevy-inspector-egui = "0.31.0"
+
+[features]
+
+default = ["dev_native"]
+dev = [
+    "bevy/dynamic_linking",
+    "bevy/bevy_dev_tools",
+    "bevy/bevy_ui_debug",
+    "bevy/track_location",
+]
+dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 
 [target.wasm32-unknown-unknown.dependencies]
 getrandom = { version = "0.3.2", features = ["wasm_js"] }
+
+[package.metadata.bevy_cli.release]
+# Disable debug functionality in release builds.
+default-features = false
+
+[package.metadata.bevy_cli.web]
+default-features = false
+rustflags = ["--cfg", "getrandom_backend=\"wasm_js\""]
+
+[package.metadata.bevy_cli.web.dev]
+features = ["dev"]
+
 
 [workspace.metadata.bevy_lint]
 pedantic = "warn"
