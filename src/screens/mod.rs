@@ -9,6 +9,7 @@ pub enum Screen {
     #[default]
     Title,
     Gameplay,
+    LevelUp,
 }
 
 pub(super) fn plugin(app: &mut App) {

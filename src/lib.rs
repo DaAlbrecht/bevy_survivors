@@ -5,6 +5,7 @@ use experience::ExperiencePlugin;
 use healthbar::HealthBarPlugin;
 use movement::MovementPlugin;
 use player::{Player, PlayerPlugin};
+use screens::Screen;
 
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -24,7 +25,7 @@ impl Plugin for AppPlugin {
 
         app.add_systems(Startup, spawn_camera);
 
-        app.add_systems(Update, update_camera);
+        app.add_systems(Update, update_camera.run_if(in_state(Screen::Gameplay)));
 
         app.add_plugins((
             EntropyPlugin::<WyRand>::default(),

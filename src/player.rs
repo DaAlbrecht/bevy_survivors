@@ -21,8 +21,6 @@ impl Plugin for PlayerPlugin {
 
         app.add_systems(OnEnter(Screen::Gameplay), show_player);
 
-        app.add_systems(OnExit(Screen::Gameplay), hide_player);
-
         app.add_systems(
             Update,
             (
@@ -239,11 +237,5 @@ fn move_player_spell(
 fn show_player(mut visibility_q: Query<&mut Visibility, With<Player>>) -> Result {
     let mut visibility = visibility_q.single_mut()?;
     *visibility = Visibility::Visible;
-    Ok(())
-}
-
-fn hide_player(mut visibility_q: Query<&mut Visibility, With<Player>>) -> Result {
-    let mut visibility = visibility_q.single_mut()?;
-    *visibility = Visibility::Hidden;
     Ok(())
 }

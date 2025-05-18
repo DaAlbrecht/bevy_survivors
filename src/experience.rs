@@ -4,15 +4,27 @@ use crate::{
     PLAYER_SIZE, XP_GAIN_GEM,
     enemy::{EnemyDeathEvent, Speed},
     player::{Level, Player, XP, XpCollectionRange},
+    screens::Screen,
+    widgets,
 };
 
 pub struct ExperiencePlugin;
 impl Plugin for ExperiencePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, collect_xp_gem)
-            .add_observer(spawn_xp_gem)
-            .add_observer(gain_xp)
-            .add_observer(level_up);
+        app.add_systems(Update, collect_xp_gem);
+
+        app.world_mut().spawn((
+            Observer::new(spawn_xp_gem),
+            Name::new("spawn_xp_gem Observer"),
+        ));
+        app.world_mut()
+            .spawn((Observer::new(gain_xp), Name::new("gain_xp Observer")));
+        app.world_mut()
+            .spawn((Observer::new(level_up), Name::new("level_up Observer")));
+        app.world_mut().spawn((
+            Observer::new(spawn_level_up_screen),
+            Name::new("spawn_level_up_screen Observer"),
+        ));
     }
 }
 
@@ -23,7 +35,7 @@ pub struct XpGem;
 pub struct GainXpEvent;
 
 #[derive(Event)]
-pub struct LevelUpEvent(Entity);
+pub struct LevelUpEvent;
 
 fn spawn_xp_gem(
     trigger: Trigger<EnemyDeathEvent>,
@@ -80,28 +92,41 @@ fn collect_xp_gem(
 
 fn gain_xp(
     _trigger: Trigger<GainXpEvent>,
-    mut player_q: Query<(&Level, &mut XP, Entity), With<Player>>,
+    mut player_q: Query<(&Level, &mut XP), With<Player>>,
     mut commands: Commands,
 ) -> Result {
     let base_xp = 100;
-    let (player_level, mut player_xp, player_entity) = player_q.single_mut()?;
+    let (player_level, mut player_xp) = player_q.single_mut()?;
     let xp_needed = base_xp * player_level.0.pow(2);
 
     player_xp.0 += XP_GAIN_GEM; //maybe increase with time   
 
     if player_xp.0 >= xp_needed {
         //Level Up
-        commands.trigger(LevelUpEvent(player_entity));
+        commands.trigger(LevelUpEvent);
         player_xp.0 = 0;
     }
 
     Ok(())
 }
 
-fn level_up(trigger: Trigger<LevelUpEvent>, mut player_q: Query<&mut Level, With<Player>>) {
-    let player_entity = trigger.0;
+fn level_up(
+    _trigger: Trigger<LevelUpEvent>,
+    mut player_q: Query<&mut Level, With<Player>>,
+) -> Result {
+    let mut level = player_q.single_mut()?;
+    level.0 += 1;
+    Ok(())
+}
 
-    if let Ok(mut player_level) = player_q.get_mut(player_entity) {
-        player_level.0 += 1;
-    }
+pub fn spawn_level_up_screen(
+    _trigger: Trigger<LevelUpEvent>,
+    mut commands: Commands,
+    mut next_state: ResMut<NextState<Screen>>,
+) {
+    next_state.set(Screen::LevelUp);
+    commands.spawn((
+        widgets::ui_root("LevelUp Screen"),
+        StateScoped(Screen::LevelUp),
+    ));
 }
