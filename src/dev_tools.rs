@@ -9,7 +9,7 @@ use bevy_inspector_egui::{
     quick::{StateInspectorPlugin, WorldInspectorPlugin},
 };
 
-use crate::{experience::LevelUpEvent, screens::Screen};
+use crate::{gameplay::experience::LevelUpEvent, screens::Screen};
 
 const TOGGLE_DEBUG_UI_KEY: KeyCode = KeyCode::Backquote;
 const TRIGGER_LEVEL_UP_KEY: KeyCode = KeyCode::F1;

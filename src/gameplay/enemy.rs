@@ -4,11 +4,11 @@ use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
-use crate::{
-    AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
+use crate::{AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE, screens::Screen};
+
+use super::{
     movement::MovementController,
     player::{Player, PlayerSpell},
-    screens::Screen,
 };
 
 pub struct EnemyPlugin;

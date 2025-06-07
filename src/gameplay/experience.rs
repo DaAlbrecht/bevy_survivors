@@ -1,11 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{
-    PLAYER_SIZE, XP_GAIN_GEM,
-    enemy::{EnemyDeathEvent, Speed},
-    player::{Level, Player, XP, XpCollectionRange},
-    screens::Screen,
-};
+use super::enemy::{EnemyDeathEvent, Speed};
+use super::player::{Level, Player, XP, XpCollectionRange};
+use crate::{PLAYER_SIZE, XP_GAIN_GEM, screens::Screen};
 
 pub struct ExperiencePlugin;
 impl Plugin for ExperiencePlugin {

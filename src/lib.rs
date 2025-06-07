@@ -1,19 +1,15 @@
 use bevy::prelude::*;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
-use enemy::EnemyPlugin;
-use experience::ExperiencePlugin;
-use healthbar::HealthBarPlugin;
-use movement::MovementPlugin;
-use player::{Player, PlayerPlugin};
+use gameplay::enemy::EnemyPlugin;
+use gameplay::experience::ExperiencePlugin;
+use gameplay::healthbar::HealthBarPlugin;
+use gameplay::movement::MovementPlugin;
+use gameplay::player::{Player, PlayerPlugin};
 use screens::Screen;
 
 #[cfg(feature = "dev")]
 mod dev_tools;
-mod enemy;
-mod experience;
-mod healthbar;
-mod movement;
-mod player;
+mod gameplay;
 mod screens;
 pub mod widgets;
 

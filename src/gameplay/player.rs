@@ -5,13 +5,10 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use leafwing_input_manager::prelude::*;
 use rand::Rng;
 
-use crate::{
-    AppSystem,
-    enemy::{DamageCooldown, Health, Speed},
-    healthbar::{HealthBar, HealthBarMaterial},
-    movement::{MovementController, apply_movement},
-    screens::Screen,
-};
+use super::enemy::{DamageCooldown, Health, Speed};
+use super::healthbar::{HealthBar, HealthBarMaterial};
+use super::movement::{MovementController, apply_movement};
+use crate::{AppSystem, screens::Screen};
 
 pub struct PlayerPlugin;
 
