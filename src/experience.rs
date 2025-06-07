@@ -5,7 +5,6 @@ use crate::{
     enemy::{EnemyDeathEvent, Speed},
     player::{Level, Player, XP, XpCollectionRange},
     screens::Screen,
-    widgets,
 };
 
 pub struct ExperiencePlugin;
@@ -21,10 +20,6 @@ impl Plugin for ExperiencePlugin {
             .spawn((Observer::new(gain_xp), Name::new("gain_xp Observer")));
         app.world_mut()
             .spawn((Observer::new(level_up), Name::new("level_up Observer")));
-        app.world_mut().spawn((
-            Observer::new(spawn_level_up_screen),
-            Name::new("spawn_level_up_screen Observer"),
-        ));
     }
 }
 
@@ -113,20 +108,11 @@ fn gain_xp(
 fn level_up(
     _trigger: Trigger<LevelUpEvent>,
     mut player_q: Query<&mut Level, With<Player>>,
+    mut next_state: ResMut<NextState<Screen>>,
 ) -> Result {
     let mut level = player_q.single_mut()?;
     level.0 += 1;
-    Ok(())
-}
 
-pub fn spawn_level_up_screen(
-    _trigger: Trigger<LevelUpEvent>,
-    mut commands: Commands,
-    mut next_state: ResMut<NextState<Screen>>,
-) {
     next_state.set(Screen::LevelUp);
-    commands.spawn((
-        widgets::ui_root("LevelUp Screen"),
-        StateScoped(Screen::LevelUp),
-    ));
+    Ok(())
 }
