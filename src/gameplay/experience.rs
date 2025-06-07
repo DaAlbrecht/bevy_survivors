@@ -1,4 +1,9 @@
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::css::{BLUE, YELLOW},
+    prelude::*,
+    render::render_resource::{AsBindGroup, ShaderRef},
+    ui::Val::{Percent, Px},
+};
 
 use super::enemy::{EnemyDeathEvent, Speed};
 use super::player::{Level, Player, XP, XpCollectionRange};
@@ -7,6 +12,9 @@ use crate::{PLAYER_SIZE, XP_GAIN_GEM, screens::Screen};
 pub struct ExperiencePlugin;
 impl Plugin for ExperiencePlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
+
+        app.add_systems(OnEnter(Screen::Gameplay), spawn_xp_bar);
         app.add_systems(Update, collect_xp_gem);
 
         app.world_mut().spawn((
@@ -112,4 +120,40 @@ fn level_up(
 
     next_state.set(Screen::LevelUp);
     Ok(())
+}
+
+fn spawn_xp_bar(mut commands: Commands, mut ui_materials: ResMut<Assets<XpBarMaterial>>) {
+    commands.spawn((
+        Name::new("XP Bar"),
+        Node {
+            position_type: PositionType::Absolute,
+            width: Percent(100.0),
+            height: Px(20.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        StateScoped(Screen::Gameplay),
+        MaterialNode(ui_materials.add(XpBarMaterial {
+            foreground_color: BLUE.into(),
+            background_color: YELLOW.into(),
+            percent: 50.,
+        })),
+    ));
+}
+
+#[derive(Asset, AsBindGroup, TypePath, Debug, Clone)]
+struct XpBarMaterial {
+    #[uniform(0)]
+    pub foreground_color: LinearRgba,
+    #[uniform(0)]
+    pub background_color: LinearRgba,
+    #[uniform(0)]
+    pub percent: f32,
+}
+
+impl UiMaterial for XpBarMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/xp_bar.wgsl".into()
+    }
 }

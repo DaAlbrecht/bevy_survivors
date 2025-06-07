@@ -12,9 +12,6 @@ impl Plugin for HealthBarPlugin {
     }
 }
 
-#[derive(Component)]
-pub struct HealthBar;
-
 #[derive(Asset, AsBindGroup, TypePath, Debug, Clone)]
 pub struct HealthBarMaterial {
     #[uniform(0)]

@@ -6,7 +6,7 @@ use leafwing_input_manager::prelude::*;
 use rand::Rng;
 
 use super::enemy::{DamageCooldown, Health, Speed};
-use super::healthbar::{HealthBar, HealthBarMaterial};
+use super::healthbar::HealthBarMaterial;
 use super::movement::{MovementController, apply_movement};
 use crate::{AppSystem, screens::Screen};
 
@@ -136,7 +136,6 @@ fn spawn_player(
             Visibility::Hidden,
         ))
         .with_child((
-            HealthBar,
             Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),
             MeshMaterial2d(health_bar_materials.add(HealthBarMaterial {
                 foreground_color: css::GREEN.into(),

@@ -1,5 +1,4 @@
 use bevy::{
-    color::palettes::css::YELLOW,
     prelude::*,
     ui::Val::{Percent, Px},
 };
@@ -12,7 +11,9 @@ pub(super) fn plugin(app: &mut App) {
 
 const NUMBER_OF_ITEM_CHOICES: usize = 3;
 
-fn spawn_level_up_screen(mut commands: Commands) {
+fn spawn_level_up_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let border_image = asset_server.load("kenny/panel-border-011.png");
+
     commands
         .spawn((
             Name::new("LevelUp"),
@@ -32,19 +33,30 @@ fn spawn_level_up_screen(mut commands: Commands) {
         ))
         .with_children(|parent| {
             for _ in 0..NUMBER_OF_ITEM_CHOICES {
-                parent.spawn(item_choice_widget()).observe(upgrade);
+                parent
+                    .spawn(item_choice_widget(border_image.clone()))
+                    .observe(upgrade);
             }
         });
 }
 
-fn item_choice_widget() -> impl Bundle {
+fn item_choice_widget(image: Handle<Image>) -> impl Bundle {
     (
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
             ..default()
         },
-        BackgroundColor(YELLOW.into()),
+        ImageNode {
+            image,
+            image_mode: NodeImageMode::Sliced(TextureSlicer {
+                border: BorderRect::all(22.0),
+                center_scale_mode: SliceScaleMode::Stretch,
+                sides_scale_mode: SliceScaleMode::Stretch,
+                max_corner_scale: 1.0,
+            }),
+            ..default()
+        },
         Button,
     )
 }
