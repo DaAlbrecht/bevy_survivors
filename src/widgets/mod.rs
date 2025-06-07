@@ -24,6 +24,7 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             row_gap: Px(20.0),
             ..default()
         },
+        Pickable::IGNORE,
     )
 }
 
