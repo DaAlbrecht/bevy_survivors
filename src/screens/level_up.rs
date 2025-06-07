@@ -39,5 +39,6 @@ fn item() -> impl Bundle {
             ..default()
         },
         BackgroundColor(YELLOW.into()),
+        Button,
     )
 }

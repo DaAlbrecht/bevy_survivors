@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 mod gameplay;
-mod leevl_up;
+mod level_up;
 mod title;
 
 /// The game's main screen states.
@@ -18,7 +18,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_state::<Screen>();
     app.enable_state_scoped_entities::<Screen>();
 
-    app.add_plugins((gameplay::plugin, title::plugin, leevl_up::plugin));
+    app.add_plugins((gameplay::plugin, title::plugin, level_up::plugin));
 
     app.register_type::<Screen>();
 }
