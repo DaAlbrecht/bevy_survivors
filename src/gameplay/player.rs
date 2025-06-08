@@ -64,10 +64,10 @@ pub enum PlayerAction {
 pub struct XpCollectionRange(pub f32);
 
 #[derive(Component, Reflect)]
-pub struct XP(pub i32);
+pub struct XP(pub f32);
 
 #[derive(Component, Reflect)]
-pub struct Level(pub i32);
+pub struct Level(pub f32);
 
 impl PlayerAction {
     pub const DIRECTIONS: [Self; 4] = [
@@ -131,8 +131,8 @@ fn spawn_player(
             Health(100.),
             DamageCooldown(Timer::from_seconds(1.0, TimerMode::Once)),
             XpCollectionRange(150.0),
-            XP(0),
-            Level(1),
+            XP(0.),
+            Level(1.),
             Visibility::Hidden,
         ))
         .with_child((

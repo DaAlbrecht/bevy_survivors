@@ -15,7 +15,10 @@ impl Plugin for ExperiencePlugin {
         app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
 
         app.add_systems(OnEnter(Screen::Gameplay), spawn_xp_bar);
-        app.add_systems(Update, collect_xp_gem);
+        app.add_systems(
+            Update,
+            (collect_xp_gem, update_xp_bar).run_if(in_state(Screen::Gameplay)),
+        );
 
         app.world_mut().spawn((
             Observer::new(spawn_xp_gem),
@@ -36,6 +39,8 @@ pub struct GainXpEvent;
 
 #[derive(Event)]
 pub struct LevelUpEvent;
+
+const BASE_LEVEL_XP: f32 = 100.;
 
 fn spawn_xp_gem(
     trigger: Trigger<EnemyDeathEvent>,
@@ -95,16 +100,15 @@ fn gain_xp(
     mut player_q: Query<(&Level, &mut XP), With<Player>>,
     mut commands: Commands,
 ) -> Result {
-    let base_xp = 100;
     let (player_level, mut player_xp) = player_q.single_mut()?;
-    let xp_needed = base_xp * player_level.0.pow(2);
+    let xp_needed = BASE_LEVEL_XP * player_level.0.powf(2.);
 
-    player_xp.0 += XP_GAIN_GEM; //maybe increase with time   
+    player_xp.0 += XP_GAIN_GEM;
 
     if player_xp.0 >= xp_needed {
         //Level Up
         commands.trigger(LevelUpEvent);
-        player_xp.0 = 0;
+        player_xp.0 = 0.;
     }
 
     Ok(())
@@ -116,7 +120,7 @@ fn level_up(
     mut next_state: ResMut<NextState<Screen>>,
 ) -> Result {
     let mut level = player_q.single_mut()?;
-    level.0 += 1;
+    level.0 += 1.;
 
     next_state.set(Screen::LevelUp);
     Ok(())
@@ -156,6 +160,25 @@ fn spawn_xp_bar(mut commands: Commands, mut ui_materials: ResMut<Assets<XpBarMat
                 })),
             ));
         });
+}
+
+fn update_xp_bar(
+    player_q: Query<(&XP, &Level), With<Player>>,
+    mut materials: ResMut<Assets<XpBarMaterial>>,
+    xp_bar_material_q: Query<&MaterialNode<XpBarMaterial>>,
+) -> Result {
+    let (xp, level) = player_q.single()?;
+    let xp_needed = BASE_LEVEL_XP * level.0.powf(2.);
+
+    let factor = if xp_needed > 0. { xp.0 / xp_needed } else { 0. };
+
+    let handle = xp_bar_material_q.single()?;
+
+    if let Some(material) = materials.get_mut(handle) {
+        material.factor = factor;
+    }
+
+    Ok(())
 }
 
 #[derive(Asset, AsBindGroup, TypePath, Debug, Clone)]
