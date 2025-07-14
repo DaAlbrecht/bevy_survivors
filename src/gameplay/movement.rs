@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::AppSystem;
+use crate::{AppSystem, screens::Screen};
 
 pub struct MovementPlugin;
 
@@ -8,7 +8,12 @@ impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<MovementController>();
 
-        app.add_systems(Update, apply_movement.in_set(AppSystem::Update));
+        app.add_systems(
+            Update,
+            apply_movement
+                .in_set(AppSystem::Update)
+                .run_if(in_state(Screen::Gameplay)),
+        );
     }
 }
 

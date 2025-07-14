@@ -7,7 +7,7 @@ use rand::Rng;
 
 use super::enemy::{DamageCooldown, Health, Speed};
 use super::healthbar::HealthBarMaterial;
-use super::movement::{MovementController, apply_movement};
+use super::movement::MovementController;
 use crate::{AppSystem, screens::Screen};
 
 pub struct PlayerPlugin;
@@ -22,13 +22,18 @@ impl Plugin for PlayerPlugin {
             Update,
             (
                 record_player_directional_input.in_set(AppSystem::RecordInput),
-                player_shoot.after(apply_movement),
+                player_shoot,
                 update_player_timer,
-                move_player_spell.after(player_shoot),
                 update_health_bar,
             )
                 .run_if(in_state(Screen::Gameplay)),
         );
+
+        app.add_systems(
+            FixedUpdate,
+            (move_player_spell).run_if(in_state(Screen::Gameplay)),
+        );
+
         app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
 
         app.register_type::<XP>().register_type::<Level>();
