@@ -4,7 +4,11 @@ use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
-use crate::{AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE, screens::Screen};
+use crate::{
+    AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
+    gameplay::player::{Direction, Knockback},
+    screens::Screen,
+};
 
 use super::{
     movement::MovementController,
@@ -34,7 +38,8 @@ impl Plugin for EnemyPlugin {
                 .run_if(in_state(Screen::Gameplay)),
         )
         .add_observer(enemy_pushing)
-        .add_observer(enemy_take_dmg);
+        .add_observer(enemy_take_dmg)
+        .add_observer(enemy_get_pushed_from_hit);
     }
 }
 
@@ -265,5 +270,20 @@ fn enemy_take_dmg(
             commands.trigger(EnemyDeathEvent(*transform));
         }
         commands.entity(spell_entity).despawn();
+    }
+}
+
+fn enemy_get_pushed_from_hit(
+    trigger: Trigger<EnemyHitEvent>,
+    mut enemy_q: Query<&mut Transform, With<Enemy>>,
+    spell_q: Query<(&Direction, &Knockback), (With<PlayerSpell>, Without<Enemy>)>,
+) {
+    let enemy_entity = trigger.entity_hit;
+    let spell_entity = trigger.spell_entity;
+
+    if let Ok((spell_direction, spell_knockback)) = spell_q.get(spell_entity) {
+        if let Ok(mut enemy_transform) = enemy_q.get_mut(enemy_entity) {
+            enemy_transform.translation += spell_direction.0 * spell_knockback.0;
+        }
     }
 }

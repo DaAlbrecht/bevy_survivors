@@ -54,7 +54,7 @@ struct PlayerBundle {
 pub struct PlayerSpell;
 
 #[derive(Component)]
-pub struct Direction(Vec3);
+pub struct Direction(pub Vec3);
 
 #[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
 pub enum PlayerAction {
@@ -73,6 +73,9 @@ pub struct XP(pub f32);
 
 #[derive(Component, Reflect)]
 pub struct Level(pub f32);
+
+#[derive(Component, Reflect)]
+pub struct Knockback(pub f32);
 
 impl PlayerAction {
     pub const DIRECTIONS: [Self; 4] = [
@@ -196,7 +199,7 @@ fn player_shoot(
     let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
 
     if player_cd.0.finished() {
-        let direction = Vec3::new(f32::sin(random_angle), f32::cos(random_angle), 0.);
+        let direction = Vec3::new(f32::cos(random_angle), f32::sin(random_angle), 0.).normalize();
 
         commands.spawn((
             Sprite {
@@ -206,6 +209,7 @@ fn player_shoot(
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
             PlayerSpell,
             Speed(600.),
+            Knockback(50.),
             Direction(direction),
         ));
         player_cd.0.reset();
