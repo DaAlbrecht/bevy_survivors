@@ -209,7 +209,7 @@ fn player_shoot(
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
             PlayerSpell,
             Speed(600.),
-            Knockback(50.),
+            Knockback(1500.),
             Direction(direction),
         ));
         player_cd.0.reset();

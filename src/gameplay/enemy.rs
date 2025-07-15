@@ -33,6 +33,7 @@ impl Plugin for EnemyPlugin {
                 enemy_stop_colliding_detection,
                 enemy_push_detection,
                 enemy_hit_detection,
+                move_enemy_from_knockback,
                 attack,
             )
                 .run_if(in_state(Screen::Gameplay)),
@@ -75,6 +76,10 @@ pub struct EnemyDeathEvent(pub Transform);
 #[derive(Component)]
 pub struct Colliding;
 
+//type shenanigans
+#[derive(Component)]
+pub struct KnockbackDirection(pub Direction);
+
 fn spawn_enemy(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -99,13 +104,19 @@ fn spawn_enemy(
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
+        KnockbackDirection(Direction(Vec3 {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+        })),
+        Knockback(0.0),
     ));
 
     Ok(())
 }
 
 fn enemy_movement(
-    enemy_query: Query<(&mut Transform, &Speed), With<Enemy>>,
+    enemy_query: Query<(&mut Transform, &Speed, &Knockback), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) -> Result {
@@ -116,7 +127,11 @@ fn enemy_movement(
         .map(|t| t.0.translation)
         .collect::<Vec<Vec3>>();
 
-    for (mut transform, speed) in enemy_query {
+    for (mut transform, speed, knockback) in enemy_query {
+        if knockback.0 > 1.0 {
+            //skip movement if enemy gets knockedback
+            continue;
+        }
         let direction = (player_transform.translation - transform.translation).normalize();
 
         // Separation force calculation for enemies
@@ -275,15 +290,40 @@ fn enemy_take_dmg(
 
 fn enemy_get_pushed_from_hit(
     trigger: Trigger<EnemyHitEvent>,
-    mut enemy_q: Query<&mut Transform, With<Enemy>>,
+    mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection), With<Enemy>>,
     spell_q: Query<(&Direction, &Knockback), (With<PlayerSpell>, Without<Enemy>)>,
 ) {
     let enemy_entity = trigger.entity_hit;
     let spell_entity = trigger.spell_entity;
 
     if let Ok((spell_direction, spell_knockback)) = spell_q.get(spell_entity) {
-        if let Ok(mut enemy_transform) = enemy_q.get_mut(enemy_entity) {
-            enemy_transform.translation += spell_direction.0 * spell_knockback.0;
+        if let Ok((mut enemy_knockback, mut enemy_knockback_direction)) =
+            enemy_q.get_mut(enemy_entity)
+        {
+            enemy_knockback.0 = spell_knockback.0;
+            //type shenanigans continue
+            enemy_knockback_direction.0.0 = spell_direction.0;
+        }
+    }
+}
+
+fn move_enemy_from_knockback(
+    mut enemy_q: Query<(&mut Knockback, &mut Transform, &KnockbackDirection), With<Enemy>>,
+    time: Res<Time>,
+) {
+    for (mut enemy_knockback, mut enemy_transform, enemy_direction) in &mut enemy_q {
+        if enemy_knockback.0 > 0.0 {
+            //Very sorry for the type shenanigans at this point tbh
+            enemy_transform.translation +=
+                enemy_knockback.0 * enemy_direction.0.0 * time.delta_secs();
+
+            //reduce knockback speed each frame (friction)
+            enemy_knockback.0 *= 0.95;
+
+            //Stop if slow
+            if enemy_knockback.0 <= 1.0 {
+                enemy_knockback.0 = 0.0;
+            }
         }
     }
 }
