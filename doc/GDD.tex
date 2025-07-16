@@ -1,0 +1,94 @@
+\documentclass[12pt]{article}
+
+\usepackage[a4paper, left=2cm, right=2cm, top=2cm]{geometry}
+
+\title{GDD Bevy Survivor}
+
+\begin{document}
+
+
+\maketitle
+\newpage
+
+\tableofcontents
+\section{Introduction}
+
+\newpage
+\section{Enemies}
+What are the key features of enemies and how do they differ to each other.
+
+\begin{itemize}
+    \item Movement 
+    \item Damage
+    \item Health 
+    \item Resistance
+\end{itemize}
+
+The following subsections describe the different types of enemies. 
+\subsection{Walker}
+The Walker enemy is the typical “filler” enemy:
+\begin{itemize}
+    \item Movement: Walks slower than the player in his direction. 
+    \item Damage: Deals damage on collision with the player. 
+    \item Health: Moderate amount of health. This type should be the cannon fodder. 
+    \item Resistance: No specific resistances.
+\end{itemize}
+
+\subsection{Sprinter}
+The Sprinter enemy is a special type of enemy, which is not as common as the walker type. 
+\begin{itemize}
+    \item Movement: Keeps distance to player and sprints to the player. 
+    \item Damage: Deals damage on collision with the player and knocks him back. 
+    \item Health: Moderate amount of health
+    \item Resistance: Is “unstoppable” while sprinting.
+\end{itemize}
+
+\subsection{Jumper}
+The Jumper enemy is a special type of enemy, which is not as common as the walker type.
+\begin{itemize}
+    \item Movement: Keeps distance to player and jumps to the player. 
+    \item Damage: Deals damage on impact and creates a zone with special effect \\
+    (slow, poison, fire ...).
+    \item Health: Should feel tanky.
+    \item Resistance: No specific resistances.
+\end{itemize}
+
+\subsection{Shooter}
+The Shooter enemy is a special type of enemy, which is not as common as the walker type.
+\begin{itemize}
+    \item Movement: Keeps distance to the player.  
+    \item Damage: Deals damage if projectile hits player. 
+    \item Health: Should feel squishy.
+    \item Resistance: No specific resistances.
+\end{itemize}
+
+\subsection{Swarm}
+The Swarm enemy/enemies are a group of enemies. 
+\begin{itemize}
+    \item Movement: Moves as group from one end to the other. 
+    \item Damage: Deals damage on collision with player.
+    \item Health: Single enemies of the swarm are very squishy. 
+    \item Resistance: Very easy to knock back. 
+\end{itemize}
+Is a very hard copy of Vampiere-Survivor... 
+
+\subsection{Elite/Minibosses}
+Special enemies which are rare and drop special loot. 
+Do we want this? 
+
+\subsection{Bosses}
+Special enemy which have a mechanic and multiple gimmicks.
+Do we want this? 
+
+\subsection{Discussion}
+Enemies of the same type can still have different states like: Movement speed, Damage, Health and special shots / effects. 
+Each enemy type probably needs its own systems for movement, abilities, take and deal damage, ... .  
+How do we want to spawn enemies, how do we handle different waves etc.? 
+
+
+\newpage
+\section{Spells}
+
+
+
+\end{document}

@@ -1,2 +1,9 @@
 # Rust builds
 /target
+
+# Latex Specific 
+doc/*
+!doc/*.tex
+!doc/*.pdf
+!doc/assets/
+!doc/assets/**
