@@ -6,7 +6,7 @@ use rand::Rng;
 
 use crate::{
     AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
-    gameplay::player::{Direction, Knockback},
+    gameplay::player::{Direction, Knockback, PlayerHitEvent},
     screens::Screen,
 };
 
@@ -237,18 +237,16 @@ fn enemy_pushing(
 
 fn attack(
     time: Res<Time>,
-    mut player_health_q: Query<&mut Health, With<Player>>,
+    mut commands: Commands,
     mut enemy_dmg_timer_q: Query<&mut DamageCooldown, (With<Enemy>, With<Colliding>)>,
-) -> Result {
-    for mut timer in enemy_dmg_timer_q.iter_mut() {
+) {
+    for mut timer in &mut enemy_dmg_timer_q {
         if timer.0.tick(time.delta()).just_finished() {
-            let mut player_health = player_health_q.single_mut()?;
-            player_health.0 -= ENEMY_DMG_STAT;
-            debug!("attacking player, player_health: {}", player_health.0);
+            commands.trigger(PlayerHitEvent {
+                dmg: ENEMY_DMG_STAT,
+            });
         }
     }
-
-    Ok(())
 }
 
 fn enemy_hit_detection(

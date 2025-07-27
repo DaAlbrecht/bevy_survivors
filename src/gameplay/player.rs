@@ -24,7 +24,6 @@ impl Plugin for PlayerPlugin {
                 record_player_directional_input.in_set(AppSystem::RecordInput),
                 player_shoot,
                 update_player_timer,
-                update_health_bar,
             )
                 .run_if(in_state(Screen::Gameplay)),
         );
@@ -33,6 +32,8 @@ impl Plugin for PlayerPlugin {
             FixedUpdate,
             (move_player_spell).run_if(in_state(Screen::Gameplay)),
         );
+
+        app.add_observer(player_hit);
 
         app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
 
@@ -52,6 +53,11 @@ struct PlayerBundle {
 
 #[derive(Component)]
 pub struct PlayerSpell;
+
+#[derive(Event)]
+pub struct PlayerHitEvent {
+    pub dmg: f32,
+}
 
 #[derive(Component)]
 pub struct Direction(pub Vec3);
@@ -154,13 +160,17 @@ fn spawn_player(
         ));
 }
 
-fn update_health_bar(
+fn player_hit(
+    trigger: Trigger<PlayerHitEvent>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
-    player_q: Query<&Health, With<Player>>,
+    mut player_q: Query<&mut Health, With<Player>>,
     healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>>,
 ) -> Result {
-    let health = player_q.single()?;
+    let mut health = player_q.single_mut()?;
+    health.0 -= trigger.dmg;
+    debug!("attacking player, player_health: {}", health.0);
     let per = health.0 / 100.;
+
     let handle = healthbar_material_q.single()?.clone_weak();
     let material = health_bar_materials.get_mut(&handle).unwrap();
     material.percent = per;
