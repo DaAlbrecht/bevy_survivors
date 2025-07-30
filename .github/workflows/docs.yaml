@@ -56,6 +56,9 @@ jobs:
       - name: Install `mdbook-linkcheck`
         run: cargo install mdbook-linkcheck
 
+      - name: Install `mdbook-alerts`
+        run: cargo install mdbook-alerts
+
       - name: Build `mdbook` docs
         run: mdbook build
         working-directory: docs
