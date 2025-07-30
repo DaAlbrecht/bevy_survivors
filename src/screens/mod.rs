@@ -7,10 +7,9 @@ mod title;
 /// The game's main screen states.
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default, Reflect)]
 pub enum Screen {
-    //#[default]
+    #[default]
     Title,
     Gameplay,
-    #[default]
     LevelUp,
 }
 

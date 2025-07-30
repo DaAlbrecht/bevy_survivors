@@ -96,6 +96,7 @@ fn spawn_enemy(
     let enemy_pos_y = player_pos.translation.y + offset_y;
 
     commands.spawn((
+        Name::new("Default Enemy"),
         Enemy,
         Sprite {
             image: asset_server.load("Enemy.png"),

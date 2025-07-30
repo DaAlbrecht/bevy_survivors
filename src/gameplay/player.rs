@@ -136,7 +136,6 @@ fn move_player(
     mut player_transform_q: Query<&mut Transform, With<Player>>,
     time: Res<Time>,
 ) -> Result {
-    info!("{}", move_action.extend(0.0));
     let velocity = move_action.extend(0.0);
     let mut player_transform = player_transform_q.single_mut()?;
     player_transform.translation += velocity * time.delta_secs();
@@ -159,6 +158,7 @@ fn player_shoot(
         let direction = Vec3::new(f32::cos(random_angle), f32::sin(random_angle), 0.).normalize();
 
         commands.spawn((
+            Name::new("Default Attack"),
             Sprite {
                 image: asset_server.load("Bullet.png"),
                 ..default()
