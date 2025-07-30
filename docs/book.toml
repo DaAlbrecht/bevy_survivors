@@ -1,0 +1,26 @@
+[book]
+title = "Bevy Survivor"
+description = "Game design document"
+src = "src"
+language = "en"
+
+[rust]
+edition = "2024"
+
+[output.html]
+git-repository-url = "https://github.com/DaAlbrecht/bevy_survivors"
+edit-url-template = "https://github.com/DaAlbrecht/bevy_survivors/edit/main/docs/{path}?mode=edit"
+site-url = "/"
+
+# `mdbook-linkcheck` <https://github.com/Michael-F-Bryan/mdbook-linkcheck> is a backend that
+# verifies links are correct.
+[output.linkcheck]
+# You don't need `linkcheck` installed in order to build the website.
+optional = true
+# When enabled, this will send requests to websites to verify the pages exist. This is slow and
+# places a burden on those websites when checked constantly, so this should only be enabled
+# manually.
+follow-web-links = false
+user-agent = "mdbook-linkcheck/0.7.7 (https://github.com/DaAlbrecht/bevy_survivors)"
+
+[preprocessor.alerts]
