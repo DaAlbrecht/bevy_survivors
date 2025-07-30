@@ -1,19 +1,18 @@
 use std::{f32::consts::PI, time::Duration};
 
+use bevy_enhanced_input::action::Action;
+
 use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
     AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
-    gameplay::player::{Direction, Knockback, PlayerHitEvent},
+    gameplay::player::{Direction, Knockback, Move, PlayerHitEvent},
     screens::Screen,
 };
 
-use super::{
-    movement::MovementController,
-    player::{Player, PlayerSpell},
-};
+use super::player::{Player, PlayerSpell};
 
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -217,18 +216,15 @@ fn enemy_push_detection(
 
 fn enemy_pushing(
     trigger: Trigger<PlayerPushingEvent>,
-    movement_query: Query<&MovementController, With<Player>>,
+    move_action: Single<&Action<Move>>,
     mut enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Player>)>,
     time: Res<Time>,
 ) -> Result {
     let push_entity = trigger.event().0;
 
-    let movement_controller = movement_query.single()?;
-    let velocity = movement_controller.max_speed * movement_controller.intent;
-
     for (mut enemy_pos, enemy_entity) in &mut enemy_query {
         if enemy_entity == push_entity {
-            enemy_pos.translation += velocity.extend(0.0) * time.delta_secs();
+            enemy_pos.translation += move_action.extend(0.0) * time.delta_secs();
         }
     }
 

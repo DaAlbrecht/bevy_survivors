@@ -21,6 +21,7 @@ rand = "0.8"
 
 leafwing-input-manager = "0.17.0"
 bevy-inspector-egui = "0.31.0"
+bevy_enhanced_input = "0.15.2"
 
 [features]
 

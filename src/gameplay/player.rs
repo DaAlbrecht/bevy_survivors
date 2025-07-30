@@ -1,19 +1,22 @@
+use bevy_enhanced_input::prelude::*;
 use std::f32::consts::PI;
 
 use bevy::{color::palettes::css, prelude::*};
+use bevy_enhanced_input::action::Action;
+use bevy_enhanced_input::actions;
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
-use leafwing_input_manager::prelude::*;
 use rand::Rng;
 
 use super::enemy::{DamageCooldown, Health, Speed};
 use super::healthbar::HealthBarMaterial;
-use super::movement::MovementController;
 use crate::{AppSystem, screens::Screen};
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
+        app.add_input_context::<Player>();
+
         app.add_systems(Startup, spawn_player);
 
         app.add_systems(OnEnter(Screen::Gameplay), show_player);
@@ -21,7 +24,7 @@ impl Plugin for PlayerPlugin {
         app.add_systems(
             Update,
             (
-                record_player_directional_input.in_set(AppSystem::RecordInput),
+                move_player.in_set(AppSystem::RecordInput),
                 player_shoot,
                 update_player_timer,
             )
@@ -35,21 +38,12 @@ impl Plugin for PlayerPlugin {
 
         app.add_observer(player_hit);
 
-        app.add_plugins(InputManagerPlugin::<PlayerAction>::default());
-
         app.register_type::<XP>().register_type::<Level>();
     }
 }
 
 #[derive(Component)]
 pub struct Player;
-
-#[derive(Bundle)]
-struct PlayerBundle {
-    player: Player,
-    input_manager: InputMap<PlayerAction>,
-    movement_controller: MovementController,
-}
 
 #[derive(Component)]
 pub struct PlayerSpell;
@@ -61,15 +55,6 @@ pub struct PlayerHitEvent {
 
 #[derive(Component)]
 pub struct Direction(pub Vec3);
-
-#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
-pub enum PlayerAction {
-    // Movement
-    Up,
-    Down,
-    Left,
-    Right,
-}
 
 #[derive(Component)]
 pub struct XpCollectionRange(pub f32);
@@ -83,45 +68,9 @@ pub struct Level(pub f32);
 #[derive(Component, Reflect)]
 pub struct Knockback(pub f32);
 
-impl PlayerAction {
-    pub const DIRECTIONS: [Self; 4] = [
-        PlayerAction::Up,
-        PlayerAction::Down,
-        PlayerAction::Left,
-        PlayerAction::Right,
-    ];
-
-    pub fn direction(self) -> Dir2 {
-        match self {
-            PlayerAction::Up => Dir2::Y,
-            PlayerAction::Down => Dir2::NEG_Y,
-            PlayerAction::Left => Dir2::NEG_X,
-            PlayerAction::Right => Dir2::X,
-        }
-    }
-}
-
-impl PlayerBundle {
-    fn default_input_map() -> InputMap<PlayerAction> {
-        use PlayerAction::{Down, Left, Right, Up};
-        let mut input_map = InputMap::default();
-
-        // Movement
-        input_map.insert(Up, KeyCode::KeyW);
-        input_map.insert(Up, GamepadButton::DPadUp);
-
-        input_map.insert(Down, KeyCode::KeyS);
-        input_map.insert(Down, GamepadButton::DPadDown);
-
-        input_map.insert(Left, KeyCode::KeyA);
-        input_map.insert(Left, GamepadButton::DPadLeft);
-
-        input_map.insert(Right, KeyCode::KeyD);
-        input_map.insert(Right, GamepadButton::DPadRight);
-
-        input_map
-    }
-}
+#[derive(InputAction)]
+#[action_output(Vec2)]
+pub struct Move;
 
 fn spawn_player(
     mut commands: Commands,
@@ -134,14 +83,18 @@ fn spawn_player(
             Name::new("Player"),
             Sprite::from_image(asset_server.load("Player.png")),
             Transform::from_xyz(50., 0., 0.),
-            PlayerBundle {
-                player: Player,
-                input_manager: PlayerBundle::default_input_map(),
-                movement_controller: MovementController {
-                    max_speed: 100.0,
-                    ..default()
-                },
-            },
+            Player,
+            actions!(Player[
+                (
+                    Action::<Move>::new(),
+                    SmoothNudge::default(),
+                    Bindings::spawn((
+                        Cardinal::wasd_keys(),
+                        Axial::left_stick()
+                    )),
+                    Scale::splat(100.),
+                ),
+            ]),
             Health(100.),
             DamageCooldown(Timer::from_seconds(1.0, TimerMode::Once)),
             XpCollectionRange(150.0),
@@ -178,22 +131,16 @@ fn player_hit(
     Ok(())
 }
 
-fn record_player_directional_input(
-    action_state: Single<&ActionState<PlayerAction>, With<Player>>,
-    mut controller_q: Query<&mut MovementController, With<Player>>,
+fn move_player(
+    move_action: Single<&Action<Move>>,
+    mut player_transform_q: Query<&mut Transform, With<Player>>,
+    time: Res<Time>,
 ) -> Result {
-    let mut intent = Vec2::ZERO;
-    let mut controller = controller_q.single_mut()?;
+    info!("{}", move_action.extend(0.0));
+    let velocity = move_action.extend(0.0);
+    let mut player_transform = player_transform_q.single_mut()?;
+    player_transform.translation += velocity * time.delta_secs();
 
-    for input_direction in PlayerAction::DIRECTIONS {
-        if action_state.pressed(&input_direction) {
-            let direction = input_direction.direction();
-            intent += *direction;
-        }
-    }
-    let intent = intent.normalize_or_zero();
-
-    controller.intent = intent;
     Ok(())
 }
 

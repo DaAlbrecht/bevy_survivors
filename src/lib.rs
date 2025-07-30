@@ -1,9 +1,9 @@
 use bevy::prelude::*;
+use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use gameplay::enemy::EnemyPlugin;
 use gameplay::experience::ExperiencePlugin;
 use gameplay::healthbar::HealthBarPlugin;
-use gameplay::movement::MovementPlugin;
 use gameplay::player::{Player, PlayerPlugin};
 use screens::Screen;
 
@@ -24,7 +24,6 @@ impl Plugin for AppPlugin {
         app.add_systems(Update, update_camera.run_if(in_state(Screen::Gameplay)));
 
         app.add_plugins((
-            EntropyPlugin::<WyRand>::default(),
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Window {
                     title: "bevy survivor".to_string(),
@@ -34,9 +33,10 @@ impl Plugin for AppPlugin {
                 .into(),
                 ..default()
             }),
+            EnhancedInputPlugin,
+            EntropyPlugin::<WyRand>::default(),
             EnemyPlugin,
             PlayerPlugin,
-            MovementPlugin,
             ExperiencePlugin,
             HealthBarPlugin,
         ));
