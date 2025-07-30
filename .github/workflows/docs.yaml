@@ -25,6 +25,7 @@ env:
   # debug info provided by `debuginfo=1` or `debuginfo=2` require an interactive debugger like
   # `lldb` or `gdb`.
   RUSTFLAGS: -C debuginfo=line-tables-only
+  toolchain: nightly-2025-06-26
 
 jobs:
   build-docs:
@@ -34,8 +35,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Rust
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.toolchain }}
 
       - name: Cache build artifacts
         uses: Swatinem/rust-cache@v2
