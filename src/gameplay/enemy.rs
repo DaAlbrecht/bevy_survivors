@@ -8,11 +8,13 @@ use rand::Rng;
 
 use crate::{
     AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
-    gameplay::player::{Direction, Knockback, Move, PlayerHitEvent},
+    gameplay::player::{Direction, Move, PlayerHitEvent},
     screens::Screen,
 };
 
-use super::player::{Player, PlayerSpell};
+use super::player::Player;
+
+use super::attacks::{Knockback, PlayerSpell};
 
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -51,15 +53,15 @@ const ENEMY_DMG_STAT: f32 = 5.;
 #[derive(Component)]
 pub struct Speed(pub f32);
 
+#[derive(Component, Default)]
+pub struct DamageCooldown(pub Timer);
+
 #[derive(Component)]
 #[require(Health(10.), Speed(50.), DamageCooldown, Sprite, Transform)]
 pub struct Enemy;
 
 #[derive(Component)]
 pub struct Health(pub f32);
-
-#[derive(Component, Default)]
-pub struct DamageCooldown(pub Timer);
 
 #[derive(Event)]
 pub struct PlayerPushingEvent(pub Entity);

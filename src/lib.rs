@@ -1,11 +1,14 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
+use gameplay::attacks::scale::ScalePlugin;
 use gameplay::enemy::EnemyPlugin;
 use gameplay::experience::ExperiencePlugin;
 use gameplay::healthbar::HealthBarPlugin;
 use gameplay::player::{Player, PlayerPlugin};
 use screens::Screen;
+
+use crate::gameplay::attacks::AttackPlugin;
 
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -39,6 +42,8 @@ impl Plugin for AppPlugin {
             PlayerPlugin,
             ExperiencePlugin,
             HealthBarPlugin,
+            AttackPlugin,
+            ScalePlugin,
         ));
 
         #[cfg(feature = "dev")]

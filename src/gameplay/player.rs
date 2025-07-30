@@ -1,13 +1,10 @@
 use bevy_enhanced_input::prelude::*;
-use std::f32::consts::PI;
 
 use bevy::{color::palettes::css, prelude::*};
 use bevy_enhanced_input::action::Action;
 use bevy_enhanced_input::actions;
-use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
-use rand::Rng;
 
-use super::enemy::{DamageCooldown, Health, Speed};
+use super::enemy::Health;
 use super::healthbar::HealthBarMaterial;
 use crate::{AppSystem, screens::Screen};
 
@@ -23,17 +20,7 @@ impl Plugin for PlayerPlugin {
 
         app.add_systems(
             Update,
-            (
-                move_player.in_set(AppSystem::RecordInput),
-                player_shoot,
-                update_player_timer,
-            )
-                .run_if(in_state(Screen::Gameplay)),
-        );
-
-        app.add_systems(
-            FixedUpdate,
-            (move_player_spell).run_if(in_state(Screen::Gameplay)),
+            (move_player.in_set(AppSystem::RecordInput),).run_if(in_state(Screen::Gameplay)),
         );
 
         app.add_observer(player_hit);
@@ -44,9 +31,6 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component)]
 pub struct Player;
-
-#[derive(Component)]
-pub struct PlayerSpell;
 
 #[derive(Event)]
 pub struct PlayerHitEvent {
@@ -65,14 +49,11 @@ pub struct XP(pub f32);
 #[derive(Component, Reflect)]
 pub struct Level(pub f32);
 
-#[derive(Component, Reflect)]
-pub struct Knockback(pub f32);
-
 #[derive(InputAction)]
 #[action_output(Vec2)]
 pub struct Move;
 
-fn spawn_player(
+pub fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
@@ -96,7 +77,6 @@ fn spawn_player(
                 ),
             ]),
             Health(100.),
-            DamageCooldown(Timer::from_seconds(1.0, TimerMode::Once)),
             XpCollectionRange(150.0),
             XP(0.),
             Level(1.),
@@ -136,62 +116,10 @@ fn move_player(
     mut player_transform_q: Query<&mut Transform, With<Player>>,
     time: Res<Time>,
 ) -> Result {
+    // info!("{}", move_action.extend(0.0));
     let velocity = move_action.extend(0.0);
     let mut player_transform = player_transform_q.single_mut()?;
     player_transform.translation += velocity * time.delta_secs();
-
-    Ok(())
-}
-
-fn player_shoot(
-    mut player_cd_q: Query<&mut DamageCooldown, With<Player>>,
-    player_pos_q: Query<&Transform, With<Player>>,
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut rng: GlobalEntropy<WyRand>,
-) -> Result {
-    let player_pos = player_pos_q.single()?;
-    let mut player_cd = player_cd_q.single_mut()?;
-    let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
-
-    if player_cd.0.finished() {
-        let direction = Vec3::new(f32::cos(random_angle), f32::sin(random_angle), 0.).normalize();
-
-        commands.spawn((
-            Name::new("Default Attack"),
-            Sprite {
-                image: asset_server.load("Bullet.png"),
-                ..default()
-            },
-            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
-            PlayerSpell,
-            Speed(600.),
-            Knockback(1500.),
-            Direction(direction),
-        ));
-        player_cd.0.reset();
-    }
-
-    Ok(())
-}
-
-fn update_player_timer(time: Res<Time>, mut cooldowns: Query<&mut DamageCooldown>) {
-    for mut cooldown in &mut cooldowns {
-        cooldown.0.tick(time.delta());
-    }
-}
-
-fn move_player_spell(
-    mut bullet_pos_q: Query<
-        (&mut Transform, &Speed, &Direction),
-        (With<PlayerSpell>, Without<Player>),
-    >,
-    time: Res<Time>,
-) -> Result {
-    for (mut bullet_pos, bullet_speed, bullet_direction) in &mut bullet_pos_q {
-        let movement = bullet_direction.0 * bullet_speed.0 * time.delta_secs();
-        bullet_pos.translation += movement;
-    }
 
     Ok(())
 }
