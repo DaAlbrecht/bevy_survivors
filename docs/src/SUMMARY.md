@@ -19,4 +19,3 @@
 - [Magic Missile](./spells/magic-missile.md)
 - [Lightning](./spells/lightning.md)
 - [Celestial Orbs](./spells/celestial-orbs.md)
-- [Celestial Orbs](./spells/celestial-orbs.md)
