@@ -14,7 +14,7 @@ use crate::{
 
 use super::player::Player;
 
-use super::attacks::{Knockback, PlayerSpell};
+use super::attacks::{Knockback, PlayerProjectile};
 
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -249,8 +249,8 @@ fn attack(
 }
 
 fn enemy_hit_detection(
-    enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerSpell>)>,
-    player_spell_query: Query<(&Transform, Entity), (With<PlayerSpell>, Without<Player>)>,
+    enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
+    player_spell_query: Query<(&Transform, Entity), (With<PlayerProjectile>, Without<Player>)>,
     mut commands: Commands,
 ) {
     for (&player_spell_pos, spell_entity) in &player_spell_query {
@@ -288,7 +288,7 @@ fn enemy_take_dmg(
 fn enemy_get_pushed_from_hit(
     trigger: Trigger<EnemyHitEvent>,
     mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection), With<Enemy>>,
-    spell_q: Query<(&Direction, &Knockback), (With<PlayerSpell>, Without<Enemy>)>,
+    spell_q: Query<(&Direction, &Knockback), (With<PlayerProjectile>, Without<Enemy>)>,
 ) {
     let enemy_entity = trigger.entity_hit;
     let spell_entity = trigger.spell_entity;

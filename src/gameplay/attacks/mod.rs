@@ -7,15 +7,6 @@ use crate::gameplay::{
 
 pub mod scale;
 
-#[derive(Component)]
-pub struct PlayerSpell;
-
-#[derive(Component, Default)]
-pub struct Cooldown(pub Timer);
-
-#[derive(Component, Reflect)]
-pub struct Knockback(pub f32);
-
 pub struct AttackPlugin;
 
 impl Plugin for AttackPlugin {
@@ -24,10 +15,29 @@ impl Plugin for AttackPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct PlayerProjectile;
+
+#[derive(Component, Default)]
+pub struct Cooldown(pub Timer);
+
+#[derive(Component, Reflect)]
+pub struct Knockback(pub f32);
+
+#[derive(Component)]
+pub struct Attack;
+
+#[derive(Component, Clone, Copy, PartialEq, Debug)]
+pub enum SpellType {
+    Scale,
+}
+#[derive(Event, Debug)]
+pub struct AttackEvent(pub SpellType);
+
 fn move_player_spell(
     mut bullet_pos_q: Query<
         (&mut Transform, &Speed, &Direction),
-        (With<PlayerSpell>, Without<Player>),
+        (With<PlayerProjectile>, Without<Player>),
     >,
     time: Res<Time>,
 ) -> Result {
