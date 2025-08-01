@@ -8,7 +8,7 @@ use super::enemy::Health;
 use super::healthbar::HealthBarMaterial;
 use crate::{
     AppSystem,
-    gameplay::attacks::{Attack, AttackEvent, Cooldown, SpellType},
+    gameplay::attacks::{Attack, Cooldown, SpellType, trigger_attack_event},
     screens::Screen,
 };
 
@@ -64,7 +64,7 @@ fn player_attack(
 ) {
     for (mut cooldown, &spell_type) in &mut attack_q {
         if cooldown.0.finished() {
-            commands.trigger(AttackEvent(spell_type));
+            trigger_attack_event(&mut commands, spell_type);
             cooldown.0.reset();
         }
     }

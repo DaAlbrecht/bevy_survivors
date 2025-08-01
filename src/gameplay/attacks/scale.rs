@@ -3,7 +3,7 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::{
-    attacks::{Attack, AttackEvent, SpellType},
+    attacks::{Attack, SpellType},
     enemy::Speed,
     player::{Direction, Player, spawn_player},
 };
@@ -11,6 +11,9 @@ use crate::gameplay::{
 use super::{Cooldown, Knockback, PlayerProjectile};
 
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
+
+#[derive(Event)]
+pub struct ScaleAttackEvent;
 
 pub struct ScalePlugin;
 
@@ -43,17 +46,12 @@ fn spawn_scale(mut commands: Commands, player_q: Query<Entity, With<Player>>) ->
 }
 
 fn spawn_scale_projectile(
-    trigger: Trigger<AttackEvent>,
+    _trigger: Trigger<ScaleAttackEvent>,
     player_pos_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut rng: GlobalEntropy<WyRand>,
 ) -> Result {
-    let trigger_spell = trigger.event().0;
-    if !(trigger_spell == SpellType::Scale) {
-        return Ok(());
-    }
-
     let player_pos = player_pos_q.single()?;
     let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
 

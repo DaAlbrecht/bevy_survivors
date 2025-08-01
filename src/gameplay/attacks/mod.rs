@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::gameplay::{
+    attacks::scale::ScaleAttackEvent,
     enemy::Speed,
     player::{Direction, Player},
 };
@@ -31,8 +32,6 @@ pub struct Attack;
 pub enum SpellType {
     Scale,
 }
-#[derive(Event, Debug)]
-pub struct AttackEvent(pub SpellType);
 
 fn move_player_spell(
     mut bullet_pos_q: Query<
@@ -47,4 +46,10 @@ fn move_player_spell(
     }
 
     Ok(())
+}
+
+pub fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
+    match spell_type {
+        SpellType::Scale => commands.trigger(ScaleAttackEvent),
+    }
 }
