@@ -53,7 +53,6 @@ impl Plugin for AppPlugin {
     }
 }
 
-const PLAYER_DMG_STAT: f32 = 5.0;
 const ENEMY_SIZE: f32 = 30.0;
 const PLAYER_SIZE: f32 = 30.0;
 const SPELL_SIZE: f32 = 16.0;

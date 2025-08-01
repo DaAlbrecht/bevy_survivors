@@ -7,8 +7,11 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSystem, ENEMY_SIZE, PLAYER_DMG_STAT, SPELL_SIZE,
-    gameplay::player::{Direction, Move, PlayerHitEvent},
+    AppSystem, ENEMY_SIZE, SPELL_SIZE,
+    gameplay::{
+        attacks::Damage,
+        player::{Direction, Move, PlayerHitEvent},
+    },
     screens::Screen,
 };
 
@@ -270,18 +273,21 @@ fn enemy_hit_detection(
 fn enemy_take_dmg(
     trigger: Trigger<EnemyHitEvent>,
     mut enemy_q: Query<(&mut Health, &Transform), With<Enemy>>,
+    spell_q: Query<&Damage, With<PlayerProjectile>>,
     mut commands: Commands,
 ) {
     let enemy_entity = trigger.entity_hit;
     let spell_entity = trigger.spell_entity;
 
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
-        health.0 -= PLAYER_DMG_STAT;
-        if health.0 <= 0.0 {
-            commands.entity(enemy_entity).despawn();
-            commands.trigger(EnemyDeathEvent(*transform));
+        if let Ok(spell_damage) = spell_q.get(spell_entity) {
+            health.0 -= spell_damage.0;
+            if health.0 <= 0.0 {
+                commands.entity(enemy_entity).despawn();
+                commands.trigger(EnemyDeathEvent(*transform));
+            }
+            commands.entity(spell_entity).despawn();
         }
-        commands.entity(spell_entity).despawn();
     }
 }
 
