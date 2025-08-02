@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::scale::ScaleAttackEvent,
+    attacks::{fireball::FireballAttackEvent, scale::ScaleAttackEvent},
     enemy::Speed,
     player::{Direction, Player},
 };
 
+pub mod fireball;
 pub mod scale;
 
 pub struct AttackPlugin;
@@ -35,6 +36,7 @@ pub struct Attack;
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 pub enum SpellType {
     Scale,
+    Fireball,
 }
 
 #[derive(Component)]
@@ -68,5 +70,6 @@ fn update_attack_cooldown(time: Res<Time>, mut cooldowns: Query<&mut Cooldown, W
 pub fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleAttackEvent),
+        SpellType::Fireball => commands.trigger(FireballAttackEvent),
     }
 }
