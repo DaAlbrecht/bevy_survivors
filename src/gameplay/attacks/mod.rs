@@ -1,9 +1,15 @@
 use bevy::prelude::*;
 
-use crate::gameplay::{
-    attacks::{fireball::FireballAttackEvent, scale::ScaleAttackEvent},
-    enemy::Speed,
-    player::{Direction, Player},
+use crate::{
+    ENEMY_SIZE, SPELL_SIZE,
+    gameplay::{
+        attacks::{
+            fireball::{FireballAttackEvent, FireballHitEvent},
+            scale::{ScaleAttackEvent, ScaleHitEvent},
+        },
+        enemy::{Enemy, Speed},
+        player::{Direction, Player},
+    },
 };
 
 pub mod fireball;
@@ -13,8 +19,8 @@ pub struct AttackPlugin;
 
 impl Plugin for AttackPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, update_attack_cooldown);
-        app.add_systems(FixedUpdate, move_player_spell);
+        app.add_systems(Update, (update_attack_cooldown, projectile_hit_detection));
+        app.add_systems(FixedUpdate, move_player_projectile);
     }
 }
 
@@ -46,19 +52,33 @@ pub struct ProjectileConfig {
     damage: f32,
 }
 
-fn move_player_spell(
+fn move_player_projectile(
     mut bullet_pos_q: Query<
         (&mut Transform, &Speed, &Direction),
         (With<PlayerProjectile>, Without<Player>),
     >,
     time: Res<Time>,
-) -> Result {
+) {
     for (mut bullet_pos, bullet_speed, bullet_direction) in &mut bullet_pos_q {
         let movement = bullet_direction.0 * bullet_speed.0 * time.delta_secs();
         bullet_pos.translation += movement;
     }
+}
 
-    Ok(())
+fn projectile_hit_detection(
+    enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
+    projectile_query: Query<(&Transform, Entity, &SpellType), With<PlayerProjectile>>,
+    mut commands: Commands,
+) {
+    for (&projectile_pos, projectile_entity, &spell_type) in &projectile_query {
+        for (&enemy_pos, enemy_entity) in &enemy_query {
+            if (projectile_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
+                <= ENEMY_SIZE / 2.0
+            {
+                trigger_hit_event(&mut commands, spell_type, projectile_entity, enemy_entity);
+            }
+        }
+    }
 }
 
 fn update_attack_cooldown(time: Res<Time>, mut cooldowns: Query<&mut Cooldown, With<Attack>>) {
@@ -71,5 +91,17 @@ pub fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleAttackEvent),
         SpellType::Fireball => commands.trigger(FireballAttackEvent),
+    }
+}
+
+pub fn trigger_hit_event(
+    commands: &mut Commands,
+    spell_type: SpellType,
+    projectile: Entity,
+    enemy: Entity,
+) {
+    match spell_type {
+        SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
+        SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
     }
 }

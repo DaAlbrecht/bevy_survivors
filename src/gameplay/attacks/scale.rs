@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 
 use crate::gameplay::{
     attacks::{Attack, Damage, ProjectileConfig, SpellType},
-    enemy::Speed,
+    enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player, spawn_player},
 };
 
@@ -17,11 +17,17 @@ const SCALE_BASE_SPEED: f32 = 600.0;
 const SCALE_BASE_KNOCKBACK: f32 = 1500.0;
 const SCALE_BASE_DMG: f32 = 5.0;
 
+#[derive(Component)]
+pub struct Scale;
+
 #[derive(Event)]
 pub struct ScaleAttackEvent;
 
-#[derive(Component)]
-pub struct Scale;
+#[derive(Event)]
+pub struct ScaleHitEvent {
+    pub enemy: Entity,
+    pub projectile: Entity,
+}
 
 pub struct ScalePlugin;
 
@@ -30,6 +36,7 @@ impl Plugin for ScalePlugin {
         app.add_systems(Startup, (spawn_scale).after(spawn_player));
 
         app.add_observer(spawn_scale_projectile);
+        app.add_observer(scale_hit);
     }
 }
 
@@ -77,6 +84,7 @@ fn spawn_scale_projectile(
         },
         Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
         PlayerProjectile,
+        SpellType::Scale,
         Speed(config.speed),
         Knockback(config.knockback),
         Damage(config.damage),
@@ -85,4 +93,21 @@ fn spawn_scale_projectile(
     ));
 
     Ok(())
+}
+
+fn scale_hit(trigger: Trigger<ScaleHitEvent>, mut commands: Commands) {
+    let enemy_entity = trigger.enemy;
+    let projectile_entity = trigger.projectile;
+
+    commands.trigger(EnemyDamageEvent {
+        entity_hit: enemy_entity,
+        spell_entity: projectile_entity,
+    });
+
+    commands.trigger(EnemyKnockbackEvent {
+        entity_hit: enemy_entity,
+        spell_entity: projectile_entity,
+    });
+
+    commands.entity(projectile_entity).despawn();
 }

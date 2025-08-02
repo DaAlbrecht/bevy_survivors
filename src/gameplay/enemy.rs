@@ -7,7 +7,7 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSystem, ENEMY_SIZE, SPELL_SIZE,
+    AppSystem,
     gameplay::{
         attacks::Damage,
         player::{Direction, Move, PlayerHitEvent},
@@ -36,7 +36,6 @@ impl Plugin for EnemyPlugin {
                 enemy_colliding_detection,
                 enemy_stop_colliding_detection,
                 enemy_push_detection,
-                enemy_hit_detection,
                 move_enemy_from_knockback,
                 attack,
             )
@@ -70,10 +69,17 @@ pub struct Health(pub f32);
 pub struct PlayerPushingEvent(pub Entity);
 
 #[derive(Event)]
-pub struct EnemyHitEvent {
+pub struct EnemyDamageEvent {
     pub entity_hit: Entity,
     pub spell_entity: Entity,
 }
+
+#[derive(Event)]
+pub struct EnemyKnockbackEvent {
+    pub entity_hit: Entity,
+    pub spell_entity: Entity,
+}
+
 #[derive(Event)]
 pub struct EnemyDeathEvent(pub Transform);
 
@@ -251,27 +257,8 @@ fn attack(
     }
 }
 
-fn enemy_hit_detection(
-    enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
-    player_spell_query: Query<(&Transform, Entity), (With<PlayerProjectile>, Without<Player>)>,
-    mut commands: Commands,
-) {
-    for (&player_spell_pos, spell_entity) in &player_spell_query {
-        for (&enemy_pos, enemy_entity) in &enemy_query {
-            if (player_spell_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
-                <= ENEMY_SIZE / 2.0
-            {
-                commands.trigger(EnemyHitEvent {
-                    entity_hit: enemy_entity,
-                    spell_entity,
-                });
-            }
-        }
-    }
-}
-
 fn enemy_take_dmg(
-    trigger: Trigger<EnemyHitEvent>,
+    trigger: Trigger<EnemyDamageEvent>,
     mut enemy_q: Query<(&mut Health, &Transform), With<Enemy>>,
     spell_q: Query<&Damage, With<PlayerProjectile>>,
     mut commands: Commands,
@@ -286,13 +273,13 @@ fn enemy_take_dmg(
                 commands.entity(enemy_entity).despawn();
                 commands.trigger(EnemyDeathEvent(*transform));
             }
-            commands.entity(spell_entity).despawn();
+            // commands.entity(spell_entity).despawn();
         }
     }
 }
 
 fn enemy_get_pushed_from_hit(
-    trigger: Trigger<EnemyHitEvent>,
+    trigger: Trigger<EnemyKnockbackEvent>,
     mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection), With<Enemy>>,
     spell_q: Query<(&Direction, &Knockback), (With<PlayerProjectile>, Without<Enemy>)>,
 ) {
