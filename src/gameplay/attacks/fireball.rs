@@ -10,7 +10,7 @@ const FIREBALL_BASE_COOLDOWN: f32 = 5.0;
 const FIREBALL_BASE_SPEED: f32 = 600.0;
 const FIREBALL_BASE_KNOCKBACK: f32 = 1500.0;
 const FIREBALL_BASE_DMG: f32 = 5.0;
-const EXPLOSION_RADIUS: f32 = 50.0;
+const EXPLOSION_RADIUS: f32 = 100.0;
 
 #[derive(Component)]
 pub struct Fireball;
@@ -115,13 +115,8 @@ fn fireball_hit(
     let enemy_entity = trigger.enemy;
     let projectile_entity = trigger.projectile;
 
-    //Deal damage and knockback
+    //Deal damage
     commands.trigger(EnemyDamageEvent {
-        entity_hit: enemy_entity,
-        spell_entity: projectile_entity,
-    });
-
-    commands.trigger(EnemyKnockbackEvent {
         entity_hit: enemy_entity,
         spell_entity: projectile_entity,
     });
@@ -146,6 +141,12 @@ fn fireball_hit(
             }
         }
     }
+
+    //Knockback
+    commands.trigger(EnemyKnockbackEvent {
+        entity_hit: enemy_entity,
+        spell_entity: projectile_entity,
+    });
 
     commands.entity(projectile_entity).despawn();
 }

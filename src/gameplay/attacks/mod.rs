@@ -5,6 +5,7 @@ use crate::{
     gameplay::{
         attacks::{
             fireball::{FireballAttackEvent, FireballHitEvent},
+            lightning::LightningAttackEvent,
             scale::{ScaleAttackEvent, ScaleHitEvent},
         },
         enemy::{Enemy, Speed},
@@ -13,6 +14,7 @@ use crate::{
 };
 
 pub mod fireball;
+pub mod lightning;
 pub mod scale;
 
 pub struct AttackPlugin;
@@ -43,6 +45,7 @@ pub struct Attack;
 pub enum SpellType {
     Scale,
     Fireball,
+    Lightning,
 }
 
 #[derive(Component)]
@@ -91,6 +94,7 @@ pub fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleAttackEvent),
         SpellType::Fireball => commands.trigger(FireballAttackEvent),
+        SpellType::Lightning => commands.trigger(LightningAttackEvent),
     }
 }
 
@@ -103,5 +107,6 @@ pub fn trigger_hit_event(
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
         SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
+        SpellType::Lightning => {}
     }
 }
