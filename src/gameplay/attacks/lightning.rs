@@ -9,7 +9,7 @@ use crate::{
     screens::Screen,
 };
 
-pub struct LightningPlugin;
+pub(crate) struct LightningPlugin;
 
 impl Plugin for LightningPlugin {
     fn build(&self, app: &mut App) {
@@ -28,22 +28,22 @@ const LIGHTNING_BASE_DMG: f32 = 5.0;
 const LIGHTNING_BASE_JUMPS: i32 = 3;
 
 #[derive(Component)]
-pub struct Lightning;
+pub(crate) struct Lightning;
 
 #[derive(Event)]
-pub struct LightningAttackEvent;
+pub(crate) struct LightningAttackEvent;
 
 #[derive(Component)]
-pub struct LightningVisualTimer(pub Timer);
+pub(crate) struct LightningVisualTimer(pub Timer);
 
 #[derive(Event)]
-pub struct LightningHitEvent {
+pub(crate) struct LightningHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,
 }
 
 #[derive(Component)]
-pub struct Jumps(pub i32);
+pub(crate) struct Jumps(pub i32);
 
 fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;

@@ -4,7 +4,7 @@ use bevy::{
     sprite::{Material2d, Material2dPlugin},
 };
 
-pub struct HealthBarPlugin;
+pub(crate) struct HealthBarPlugin;
 
 impl Plugin for HealthBarPlugin {
     fn build(&self, app: &mut App) {
@@ -13,7 +13,7 @@ impl Plugin for HealthBarPlugin {
 }
 
 #[derive(Asset, AsBindGroup, TypePath, Debug, Clone)]
-pub struct HealthBarMaterial {
+pub(crate) struct HealthBarMaterial {
     #[uniform(0)]
     pub foreground_color: LinearRgba,
     #[uniform(0)]

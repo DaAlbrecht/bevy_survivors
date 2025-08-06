@@ -17,7 +17,7 @@ pub mod fireball;
 pub mod lightning;
 pub mod scale;
 
-pub struct AttackPlugin;
+pub(crate) struct AttackPlugin;
 
 impl Plugin for AttackPlugin {
     fn build(&self, app: &mut App) {
@@ -27,29 +27,29 @@ impl Plugin for AttackPlugin {
 }
 
 #[derive(Component)]
-pub struct PlayerProjectile;
+pub(crate) struct PlayerProjectile;
 
 #[derive(Component, Default)]
-pub struct Cooldown(pub Timer);
+pub(crate) struct Cooldown(pub Timer);
 
 #[derive(Component, Reflect)]
-pub struct Knockback(pub f32);
+pub(crate) struct Knockback(pub f32);
 
 #[derive(Component)]
-pub struct Damage(pub f32);
+pub(crate) struct Damage(pub f32);
 
 #[derive(Component)]
-pub struct Attack;
+pub(crate) struct Attack;
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
-pub enum SpellType {
+pub(crate) enum SpellType {
     Scale,
     Fireball,
     Lightning,
 }
 
 #[derive(Component)]
-pub struct ProjectileConfig {
+pub(crate) struct ProjectileConfig {
     speed: f32,
     knockback: f32,
     damage: f32,
@@ -90,7 +90,7 @@ fn update_attack_cooldown(time: Res<Time>, mut cooldowns: Query<&mut Cooldown, W
     }
 }
 
-pub fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
+pub(crate) fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleAttackEvent),
         SpellType::Fireball => commands.trigger(FireballAttackEvent),
@@ -98,7 +98,7 @@ pub fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
     }
 }
 
-pub fn trigger_hit_event(
+pub(crate) fn trigger_hit_event(
     commands: &mut Commands,
     spell_type: SpellType,
     projectile: Entity,

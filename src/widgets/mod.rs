@@ -11,7 +11,7 @@ use palette::*;
 
 mod palette;
 
-pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
+pub(crate) fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
     (
         Name::new(name),
         Node {
@@ -29,7 +29,7 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
 }
 
 /// A large rounded button with text and an action defined as an [`Observer`].
-pub fn button<E, B, M, I>(text: impl Into<String>, action: I) -> impl Bundle
+pub(crate) fn button<E, B, M, I>(text: impl Into<String>, action: I) -> impl Bundle
 where
     E: Event,
     B: Bundle,

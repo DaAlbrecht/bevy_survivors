@@ -14,7 +14,7 @@ use crate::{
     screens::Screen,
 };
 
-pub struct PlayerPlugin;
+pub(crate) struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -44,28 +44,28 @@ impl Plugin for PlayerPlugin {
     XP(0.),
     Level(1.)
 )]
-pub struct Player;
+pub(crate) struct Player;
 
 #[derive(Event)]
-pub struct PlayerHitEvent {
+pub(crate) struct PlayerHitEvent {
     pub dmg: f32,
 }
 
 #[derive(Component)]
-pub struct Direction(pub Vec3);
+pub(crate) struct Direction(pub Vec3);
 
 #[derive(Component)]
-pub struct XpCollectionRange(pub f32);
+pub(crate) struct XpCollectionRange(pub f32);
 
 #[derive(Component, Reflect)]
-pub struct XP(pub f32);
+pub(crate) struct XP(pub f32);
 
 #[derive(Component, Reflect)]
-pub struct Level(pub f32);
+pub(crate) struct Level(pub f32);
 
 #[derive(InputAction)]
 #[action_output(Vec2)]
-pub struct Move;
+pub(crate) struct Move;
 
 fn player_attack(
     mut attack_q: Query<(&mut Cooldown, &SpellType), With<Attack>>,
@@ -79,7 +79,7 @@ fn player_attack(
     }
 }
 
-pub fn spawn_player(
+pub(crate) fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,

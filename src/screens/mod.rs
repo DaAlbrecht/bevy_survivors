@@ -6,14 +6,14 @@ mod title;
 
 /// The game's main screen states.
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default, Reflect)]
-pub enum Screen {
+pub(crate) enum Screen {
     #[default]
     Title,
     Gameplay,
     LevelUp,
 }
 
-pub(super) fn plugin(app: &mut App) {
+pub(crate) fn plugin(app: &mut App) {
     app.init_state::<Screen>();
     app.enable_state_scoped_entities::<Screen>();
 

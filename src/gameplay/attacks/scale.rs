@@ -18,18 +18,18 @@ const SCALE_BASE_KNOCKBACK: f32 = 1500.0;
 const SCALE_BASE_DMG: f32 = 5.0;
 
 #[derive(Component)]
-pub struct Scale;
+pub(crate) struct Scale;
 
 #[derive(Event)]
-pub struct ScaleAttackEvent;
+pub(crate) struct ScaleAttackEvent;
 
 #[derive(Event)]
-pub struct ScaleHitEvent {
+pub(crate) struct ScaleHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,
 }
 
-pub struct ScalePlugin;
+pub(crate) struct ScalePlugin;
 
 impl Plugin for ScalePlugin {
     fn build(&self, app: &mut App) {

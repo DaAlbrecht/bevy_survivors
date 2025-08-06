@@ -7,4 +7,4 @@ pub mod healthbar;
 pub mod player;
 
 #[derive(Component)]
-pub struct Health(pub f32);
+pub(crate) struct Health(pub f32);

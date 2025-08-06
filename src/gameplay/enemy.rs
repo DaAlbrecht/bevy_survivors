@@ -20,7 +20,7 @@ use super::player::Player;
 
 use super::attacks::{Knockback, PlayerProjectile};
 
-pub struct EnemyPlugin;
+pub(crate) struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
@@ -54,39 +54,39 @@ const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
 
 #[derive(Component)]
-pub struct Speed(pub f32);
+pub(crate) struct Speed(pub f32);
 
 #[derive(Component, Default)]
-pub struct DamageCooldown(pub Timer);
+pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component)]
 #[require(Health(10.), Speed(50.), DamageCooldown, Sprite, Transform)]
-pub struct Enemy;
+pub(crate) struct Enemy;
 
 #[derive(Event)]
-pub struct PlayerPushingEvent(pub Entity);
+pub(crate) struct PlayerPushingEvent(pub Entity);
 
 #[derive(Event)]
-pub struct EnemyDamageEvent {
+pub(crate) struct EnemyDamageEvent {
     pub entity_hit: Entity,
     pub spell_entity: Entity,
 }
 
 #[derive(Event)]
-pub struct EnemyKnockbackEvent {
+pub(crate) struct EnemyKnockbackEvent {
     pub entity_hit: Entity,
     pub spell_entity: Entity,
 }
 
 #[derive(Event)]
-pub struct EnemyDeathEvent(pub Transform);
+pub(crate) struct EnemyDeathEvent(pub Transform);
 
 #[derive(Component)]
-pub struct Colliding;
+pub(crate) struct Colliding;
 
 //type shenanigans
 #[derive(Component)]
-pub struct KnockbackDirection(pub Direction);
+pub(crate) struct KnockbackDirection(pub Direction);
 
 fn spawn_enemy(
     mut commands: Commands,

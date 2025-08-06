@@ -9,7 +9,7 @@ use super::enemy::{EnemyDeathEvent, Speed};
 use super::player::{Level, Player, XP, XpCollectionRange};
 use crate::{PLAYER_SIZE, XP_GAIN_GEM, screens::Screen};
 
-pub struct ExperiencePlugin;
+pub(crate) struct ExperiencePlugin;
 impl Plugin for ExperiencePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
@@ -32,13 +32,13 @@ impl Plugin for ExperiencePlugin {
 }
 
 #[derive(Component)]
-pub struct XpGem;
+pub(crate) struct XpGem;
 
 #[derive(Event)]
-pub struct GainXpEvent;
+pub(crate) struct GainXpEvent;
 
 #[derive(Event)]
-pub struct LevelUpEvent;
+pub(crate) struct LevelUpEvent;
 
 const BASE_LEVEL_XP: f32 = 100.;
 

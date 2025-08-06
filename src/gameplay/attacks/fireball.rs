@@ -13,18 +13,18 @@ const FIREBALL_BASE_DMG: f32 = 5.0;
 const EXPLOSION_RADIUS: f32 = 100.0;
 
 #[derive(Component)]
-pub struct Fireball;
+pub(crate) struct Fireball;
 
 #[derive(Event)]
-pub struct FireballAttackEvent;
+pub(crate) struct FireballAttackEvent;
 
 #[derive(Event)]
-pub struct FireballHitEvent {
+pub(crate) struct FireballHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,
 }
 
-pub struct FireballPlugin;
+pub(crate) struct FireballPlugin;
 
 impl Plugin for FireballPlugin {
     fn build(&self, app: &mut App) {
