@@ -60,7 +60,19 @@ pub(crate) struct Speed(pub f32);
 pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component)]
-#[require(Health(10.), Speed(50.), DamageCooldown, Sprite, Transform)]
+#[require(
+    Health(10.),
+    Speed(50.),
+    DamageCooldown,
+    Sprite,
+    Transform,
+    KnockbackDirection(Direction(Vec3 {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+        })),
+    Knockback(0.0),
+)]
 pub(crate) struct Enemy;
 
 #[derive(Event)]
@@ -113,12 +125,6 @@ fn spawn_enemy(
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-        KnockbackDirection(Direction(Vec3 {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-        })),
-        Knockback(0.0),
     ));
 
     Ok(())
