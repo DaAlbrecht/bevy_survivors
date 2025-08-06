@@ -9,6 +9,7 @@ use rand::Rng;
 use crate::{
     AppSystem,
     gameplay::{
+        Health,
         attacks::Damage,
         player::{Direction, Move, PlayerHitEvent},
     },
@@ -61,9 +62,6 @@ pub struct DamageCooldown(pub Timer);
 #[derive(Component)]
 #[require(Health(10.), Speed(50.), DamageCooldown, Sprite, Transform)]
 pub struct Enemy;
-
-#[derive(Component)]
-pub struct Health(pub f32);
 
 #[derive(Event)]
 pub struct PlayerPushingEvent(pub Entity);

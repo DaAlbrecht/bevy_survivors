@@ -4,11 +4,13 @@ use bevy::{color::palettes::css, prelude::*};
 use bevy_enhanced_input::action::Action;
 use bevy_enhanced_input::actions;
 
-use super::enemy::Health;
 use super::healthbar::HealthBarMaterial;
 use crate::{
     AppSystem,
-    gameplay::attacks::{Attack, Cooldown, SpellType, trigger_attack_event},
+    gameplay::{
+        Health,
+        attacks::{Attack, Cooldown, SpellType, trigger_attack_event},
+    },
     screens::Screen,
 };
 
@@ -35,6 +37,13 @@ impl Plugin for PlayerPlugin {
 }
 
 #[derive(Component)]
+#[require(
+    Health(100.),
+    Transform::from_xyz(50., 0., 0.),
+    XpCollectionRange(150.0),
+    XP(0.),
+    Level(1.)
+)]
 pub struct Player;
 
 #[derive(Event)]
@@ -78,10 +87,10 @@ pub fn spawn_player(
 ) {
     commands
         .spawn((
+            Player,
             Name::new("Player"),
             Sprite::from_image(asset_server.load("Player.png")),
             Transform::from_xyz(50., 0., 0.),
-            Player,
             actions!(Player[
                 (
                     Action::<Move>::new(),
@@ -93,10 +102,6 @@ pub fn spawn_player(
                     Scale::splat(100.),
                 ),
             ]),
-            Health(100.),
-            XpCollectionRange(150.0),
-            XP(0.),
-            Level(1.),
             Visibility::Hidden,
         ))
         .with_child((
@@ -133,7 +138,6 @@ fn move_player(
     mut player_transform_q: Query<&mut Transform, With<Player>>,
     time: Res<Time>,
 ) -> Result {
-    // info!("{}", move_action.extend(0.0));
     let velocity = move_action.extend(0.0);
     let mut player_transform = player_transform_q.single_mut()?;
     player_transform.translation += velocity * time.delta_secs();
