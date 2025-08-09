@@ -1,9 +1,9 @@
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::{platform::collections::HashSet, prelude::*, sprite::Anchor};
 
 use crate::{
     gameplay::{
-        attacks::{Attack, Cooldown, Damage, SpellType},
-        enemy::Enemy,
+        attacks::{Attack, Cooldown, Damage, Range, SpellType},
+        enemy::{Enemy, EnemyDamageEvent},
         player::{Player, spawn_player},
     },
     screens::Screen,
@@ -20,12 +20,14 @@ impl Plugin for LightningPlugin {
             cleanup_lightning_bolt.run_if(in_state(Screen::Gameplay)),
         );
         app.add_observer(spawn_lightning_bolt);
+        app.add_observer(lightning_hit);
     }
 }
 
-const LIGHTNING_BASE_COOLDOWN: f32 = 1.0;
+const LIGHTNING_BASE_COOLDOWN: f32 = 3.0;
 const LIGHTNING_BASE_DMG: f32 = 5.0;
 const LIGHTNING_BASE_JUMPS: i32 = 3;
+const LIGHTNING_BASE_RANGE: f32 = 300.0;
 
 #[derive(Component)]
 pub(crate) struct Lightning;
@@ -39,16 +41,14 @@ pub(crate) struct LightningVisualTimer(pub Timer);
 #[derive(Event)]
 pub(crate) struct LightningHitEvent {
     pub enemy: Entity,
-    pub projectile: Entity,
+    pub lightning_bolt: Entity,
 }
 
 #[derive(Component)]
 pub(crate) struct Jumps(pub i32);
 
-fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
-    let player = player_q.single()?;
-
-    let lighting = commands.spawn((
+fn spawn_lightning(mut commands: Commands) {
+    commands.spawn((
         Attack,
         Lightning,
         SpellType::Lightning,
@@ -58,59 +58,93 @@ fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>
         )),
         Damage(LIGHTNING_BASE_DMG),
         Jumps(LIGHTNING_BASE_JUMPS),
+        Range(LIGHTNING_BASE_RANGE),
     ));
-
-    Ok(())
 }
 
 fn spawn_lightning_bolt(
     _trigger: Trigger<LightningAttackEvent>,
     mut commands: Commands,
-    player_q: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    player_q: Query<(&Transform, Entity), (With<Player>, Without<Enemy>)>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<Player>)>,
-    config_q: Query<(&Damage, &Jumps), With<Lightning>>,
+    lightning_q: Query<(&Damage, &Jumps, &Range), With<Lightning>>,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let player_pos = player_q.single()?;
-    let (config_dmg, config_jumps) = config_q.single()?;
+    let (player_pos, player_entity) = player_q.single()?;
+    let (lightning_dmg, lightning_jumps, lightning_range) = lightning_q.single()?;
 
-    let mut min_distance = f32::MAX;
-    let mut closest_enemy: Option<Entity> = None;
+    let mut current_source_pos = player_pos;
+    let mut current_source_entity: Option<Entity> = Some(player_entity);
+    let mut visited: HashSet<Entity> = HashSet::new();
 
-    //get target
-    for (enemy_pos, enemy) in &enemy_q {
-        let distance = player_pos
-            .translation
-            .truncate()
-            .distance(enemy_pos.translation.truncate());
+    for _ in 0..lightning_jumps.0 {
+        // Reset for current jump
+        let mut max_distance = lightning_range.0;
+        let mut closest: Option<(Entity, &Transform)> = None;
 
-        if distance < min_distance {
-            min_distance = distance;
-            closest_enemy = Some(enemy);
+        //get target
+        for (enemy_pos, enemy) in &enemy_q {
+            // dont traget the source
+            if (Some(enemy)) == current_source_entity {
+                continue;
+            }
+
+            // don't rehit enemies
+            if visited.contains(&enemy) {
+                continue;
+            }
+
+            let distance = current_source_pos
+                .translation
+                .truncate()
+                .distance(enemy_pos.translation.truncate());
+
+            if distance < max_distance {
+                max_distance = distance;
+                closest = Some((enemy, enemy_pos));
+            }
         }
-    }
 
-    if let Some(enemy) = closest_enemy {
-        let (enemy_pos, _) = enemy_q.get(enemy)?;
-        let direction = (enemy_pos.translation - player_pos.translation).truncate();
+        // no enemy found => stop chaning
+        let Some((enemy, enemy_pos)) = closest else {
+            break;
+        };
+
+        // spawn visual + trigger damage
+        let direction = (enemy_pos.translation - current_source_pos.translation).truncate();
         let length = direction.length();
         let angle = direction.y.atan2(direction.x);
-        let anchor_point = player_pos.translation.truncate() + direction * 0.5;
+        let anchor_point = current_source_pos.translation.truncate() + direction * 0.5;
 
-        commands.spawn((
-            Sprite {
-                image: asset_server.load("Lightning.png"),
-                custom_size: Some(Vec2::new(length, 13.0)),
-                anchor: Anchor::Center,
-                ..default()
-            },
-            Transform {
-                translation: anchor_point.extend(0.0),
-                rotation: Quat::from_rotation_z(angle),
-                ..default()
-            },
-            LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
-        ));
+        let lightning_bolt = commands
+            .spawn((
+                Sprite {
+                    image: asset_server.load("Lightning.png"),
+                    custom_size: Some(Vec2::new(length, 13.0)),
+                    anchor: Anchor::Center,
+                    ..default()
+                },
+                Transform {
+                    translation: anchor_point.extend(1.0),
+                    rotation: Quat::from_rotation_z(angle),
+                    ..default()
+                },
+                Attack,
+                SpellType::Lightning,
+                Damage(lightning_dmg.0),
+                LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
+            ))
+            .id();
+
+        commands.trigger(LightningHitEvent {
+            enemy: enemy,
+            lightning_bolt,
+        });
+
+        //update chain state
+        visited.insert(enemy);
+        current_source_pos = enemy_pos;
+        current_source_entity = Some(enemy);
     }
 
     Ok(())
@@ -128,4 +162,14 @@ fn cleanup_lightning_bolt(
             commands.entity(entity).despawn();
         }
     }
+}
+
+fn lightning_hit(trigger: Trigger<LightningHitEvent>, mut commands: Commands) {
+    let enemy_entity = trigger.enemy;
+    let lightning_entity = trigger.lightning_bolt;
+
+    commands.trigger(EnemyDamageEvent {
+        entity_hit: enemy_entity,
+        spell_entity: lightning_entity,
+    });
 }

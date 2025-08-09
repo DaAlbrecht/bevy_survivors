@@ -10,7 +10,7 @@ use crate::{
     AppSystem,
     gameplay::{
         Health,
-        attacks::Damage,
+        attacks::{Attack, Damage},
         player::{Direction, Move, PlayerHitEvent},
     },
     screens::Screen,
@@ -264,7 +264,7 @@ fn attack(
 fn enemy_take_dmg(
     trigger: Trigger<EnemyDamageEvent>,
     mut enemy_q: Query<(&mut Health, &Transform), With<Enemy>>,
-    spell_q: Query<&Damage, With<PlayerProjectile>>,
+    spell_q: Query<&Damage, With<Attack>>,
     mut commands: Commands,
 ) {
     let enemy_entity = trigger.entity_hit;

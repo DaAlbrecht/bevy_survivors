@@ -94,6 +94,7 @@ fn spawn_fireball_projectile(
                 ..default()
             },
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
+            Attack,
             PlayerProjectile,
             SpellType::Fireball,
             Speed(config.speed),

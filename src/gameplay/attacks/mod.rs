@@ -39,6 +39,9 @@ pub(crate) struct Knockback(pub f32);
 pub(crate) struct Damage(pub f32);
 
 #[derive(Component)]
+pub(crate) struct Range(pub f32);
+
+#[derive(Component)]
 pub(crate) struct Attack;
 
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
@@ -107,6 +110,6 @@ pub(crate) fn trigger_hit_event(
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
         SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
-        SpellType::Lightning => {}
+        _ => {}
     }
 }

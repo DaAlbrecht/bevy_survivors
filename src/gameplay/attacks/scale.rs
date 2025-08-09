@@ -83,6 +83,7 @@ fn spawn_scale_projectile(
             ..default()
         },
         Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
+        Attack,
         PlayerProjectile,
         SpellType::Scale,
         Speed(config.speed),
