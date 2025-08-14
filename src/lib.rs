@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
+use bevy_seedling::prelude::*;
 use gameplay::attacks::AttackPlugin;
 use gameplay::attacks::fireball::FireballPlugin;
 use gameplay::attacks::lightning::LightningPlugin;
@@ -39,6 +40,10 @@ impl Plugin for AppPlugin {
             }),
             EnhancedInputPlugin,
             EntropyPlugin::<WyRand>::default(),
+            SeedlingPlugin::default(),
+        ));
+
+        app.add_plugins((
             EnemyPlugin,
             PlayerPlugin,
             ExperiencePlugin,
