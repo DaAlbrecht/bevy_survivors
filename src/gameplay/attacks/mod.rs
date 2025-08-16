@@ -1,12 +1,15 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 
 use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
         attacks::{
-            fireball::{FireballAttackEvent, FireballHitEvent},
-            lightning::LightningAttackEvent,
-            scale::{ScaleAttackEvent, ScaleHitEvent},
+            fireball::{FireballAttackEvent, FireballHitEvent, FireballPlugin},
+            lightning::{LightningAttackEvent, LightningPlugin},
+            orbs::{OrbAttackEvent, OrbPlugin},
+            scale::{ScaleAttackEvent, ScaleHitEvent, ScalePlugin},
         },
         enemy::{Enemy, Speed},
         player::{Direction, Player},
@@ -15,13 +18,16 @@ use crate::{
 
 pub mod fireball;
 pub mod lightning;
+pub mod orbs;
 pub mod scale;
 
 pub(crate) struct AttackPlugin;
 
 impl Plugin for AttackPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (update_attack_cooldown, projectile_hit_detection));
+        app.add_plugins((ScalePlugin, FireballPlugin, LightningPlugin, OrbPlugin));
+
+        app.add_systems(Update, (update_attack_timers, projectile_hit_detection));
         app.add_systems(FixedUpdate, move_player_projectile);
     }
 }
@@ -44,11 +50,15 @@ pub(crate) struct Range(pub f32);
 #[derive(Component)]
 pub(crate) struct Attack;
 
+#[derive(Component)]
+pub(crate) struct SpellDuration(pub Timer);
+
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 pub(crate) enum SpellType {
     Scale,
     Fireball,
     Lightning,
+    Orb,
 }
 
 #[derive(Component)]
@@ -87,9 +97,17 @@ fn projectile_hit_detection(
     }
 }
 
-fn update_attack_cooldown(time: Res<Time>, mut cooldowns: Query<&mut Cooldown, With<Attack>>) {
+fn update_attack_timers(
+    time: Res<Time>,
+    mut cooldowns: Query<&mut Cooldown, With<Attack>>,
+    mut durations: Query<&mut SpellDuration, With<Attack>>,
+) {
     for mut cooldown in &mut cooldowns {
         cooldown.0.tick(time.delta());
+    }
+
+    for mut duration in &mut durations {
+        duration.0.tick(time.delta());
     }
 }
 
@@ -98,6 +116,7 @@ pub(crate) fn trigger_attack_event(commands: &mut Commands, spell_type: SpellTyp
         SpellType::Scale => commands.trigger(ScaleAttackEvent),
         SpellType::Fireball => commands.trigger(FireballAttackEvent),
         SpellType::Lightning => commands.trigger(LightningAttackEvent),
+        SpellType::Orb => commands.trigger(OrbAttackEvent),
     }
 }
 
@@ -110,6 +129,7 @@ pub(crate) fn trigger_hit_event(
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
         SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
+        SpellType::Orb => {}
         _ => {}
     }
 }

@@ -3,9 +3,6 @@ use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_seedling::prelude::*;
 use gameplay::attacks::AttackPlugin;
-use gameplay::attacks::fireball::FireballPlugin;
-use gameplay::attacks::lightning::LightningPlugin;
-use gameplay::attacks::scale::ScalePlugin;
 use gameplay::enemy::EnemyPlugin;
 use gameplay::experience::ExperiencePlugin;
 use gameplay::healthbar::HealthBarPlugin;
@@ -49,9 +46,6 @@ impl Plugin for AppPlugin {
             ExperiencePlugin,
             HealthBarPlugin,
             AttackPlugin,
-            ScalePlugin,
-            FireballPlugin,
-            LightningPlugin,
         ));
 
         #[cfg(feature = "dev")]

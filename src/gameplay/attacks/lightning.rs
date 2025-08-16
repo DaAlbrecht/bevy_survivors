@@ -48,19 +48,27 @@ pub(crate) struct LightningHitEvent {
 #[derive(Component)]
 pub(crate) struct Jumps(pub i32);
 
-fn spawn_lightning(mut commands: Commands) {
-    commands.spawn((
-        Attack,
-        Lightning,
-        SpellType::Lightning,
-        Cooldown(Timer::from_seconds(
-            LIGHTNING_BASE_COOLDOWN,
-            TimerMode::Once,
-        )),
-        Damage(LIGHTNING_BASE_DMG),
-        Jumps(LIGHTNING_BASE_JUMPS),
-        Range(LIGHTNING_BASE_RANGE),
-    ));
+fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
+    let player = player_q.single()?;
+
+    let lightning = commands
+        .spawn((
+            Attack,
+            Lightning,
+            SpellType::Lightning,
+            Cooldown(Timer::from_seconds(
+                LIGHTNING_BASE_COOLDOWN,
+                TimerMode::Once,
+            )),
+            Damage(LIGHTNING_BASE_DMG),
+            Jumps(LIGHTNING_BASE_JUMPS),
+            Range(LIGHTNING_BASE_RANGE),
+        ))
+        .id();
+
+    commands.entity(player).add_child(lightning);
+
+    Ok(())
 }
 
 fn spawn_lightning_bolt(
@@ -134,6 +142,7 @@ fn spawn_lightning_bolt(
                 SpellType::Lightning,
                 Damage(lightning_dmg.0),
                 LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
+                Name::new("LightningBolt"),
             ))
             .id();
 
