@@ -5,14 +5,7 @@ use bevy_enhanced_input::action::Action;
 use bevy_enhanced_input::actions;
 
 use super::healthbar::HealthBarMaterial;
-use crate::{
-    AppSystem,
-    gameplay::{
-        Health,
-        attacks::{Attack, Cooldown, SpellType, trigger_attack_event},
-    },
-    screens::Screen,
-};
+use crate::{AppSystem, gameplay::Health, screens::Screen};
 
 pub(crate) struct PlayerPlugin;
 
@@ -26,8 +19,7 @@ impl Plugin for PlayerPlugin {
 
         app.add_systems(
             Update,
-            (move_player.in_set(AppSystem::RecordInput), player_attack)
-                .run_if(in_state(Screen::Gameplay)),
+            (move_player.in_set(AppSystem::RecordInput)).run_if(in_state(Screen::Gameplay)),
         );
 
         app.add_observer(player_hit);
@@ -66,18 +58,6 @@ pub(crate) struct Level(pub f32);
 #[derive(InputAction)]
 #[action_output(Vec2)]
 pub(crate) struct Move;
-
-fn player_attack(
-    mut attack_q: Query<(&mut Cooldown, &SpellType), With<Attack>>,
-    mut commands: Commands,
-) {
-    for (mut cooldown, &spell_type) in &mut attack_q {
-        if cooldown.0.finished() {
-            trigger_attack_event(&mut commands, spell_type);
-            cooldown.0.reset();
-        }
-    }
-}
 
 pub(crate) fn spawn_player(
     mut commands: Commands,

@@ -149,7 +149,7 @@ fn spawn_lightning_bolt(
         commands.spawn(SamplePlayer::new(asset_server.load("sounds/pew.wav")));
 
         commands.trigger(LightningHitEvent {
-            enemy: enemy,
+            enemy,
             lightning_bolt,
         });
 

@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
 
 use crate::{
@@ -14,6 +12,7 @@ use crate::{
         enemy::{Enemy, Speed},
         player::{Direction, Player},
     },
+    screens::Screen,
 };
 
 pub mod fireball;
@@ -27,8 +26,12 @@ impl Plugin for AttackPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((ScalePlugin, FireballPlugin, LightningPlugin, OrbPlugin));
 
-        app.add_systems(Update, (update_attack_timers, projectile_hit_detection));
-        app.add_systems(FixedUpdate, move_player_projectile);
+        app.add_systems(
+            Update,
+            (attack, update_attack_timers, projectile_hit_detection)
+                .run_if(in_state(Screen::Gameplay)),
+        );
+        app.add_systems(FixedUpdate, move_projectile);
     }
 }
 
@@ -68,7 +71,21 @@ pub(crate) struct ProjectileConfig {
     damage: f32,
 }
 
-fn move_player_projectile(
+fn attack(mut attack_q: Query<(&mut Cooldown, &SpellType), With<Attack>>, mut commands: Commands) {
+    for (mut cooldown, &spell_type) in &mut attack_q {
+        if cooldown.0.finished() {
+            match spell_type {
+                SpellType::Scale => commands.trigger(ScaleAttackEvent),
+                SpellType::Fireball => commands.trigger(FireballAttackEvent),
+                SpellType::Lightning => commands.trigger(LightningAttackEvent),
+                SpellType::Orb => commands.trigger(OrbAttackEvent),
+            }
+            cooldown.0.reset();
+        }
+    }
+}
+
+fn move_projectile(
     mut bullet_pos_q: Query<
         (&mut Transform, &Speed, &Direction),
         (With<PlayerProjectile>, Without<Player>),
@@ -111,15 +128,6 @@ fn update_attack_timers(
     }
 }
 
-pub(crate) fn trigger_attack_event(commands: &mut Commands, spell_type: SpellType) {
-    match spell_type {
-        SpellType::Scale => commands.trigger(ScaleAttackEvent),
-        SpellType::Fireball => commands.trigger(FireballAttackEvent),
-        SpellType::Lightning => commands.trigger(LightningAttackEvent),
-        SpellType::Orb => commands.trigger(OrbAttackEvent),
-    }
-}
-
 pub(crate) fn trigger_hit_event(
     commands: &mut Commands,
     spell_type: SpellType,
@@ -129,7 +137,6 @@ pub(crate) fn trigger_hit_event(
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
         SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
-        SpellType::Orb => {}
         _ => {}
     }
 }
