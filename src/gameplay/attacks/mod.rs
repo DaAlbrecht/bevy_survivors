@@ -50,7 +50,7 @@ pub(crate) struct Damage(pub f32);
 #[derive(Component)]
 pub(crate) struct Range(pub f32);
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub(crate) struct Attack;
 
 #[derive(Component)]

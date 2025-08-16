@@ -55,6 +55,14 @@ pub(crate) struct Level(pub f32);
 #[action_output(Vec2)]
 pub(crate) struct Move;
 
+#[derive(Component)]
+#[relationship_target(relationship = AddToInventory)]
+pub(crate) struct Inventory(Vec<Entity>);
+
+#[derive(Component)]
+#[relationship(relationship_target = Inventory)]
+pub(crate) struct AddToInventory(pub Entity);
+
 pub(crate) fn spawn_player(
     mut commands: Commands,
     asset_server: Res<AssetServer>,

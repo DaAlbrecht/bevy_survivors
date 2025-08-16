@@ -9,7 +9,7 @@ use crate::gameplay::{
         SpellDuration, SpellType,
     },
     enemy::Speed,
-    player::{Direction, Player, spawn_player},
+    player::{AddToInventory, Direction, Player, spawn_player},
 };
 
 const ORB_BASE_COOLDOWN: f32 = 4.0;
@@ -21,6 +21,19 @@ const ORB_BASE_COUNT: f32 = 5.0;
 const ORB_BASE_RANGE: f32 = 75.0;
 
 #[derive(Component)]
+#[require(
+    Attack,
+    SpellType::Orb,
+    Cooldown(Timer::from_seconds(ORB_BASE_COOLDOWN, TimerMode::Once)),
+    SpellDuration(Timer::from_seconds(ORB_BASE_DURATION, TimerMode::Once)),
+    Range(ORB_BASE_RANGE),
+    OrbCount(ORB_BASE_COUNT),
+    ProjectileConfig {
+        speed: ORB_BASE_SPEED,
+        damage: ORB_BASE_DAMAGE,
+        knockback: ORB_BASE_KNOCKBACK,
+    },
+)]
 pub(crate) struct Orb;
 
 #[derive(Component)]
@@ -43,37 +56,20 @@ pub(crate) struct OrbHitEvent {
 pub(crate) struct OrbCount(pub f32);
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_orb.after(spawn_player));
+    app.add_systems(Startup, add_spell.after(spawn_player));
     app.add_systems(Update, (update_orb_direction, orb_lifetime));
-    app.add_observer(spawn_orb_projectile);
+    app.add_observer(fire);
 }
 
-fn spawn_orb(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
+fn add_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
 
-    let orb = commands
-        .spawn((
-            Attack,
-            Orb,
-            SpellType::Orb,
-            Cooldown(Timer::from_seconds(ORB_BASE_COOLDOWN, TimerMode::Once)),
-            SpellDuration(Timer::from_seconds(ORB_BASE_DURATION, TimerMode::Once)),
-            Range(ORB_BASE_RANGE),
-            OrbCount(ORB_BASE_COUNT),
-            ProjectileConfig {
-                speed: ORB_BASE_SPEED,
-                damage: ORB_BASE_DAMAGE,
-                knockback: ORB_BASE_KNOCKBACK,
-            },
-        ))
-        .id();
-
-    commands.entity(player).add_child(orb);
+    commands.spawn((Orb, AddToInventory(player), Name::new("Orb Spell")));
 
     Ok(())
 }
 
-fn spawn_orb_projectile(
+fn fire(
     _trigger: Trigger<OrbAttackEvent>,
     player_q: Query<Entity, With<Player>>,
     orb_q: Query<(&ProjectileConfig, &Range, &OrbCount), With<Orb>>,
