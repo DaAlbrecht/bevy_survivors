@@ -7,25 +7,21 @@ use bevy_enhanced_input::actions;
 use super::healthbar::HealthBarMaterial;
 use crate::{AppSystem, gameplay::Health, screens::Screen};
 
-pub(crate) struct PlayerPlugin;
+pub(crate) fn plugin(app: &mut App) {
+    app.add_input_context::<Player>();
 
-impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_input_context::<Player>();
+    app.add_systems(Startup, spawn_player);
 
-        app.add_systems(Startup, spawn_player);
+    app.add_systems(OnEnter(Screen::Gameplay), show_player);
 
-        app.add_systems(OnEnter(Screen::Gameplay), show_player);
+    app.add_systems(
+        Update,
+        (move_player.in_set(AppSystem::RecordInput)).run_if(in_state(Screen::Gameplay)),
+    );
 
-        app.add_systems(
-            Update,
-            (move_player.in_set(AppSystem::RecordInput)).run_if(in_state(Screen::Gameplay)),
-        );
+    app.add_observer(player_hit);
 
-        app.add_observer(player_hit);
-
-        app.register_type::<XP>().register_type::<Level>();
-    }
+    app.register_type::<XP>().register_type::<Level>();
 }
 
 #[derive(Component)]

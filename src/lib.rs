@@ -2,12 +2,10 @@ use bevy::prelude::*;
 use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_seedling::prelude::*;
-use gameplay::attacks::AttackPlugin;
-use gameplay::enemy::EnemyPlugin;
-use gameplay::experience::ExperiencePlugin;
-use gameplay::healthbar::HealthBarPlugin;
-use gameplay::player::{Player, PlayerPlugin};
+use gameplay::player::Player;
 use screens::Screen;
+
+use crate::gameplay::{attacks, enemy, experience, healthbar, player};
 
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -15,44 +13,40 @@ mod gameplay;
 mod screens;
 pub mod widgets;
 
-pub struct AppPlugin;
+pub fn plugin(app: &mut App) {
+    app.configure_sets(Update, (AppSystem::RecordInput, AppSystem::Update).chain());
 
-impl Plugin for AppPlugin {
-    fn build(&self, app: &mut App) {
-        app.configure_sets(Update, (AppSystem::RecordInput, AppSystem::Update).chain());
+    app.add_systems(Startup, spawn_camera);
 
-        app.add_systems(Startup, spawn_camera);
+    app.add_systems(Update, update_camera.run_if(in_state(Screen::Gameplay)));
 
-        app.add_systems(Update, update_camera.run_if(in_state(Screen::Gameplay)));
-
-        app.add_plugins((
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Window {
-                    title: "bevy survivor".to_string(),
-                    fit_canvas_to_parent: true,
-                    ..default()
-                }
-                .into(),
+    app.add_plugins((
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Window {
+                title: "bevy survivor".to_string(),
+                fit_canvas_to_parent: true,
                 ..default()
-            }),
-            EnhancedInputPlugin,
-            EntropyPlugin::<WyRand>::default(),
-            SeedlingPlugin::default(),
-        ));
+            }
+            .into(),
+            ..default()
+        }),
+        EnhancedInputPlugin,
+        EntropyPlugin::<WyRand>::default(),
+        SeedlingPlugin::default(),
+    ));
 
-        app.add_plugins((
-            EnemyPlugin,
-            PlayerPlugin,
-            ExperiencePlugin,
-            HealthBarPlugin,
-            AttackPlugin,
-        ));
+    app.add_plugins((
+        enemy::plugin,
+        player::plugin,
+        experience::plugin,
+        healthbar::plugin,
+        attacks::plugin,
+    ));
 
-        #[cfg(feature = "dev")]
-        app.add_plugins(dev_tools::plugin);
+    #[cfg(feature = "dev")]
+    app.add_plugins(dev_tools::plugin);
 
-        app.add_plugins(screens::plugin);
-    }
+    app.add_plugins(screens::plugin);
 }
 
 const ENEMY_SIZE: f32 = 30.0;

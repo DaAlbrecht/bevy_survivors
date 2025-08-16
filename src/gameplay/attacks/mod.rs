@@ -4,10 +4,10 @@ use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
         attacks::{
-            fireball::{FireballAttackEvent, FireballHitEvent, FireballPlugin},
-            lightning::{LightningAttackEvent, LightningPlugin},
-            orbs::{OrbAttackEvent, OrbPlugin},
-            scale::{ScaleAttackEvent, ScaleHitEvent, ScalePlugin},
+            fireball::{FireballAttackEvent, FireballHitEvent},
+            lightning::LightningAttackEvent,
+            orbs::OrbAttackEvent,
+            scale::{ScaleAttackEvent, ScaleHitEvent},
         },
         enemy::{Enemy, Speed},
         player::{Direction, Player},
@@ -20,19 +20,19 @@ pub mod lightning;
 pub mod orbs;
 pub mod scale;
 
-pub(crate) struct AttackPlugin;
+pub(crate) fn plugin(app: &mut App) {
+    app.add_plugins((
+        scale::plugin,
+        fireball::plugin,
+        lightning::plugin,
+        orbs::plugin,
+    ));
 
-impl Plugin for AttackPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins((ScalePlugin, FireballPlugin, LightningPlugin, OrbPlugin));
-
-        app.add_systems(
-            Update,
-            (attack, update_attack_timers, projectile_hit_detection)
-                .run_if(in_state(Screen::Gameplay)),
-        );
-        app.add_systems(FixedUpdate, move_projectile);
-    }
+    app.add_systems(
+        Update,
+        (attack, update_attack_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
+    );
+    app.add_systems(FixedUpdate, move_projectile);
 }
 
 #[derive(Component)]

@@ -9,26 +9,23 @@ use super::enemy::{EnemyDeathEvent, Speed};
 use super::player::{Level, Player, XP, XpCollectionRange};
 use crate::{PLAYER_SIZE, XP_GAIN_GEM, screens::Screen};
 
-pub(crate) struct ExperiencePlugin;
-impl Plugin for ExperiencePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
+pub(crate) fn plugin(app: &mut App) {
+    app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
 
-        app.add_systems(OnEnter(Screen::Gameplay), spawn_xp_bar);
-        app.add_systems(
-            Update,
-            (collect_xp_gem, update_xp_bar).run_if(in_state(Screen::Gameplay)),
-        );
+    app.add_systems(OnEnter(Screen::Gameplay), spawn_xp_bar);
+    app.add_systems(
+        Update,
+        (collect_xp_gem, update_xp_bar).run_if(in_state(Screen::Gameplay)),
+    );
 
-        app.world_mut().spawn((
-            Observer::new(spawn_xp_gem),
-            Name::new("spawn_xp_gem Observer"),
-        ));
-        app.world_mut()
-            .spawn((Observer::new(gain_xp), Name::new("gain_xp Observer")));
-        app.world_mut()
-            .spawn((Observer::new(level_up), Name::new("level_up Observer")));
-    }
+    app.world_mut().spawn((
+        Observer::new(spawn_xp_gem),
+        Name::new("spawn_xp_gem Observer"),
+    ));
+    app.world_mut()
+        .spawn((Observer::new(gain_xp), Name::new("gain_xp Observer")));
+    app.world_mut()
+        .spawn((Observer::new(level_up), Name::new("level_up Observer")));
 }
 
 #[derive(Component)]

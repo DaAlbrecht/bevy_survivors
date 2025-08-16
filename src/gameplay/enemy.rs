@@ -20,32 +20,29 @@ use super::player::Player;
 
 use super::attacks::{Knockback, PlayerProjectile};
 
-pub(crate) struct EnemyPlugin;
-impl Plugin for EnemyPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            spawn_enemy
-                .run_if(on_timer(Duration::from_millis(2000)))
-                .run_if(in_state(Screen::Gameplay))
-                .in_set(AppSystem::Update),
-        );
-        app.add_systems(
-            Update,
-            (
-                enemy_movement,
-                enemy_colliding_detection,
-                enemy_stop_colliding_detection,
-                enemy_push_detection,
-                move_enemy_from_knockback,
-                attack,
-            )
-                .run_if(in_state(Screen::Gameplay)),
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(
+        Update,
+        spawn_enemy
+            .run_if(on_timer(Duration::from_millis(2000)))
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(AppSystem::Update),
+    );
+    app.add_systems(
+        Update,
+        (
+            enemy_movement,
+            enemy_colliding_detection,
+            enemy_stop_colliding_detection,
+            enemy_push_detection,
+            move_enemy_from_knockback,
+            attack,
         )
-        .add_observer(enemy_pushing)
-        .add_observer(enemy_take_dmg)
-        .add_observer(enemy_get_pushed_from_hit);
-    }
+            .run_if(in_state(Screen::Gameplay)),
+    )
+    .add_observer(enemy_pushing)
+    .add_observer(enemy_take_dmg)
+    .add_observer(enemy_get_pushed_from_hit);
 }
 
 const SPAWN_RADIUS: f32 = 200.0;

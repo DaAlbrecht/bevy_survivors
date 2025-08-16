@@ -29,15 +29,11 @@ pub(crate) struct ScaleHitEvent {
     pub projectile: Entity,
 }
 
-pub(crate) struct ScalePlugin;
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(Startup, (spawn_scale).after(spawn_player));
 
-impl Plugin for ScalePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_scale).after(spawn_player));
-
-        app.add_observer(spawn_scale_projectile);
-        app.add_observer(scale_hit);
-    }
+    app.add_observer(spawn_scale_projectile);
+    app.add_observer(scale_hit);
 }
 
 fn spawn_scale(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {

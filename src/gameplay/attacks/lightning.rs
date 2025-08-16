@@ -10,19 +10,15 @@ use crate::{
     screens::Screen,
 };
 
-pub(crate) struct LightningPlugin;
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(Startup, (spawn_lightning).after(spawn_player));
 
-impl Plugin for LightningPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_lightning).after(spawn_player));
-
-        app.add_systems(
-            FixedUpdate,
-            cleanup_lightning_bolt.run_if(in_state(Screen::Gameplay)),
-        );
-        app.add_observer(spawn_lightning_bolt);
-        app.add_observer(lightning_hit);
-    }
+    app.add_systems(
+        FixedUpdate,
+        cleanup_lightning_bolt.run_if(in_state(Screen::Gameplay)),
+    );
+    app.add_observer(spawn_lightning_bolt);
+    app.add_observer(lightning_hit);
 }
 
 const LIGHTNING_BASE_COOLDOWN: f32 = 3.0;

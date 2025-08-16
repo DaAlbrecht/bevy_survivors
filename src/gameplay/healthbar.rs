@@ -4,12 +4,8 @@ use bevy::{
     sprite::{Material2d, Material2dPlugin},
 };
 
-pub(crate) struct HealthBarPlugin;
-
-impl Plugin for HealthBarPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins(Material2dPlugin::<HealthBarMaterial>::default());
-    }
+pub(crate) fn plugin(app: &mut App) {
+    app.add_plugins(Material2dPlugin::<HealthBarMaterial>::default());
 }
 
 #[derive(Asset, AsBindGroup, TypePath, Debug, Clone)]

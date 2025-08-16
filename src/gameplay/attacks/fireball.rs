@@ -24,14 +24,10 @@ pub(crate) struct FireballHitEvent {
     pub projectile: Entity,
 }
 
-pub(crate) struct FireballPlugin;
-
-impl Plugin for FireballPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (spawn_fireball).after(spawn_player));
-        app.add_observer(spawn_fireball_projectile);
-        app.add_observer(fireball_hit);
-    }
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(Startup, (spawn_fireball).after(spawn_player));
+    app.add_observer(spawn_fireball_projectile);
+    app.add_observer(fireball_hit);
 }
 
 fn spawn_fireball(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {

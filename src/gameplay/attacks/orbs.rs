@@ -42,14 +42,10 @@ pub(crate) struct OrbHitEvent {
 #[derive(Component)]
 pub(crate) struct OrbCount(pub i32);
 
-pub(crate) struct OrbPlugin;
-
-impl Plugin for OrbPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_orb.after(spawn_player));
-        app.add_systems(Update, (update_orb_direction, orb_lifetime));
-        app.add_observer(spawn_orb_projectile);
-    }
+pub(crate) fn plugin(app: &mut App) {
+    app.add_systems(Startup, spawn_orb.after(spawn_player));
+    app.add_systems(Update, (update_orb_direction, orb_lifetime));
+    app.add_observer(spawn_orb_projectile);
 }
 
 fn spawn_orb(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
