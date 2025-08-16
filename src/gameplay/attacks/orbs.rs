@@ -17,7 +17,7 @@ const ORB_BASE_DURATION: f32 = 2.0;
 const ORB_BASE_DAMAGE: f32 = 1.0;
 const ORB_BASE_KNOCKBACK: f32 = 750.0;
 const ORB_BASE_SPEED: f32 = 100.0;
-const ORB_BASE_COUNT: i32 = 5;
+const ORB_BASE_COUNT: f32 = 5.0;
 const ORB_BASE_RANGE: f32 = 75.0;
 
 #[derive(Component)]
@@ -40,7 +40,7 @@ pub(crate) struct OrbHitEvent {
 }
 
 #[derive(Component)]
-pub(crate) struct OrbCount(pub i32);
+pub(crate) struct OrbCount(pub f32);
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_orb.after(spawn_player));
@@ -86,8 +86,8 @@ fn spawn_orb_projectile(
     let mut pos_x: f32;
     let mut pos_y: f32;
 
-    for n in 1..=count.0 {
-        let angle = (2.0 * PI) * (n as f32 / count.0 as f32);
+    for n in 1..=count.0 as usize {
+        let angle = (2.0 * PI) * (n as f32 / count.0);
         pos_x = f32::cos(angle);
         pos_y = f32::sin(angle);
 
@@ -124,7 +124,7 @@ fn spawn_orb_projectile(
 //Keeps direction orthogonal to radius -> circel
 fn update_orb_direction(
     mut orb_q: Query<(&mut Transform, &mut Direction, &Range), With<OrbProjectile>>,
-) -> Result {
+) {
     for (mut orb_pos, mut direction, orbit_radius) in &mut orb_q {
         let mut pos_vec = orb_pos.translation.truncate();
 
@@ -144,17 +144,14 @@ fn update_orb_direction(
 
         direction.0 = Vec3::new(-pos_vec.y, pos_vec.x, 0.0).normalize();
     }
-
-    Ok(())
 }
 
 fn orb_lifetime(
     mut commands: Commands,
-    mut orb_q: Query<(&Cooldown, &mut SpellDuration), With<Orb>>,
+    mut orb_q: Query<&mut SpellDuration, With<Orb>>,
     projectile_q: Query<Entity, With<OrbProjectile>>,
-    time: Res<Time>,
 ) -> Result {
-    let (orb_cooldown, orb_duration) = &mut orb_q.single_mut()?;
+    let mut orb_duration = orb_q.single_mut()?;
 
     if orb_duration.0.finished() {
         for orb in projectile_q {
