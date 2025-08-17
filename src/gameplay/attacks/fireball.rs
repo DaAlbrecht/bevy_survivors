@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::gameplay::{
     attacks::{Cooldown, ExplosionRadius, ProjectileConfig, Spell, SpellType},
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
-    player::{Player, spawn_player},
+    player::{AddToInventory, Player, spawn_player},
 };
 
 #[derive(Component)]
@@ -40,9 +40,7 @@ pub(crate) fn plugin(app: &mut App) {
 fn spawn_fireball(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
 
-    let fireball = commands.spawn((Fireball,)).id();
-
-    commands.entity(player).add_child(fireball);
+    commands.spawn((Fireball, AddToInventory(player)));
 
     Ok(())
 }

@@ -153,7 +153,6 @@ fn projectile_hit_detection(
             if (projectile_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
                 <= ENEMY_SIZE / 2.0
             {
-                info!("hitting: {:?}", spell_type);
                 trigger_hit_event(&mut commands, spell_type, projectile_entity, enemy_entity);
             }
         }
