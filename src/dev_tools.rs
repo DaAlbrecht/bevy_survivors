@@ -24,10 +24,8 @@ pub(super) fn plugin(app: &mut App) {
         ),
     );
 
-    app.add_plugins(EguiPlugin {
-        enable_multipass_for_primary_context: true,
-    })
-    .add_plugins((
+    app.add_plugins((
+        EguiPlugin::default(),
         WorldInspectorPlugin::new().run_if(input_toggle_active(true, TOGGLE_INSEPCTOR)),
         StateInspectorPlugin::<Screen>::new().run_if(input_toggle_active(true, TOGGLE_INSEPCTOR)),
     ));
