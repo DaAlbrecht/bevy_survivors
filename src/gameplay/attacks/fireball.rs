@@ -95,16 +95,18 @@ fn fireball_hit(
     trigger: Trigger<FireballHitEvent>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     mut commands: Commands,
-    explosion_radius: Query<&ExplosionRadius, With<Fireball>>,
+    explosion_radius: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
 ) -> Result {
     let enemy_entity = trigger.enemy;
     let spell_entity = trigger.projectile;
-    let explosion_radius = explosion_radius.single()?;
+    let (explosion_radius, dmg) = explosion_radius.single()?;
+
+    let dmg = dmg.0;
 
     //Deal damage
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy_entity,
-        spell_entity,
+        dmg,
     });
 
     //Deal damage to all enemys in explosion radius
@@ -122,7 +124,7 @@ fn fireball_hit(
             if distance < explosion_radius.0 {
                 commands.trigger(EnemyDamageEvent {
                     entity_hit: other_enemy,
-                    spell_entity,
+                    dmg,
                 });
             }
         }

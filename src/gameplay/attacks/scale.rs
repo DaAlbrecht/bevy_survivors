@@ -77,13 +77,18 @@ fn spawn_scale_projectile(
     Ok(())
 }
 
-fn scale_hit(trigger: Trigger<ScaleHitEvent>, mut commands: Commands) {
+fn scale_hit(
+    trigger: Trigger<ScaleHitEvent>,
+    mut commands: Commands,
+    scale_dmg: Query<&Damage, With<Scale>>,
+) -> Result {
     let enemy = trigger.enemy;
     let spell_entity = trigger.projectile;
+    let dmg = scale_dmg.single()?.0;
 
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy,
-        spell_entity,
+        dmg,
     });
 
     commands.trigger(EnemyKnockbackEvent {
@@ -92,4 +97,5 @@ fn scale_hit(trigger: Trigger<ScaleHitEvent>, mut commands: Commands) {
     });
 
     commands.entity(spell_entity).despawn();
+    Ok(())
 }

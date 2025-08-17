@@ -10,7 +10,7 @@ use crate::{
     AppSystem,
     gameplay::{
         Health,
-        attacks::{Attack, Damage},
+        attacks::{CastSpell, Spell},
         player::{Direction, Move, PlayerHitEvent},
     },
     screens::Screen,
@@ -78,7 +78,7 @@ pub(crate) struct PlayerPushingEvent(pub Entity);
 #[derive(Event)]
 pub(crate) struct EnemyDamageEvent {
     pub entity_hit: Entity,
-    pub spell_entity: Entity,
+    pub dmg: f32,
 }
 
 #[derive(Event)]
@@ -259,22 +259,15 @@ fn attack(
 fn enemy_take_dmg(
     trigger: Trigger<EnemyDamageEvent>,
     mut enemy_q: Query<(&mut Health, &Transform), With<Enemy>>,
-    spell_q: Query<&Damage, With<Attack>>,
     mut commands: Commands,
 ) {
     let enemy_entity = trigger.entity_hit;
-    let spell_entity = trigger.spell_entity;
-
-    info!("enemy take dmg");
 
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
-        if let Ok(spell_damage) = spell_q.get(spell_entity) {
-            info!("spell dmg {}", spell_damage.0);
-            health.0 -= spell_damage.0;
-            if health.0 <= 0.0 {
-                commands.entity(enemy_entity).despawn();
-                commands.trigger(EnemyDeathEvent(*transform));
-            }
+        health.0 -= trigger.dmg;
+        if health.0 <= 0.0 {
+            commands.entity(enemy_entity).despawn();
+            commands.trigger(EnemyDeathEvent(*transform));
         }
     }
 }
@@ -282,20 +275,31 @@ fn enemy_take_dmg(
 fn enemy_get_pushed_from_hit(
     trigger: Trigger<EnemyKnockbackEvent>,
     mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection), With<Enemy>>,
-    spell_q: Query<(&Direction, &Knockback), (With<PlayerProjectile>, Without<Enemy>)>,
-) {
+    knockback: Query<&Knockback, (With<Spell>, Without<Enemy>)>,
+    projectile_direction: Query<&Direction, With<PlayerProjectile>>,
+    spells: Query<&CastSpell>,
+) -> Result {
     let enemy_entity = trigger.entity_hit;
-    let spell_entity = trigger.spell_entity;
+    let projectile_entity = trigger.spell_entity;
 
-    if let Ok((spell_direction, spell_knockback)) = spell_q.get(spell_entity) {
-        if let Ok((mut enemy_knockback, mut enemy_knockback_direction)) =
-            enemy_q.get_mut(enemy_entity)
-        {
-            enemy_knockback.0 = spell_knockback.0;
-            //type shenanigans continue
-            enemy_knockback_direction.0.0 = spell_direction.0;
-        }
+    //Get the Spell of this projectile, each projectile, this is a 1-many relationship
+    let spell = spells
+        .iter_ancestors(projectile_entity)
+        .next()
+        .expect("there should always only be one ancestor spell for each projectile");
+
+    let knockback = knockback.get(spell)?.0;
+
+    let direction = projectile_direction.get(projectile_entity)?.0;
+
+    if let Ok((mut enemy_knockback, mut enemy_knockback_direction)) = enemy_q.get_mut(enemy_entity)
+    {
+        enemy_knockback.0 = knockback;
+        //type shenanigans continue
+        enemy_knockback_direction.0.0 = direction;
     }
+
+    Ok(())
 }
 
 fn move_enemy_from_knockback(

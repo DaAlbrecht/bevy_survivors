@@ -75,11 +75,11 @@ pub(crate) struct Spell;
 
 #[derive(Component)]
 #[relationship(relationship_target = SpellProjectiles)]
-struct CastSpell(pub Entity);
+pub(crate) struct CastSpell(pub Entity);
 
 #[derive(Component)]
 #[relationship_target(relationship = CastSpell, linked_spawn)]
-struct SpellProjectiles(Vec<Entity>);
+pub(crate) struct SpellProjectiles(Vec<Entity>);
 
 fn attack(
     player: Query<Entity, With<Player>>,

@@ -30,6 +30,7 @@ const LIGHTNING_BASE_RANGE: f32 = 300.0;
 #[require(
     Spell,
     SpellType::Lightning,
+    Damage(5.),
     Cooldown(Timer::from_seconds(LIGHTNING_BASE_COOLDOWN, TimerMode::Once,)),
     Jumps(LIGHTNING_BASE_JUMPS),
     Range(LIGHTNING_BASE_RANGE)
@@ -45,7 +46,6 @@ pub(crate) struct LightningVisualTimer(pub Timer);
 #[derive(Event)]
 pub(crate) struct LightningHitEvent {
     pub enemy: Entity,
-    pub lightning_bolt: Entity,
 }
 
 #[derive(Component)]
@@ -113,33 +113,28 @@ fn spawn_lightning_bolt(
         let angle = direction.y.atan2(direction.x);
         let anchor_point = current_source_pos.translation.truncate() + direction * 0.5;
 
-        let lightning_bolt = commands
-            .spawn((
-                Name::new("LightningBolt"),
-                Sprite {
-                    image: asset_server.load("Lightning.png"),
-                    custom_size: Some(Vec2::new(length, 13.0)),
-                    anchor: Anchor::Center,
-                    ..default()
-                },
-                Transform {
-                    translation: anchor_point.extend(1.0),
-                    rotation: Quat::from_rotation_z(angle),
-                    ..default()
-                },
-                Attack,
-                Damage(LIGHTNING_BASE_DMG),
-                SpellType::Lightning,
-                LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
-            ))
-            .id();
+        commands.spawn((
+            Name::new("LightningBolt"),
+            Sprite {
+                image: asset_server.load("Lightning.png"),
+                custom_size: Some(Vec2::new(length, 13.0)),
+                anchor: Anchor::Center,
+                ..default()
+            },
+            Transform {
+                translation: anchor_point.extend(1.0),
+                rotation: Quat::from_rotation_z(angle),
+                ..default()
+            },
+            Attack,
+            Damage(LIGHTNING_BASE_DMG),
+            SpellType::Lightning,
+            LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
+        ));
 
         commands.spawn(SamplePlayer::new(asset_server.load("sounds/pew.wav")));
 
-        commands.trigger(LightningHitEvent {
-            enemy,
-            lightning_bolt,
-        });
+        commands.trigger(LightningHitEvent { enemy });
 
         //update chain state
         visited.insert(enemy);
@@ -164,12 +159,17 @@ fn cleanup_lightning_bolt(
     }
 }
 
-fn lightning_hit(trigger: Trigger<LightningHitEvent>, mut commands: Commands) {
+fn lightning_hit(
+    trigger: Trigger<LightningHitEvent>,
+    mut commands: Commands,
+    lightning_dmg: Query<&Damage, With<Lightning>>,
+) -> Result {
     let enemy = trigger.enemy;
-    let spell_entity = trigger.lightning_bolt;
+    let dmg = lightning_dmg.single()?.0;
 
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy,
-        spell_entity,
+        dmg,
     });
+    Ok(())
 }
