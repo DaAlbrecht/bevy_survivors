@@ -5,14 +5,12 @@ use crate::{
     gameplay::{
         attacks::{Cooldown, Damage, Range, Spell, SpellType},
         enemy::{Enemy, EnemyDamageEvent},
-        player::{AddToInventory, Player, spawn_player},
+        player::Player,
     },
     screens::Screen,
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, (spawn_lightning).after(spawn_player));
-
     app.add_systems(
         FixedUpdate,
         cleanup_lightning_bolt.run_if(in_state(Screen::Gameplay)),
@@ -45,14 +43,6 @@ pub(crate) struct LightningHitEvent {
 
 #[derive(Component)]
 pub(crate) struct Jumps(pub u32);
-
-fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
-    let player = player_q.single()?;
-
-    commands.spawn((Lightning, AddToInventory(player)));
-
-    Ok(())
-}
 
 fn spawn_lightning_bolt(
     _trigger: Trigger<LightningAttackEvent>,

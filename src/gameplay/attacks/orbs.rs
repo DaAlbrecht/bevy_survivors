@@ -9,7 +9,7 @@ use crate::gameplay::{
         SpellDuration, SpellType,
     },
     enemy::Speed,
-    player::{AddToInventory, Direction, Player, spawn_player},
+    player::{Direction, Player},
 };
 
 #[derive(Component)]
@@ -40,17 +40,8 @@ pub(crate) struct OrbHitEvent {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, add_orb_spell.after(spawn_player));
     app.add_systems(Update, (update_orb_direction, orb_lifetime));
     app.add_observer(spawn_orb_projectile);
-}
-
-fn add_orb_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
-    let player = player_q.single()?;
-
-    commands.spawn((Orb, AddToInventory(player)));
-
-    Ok(())
 }
 
 fn spawn_orb_projectile(
@@ -126,15 +117,13 @@ fn orb_lifetime(
     mut commands: Commands,
     mut orb_q: Query<&mut SpellDuration, With<Orb>>,
     projectile_q: Query<Entity, With<OrbProjectile>>,
-) -> Result {
-    let mut orb_duration = orb_q.single_mut()?;
-
-    if orb_duration.0.finished() {
-        for orb in projectile_q {
-            commands.entity(orb).despawn();
+) {
+    for mut orb_duration in &mut orb_q {
+        if orb_duration.0.finished() {
+            for orb in projectile_q {
+                commands.entity(orb).despawn();
+            }
+            orb_duration.0.reset();
         }
-        orb_duration.0.reset();
     }
-
-    Ok(())
 }

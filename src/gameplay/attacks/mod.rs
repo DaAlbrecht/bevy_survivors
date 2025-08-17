@@ -3,14 +3,15 @@ use bevy::prelude::*;
 use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
+        PickUpSpell,
         attacks::{
-            fireball::{FireballAttackEvent, FireballHitEvent},
-            lightning::LightningAttackEvent,
-            orbs::OrbAttackEvent,
-            scale::{ScaleAttackEvent, ScaleHitEvent},
+            fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
+            lightning::{Lightning, LightningAttackEvent},
+            orbs::{Orb, OrbAttackEvent},
+            scale::{Scale, ScaleAttackEvent, ScaleHitEvent},
         },
         enemy::{Enemy, Speed},
-        player::{Direction, Inventory, Player},
+        player::{AddToInventory, Direction, Inventory, Player},
     },
     screens::Screen,
 };
@@ -33,6 +34,8 @@ pub(crate) fn plugin(app: &mut App) {
         (attack, update_attack_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
     );
     app.add_systems(FixedUpdate, move_projectile);
+
+    app.add_observer(add_spell_to_inventory);
 }
 
 #[derive(Component, Default)]
@@ -80,6 +83,32 @@ pub(crate) struct CastSpell(pub Entity);
 #[derive(Component)]
 #[relationship_target(relationship = CastSpell, linked_spawn)]
 pub(crate) struct SpellProjectiles(Vec<Entity>);
+
+pub(crate) fn add_spell_to_inventory(
+    trigger: Trigger<PickUpSpell>,
+    mut commands: Commands,
+    player: Query<Entity, With<Player>>,
+) -> Result {
+    let player = player.single()?;
+    let mut e = commands.spawn(AddToInventory(player));
+
+    match trigger.spell_type {
+        SpellType::Scale => {
+            e.insert(Scale);
+        }
+        SpellType::Fireball => {
+            e.insert(Fireball);
+        }
+        SpellType::Lightning => {
+            e.insert(Lightning);
+        }
+        SpellType::Orb => {
+            e.insert(Orb);
+        }
+    }
+
+    Ok(())
+}
 
 fn attack(
     player: Query<Entity, With<Player>>,

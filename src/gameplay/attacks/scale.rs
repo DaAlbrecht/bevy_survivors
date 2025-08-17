@@ -5,7 +5,7 @@ use std::f32::consts::PI;
 use crate::gameplay::{
     attacks::{CastSpell, Damage, Knockback, PlayerProjectile, Spell, SpellType},
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
-    player::{AddToInventory, Direction, Player, spawn_player},
+    player::{Direction, Player},
 };
 
 use super::Cooldown;
@@ -34,18 +34,8 @@ pub(crate) struct ScaleHitEvent {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, (add_scale_spell).after(spawn_player));
-
     app.add_observer(spawn_scale_projectile);
     app.add_observer(scale_hit);
-}
-
-fn add_scale_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
-    let player = player_q.single()?;
-
-    commands.spawn((Scale, AddToInventory(player)));
-
-    Ok(())
 }
 
 fn spawn_scale_projectile(

@@ -97,6 +97,11 @@ pub(crate) fn spawn_player(
             })),
             Transform::from_xyz(0.0, -25.0, 0.),
         ));
+
+    //Default player has Scale attack
+    commands.trigger(crate::gameplay::PickUpSpell {
+        spell_type: crate::gameplay::attacks::SpellType::Scale,
+    });
 }
 
 fn player_hit(

@@ -5,7 +5,7 @@ use crate::gameplay::{
         CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
     },
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent, Speed},
-    player::{AddToInventory, Direction, Player, spawn_player},
+    player::{Direction, Player},
 };
 
 #[derive(Component)]
@@ -31,17 +31,8 @@ pub(crate) struct FireballHitEvent {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, (spawn_fireball).after(spawn_player));
     app.add_observer(spawn_fireball_projectile);
     app.add_observer(fireball_hit);
-}
-
-fn spawn_fireball(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
-    let player = player_q.single()?;
-
-    commands.spawn((Fireball, AddToInventory(player)));
-
-    Ok(())
 }
 
 fn spawn_fireball_projectile(
