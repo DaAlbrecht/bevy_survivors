@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::{Cooldown, ExplosionRadius, ProjectileConfig, Spell, SpellType},
-    enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
-    player::{AddToInventory, Player, spawn_player},
+    attacks::{
+        CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
+    },
+    enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent, Speed},
+    player::{AddToInventory, Direction, Player, spawn_player},
 };
 
 #[derive(Component)]
@@ -11,12 +13,9 @@ use crate::gameplay::{
     Spell,
     SpellType::Fireball,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
-    ProjectileConfig{
-        speed: 600.,
-        knockback: 1500.,
-        damage: 5.,
-        projectile_count: 1.,
-    },
+    Speed(600.),
+    Knockback(1500.),
+    Damage(5.),
     ExplosionRadius(100.),
     Name::new("Fireball")
 )]
@@ -48,13 +47,13 @@ fn spawn_fireball(mut commands: Commands, player_q: Query<Entity, With<Player>>)
 fn spawn_fireball_projectile(
     _trigger: Trigger<FireballAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
+    fireball: Query<Entity, With<Fireball>>,
     enemy_q: Query<&Transform, With<Enemy>>,
-    config_q: Query<&ProjectileConfig, With<Fireball>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let player_pos = player_q.single()?;
-    let config = config_q.single()?;
+    let fireball = fireball.single()?;
 
     let mut min_distance = f32::MAX;
     let mut closest_enemy: Option<&Transform> = None;
@@ -77,15 +76,15 @@ fn spawn_fireball_projectile(
             .normalize();
 
         commands.spawn((
+            Name::new("fireball projectile"),
             Sprite {
                 image: asset_server.load("Fireball.png"),
                 ..default()
             },
-            config.add_projectile(
-                direction.extend(0.),
-                player_pos.translation,
-                SpellType::Fireball,
-            ),
+            CastSpell(fireball),
+            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
+            Direction(direction.extend(0.)),
+            PlayerProjectile,
         ));
     }
 
@@ -96,11 +95,11 @@ fn fireball_hit(
     trigger: Trigger<FireballHitEvent>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     mut commands: Commands,
-    fireball_q: Query<&ExplosionRadius, With<Fireball>>,
+    explosion_radius: Query<&ExplosionRadius, With<Fireball>>,
 ) -> Result {
     let enemy_entity = trigger.enemy;
     let spell_entity = trigger.projectile;
-    let explosion_radius = fireball_q.single()?;
+    let explosion_radius = explosion_radius.single()?;
 
     //Deal damage
     commands.trigger(EnemyDamageEvent {

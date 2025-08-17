@@ -3,9 +3,9 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::{
-    attacks::{ProjectileConfig, Spell, SpellType},
-    enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
-    player::{AddToInventory, Player, spawn_player},
+    attacks::{CastSpell, Damage, Knockback, PlayerProjectile, Spell, SpellType},
+    enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
+    player::{AddToInventory, Direction, Player, spawn_player},
 };
 
 use super::Cooldown;
@@ -17,12 +17,9 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
     Spell,
     SpellType::Scale,
     Cooldown(Timer::from_seconds(1., TimerMode::Once)),
-    ProjectileConfig{
-        speed: 600.,
-        knockback: 1500.,
-        damage: 5.,
-        projectile_count: 1.,
-    },
+    Speed(600.),
+    Knockback(1500.),
+    Damage(5.),
     Name::new("Scale")
 )]
 pub(crate) struct Scale;
@@ -54,22 +51,27 @@ fn add_scale_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>
 fn spawn_scale_projectile(
     _trigger: Trigger<ScaleAttackEvent>,
     player_pos_q: Query<&Transform, With<Player>>,
-    config_q: Query<&ProjectileConfig, With<Scale>>,
+    scale: Query<Entity, With<Scale>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut rng: GlobalEntropy<WyRand>,
 ) -> Result {
     let player_pos = player_pos_q.single()?;
-    let config = config_q.single()?;
+    let scale = scale.single()?;
+
     let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
     let direction = Vec3::new(f32::cos(random_angle), f32::sin(random_angle), 0.).normalize();
 
     commands.spawn((
+        Name::new("scale projectile"),
         Sprite {
             image: asset_server.load("Bullet.png"),
             ..default()
         },
-        config.add_projectile(direction, player_pos.translation, SpellType::Scale),
+        CastSpell(scale),
+        Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
+        Direction(direction),
+        PlayerProjectile,
     ));
 
     Ok(())

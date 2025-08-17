@@ -4,7 +4,11 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::{Cooldown, ProjectileConfig, Range, Spell, SpellDuration, SpellType},
+    attacks::{
+        CastSpell, Cooldown, Damage, Knockback, PlayerProjectile, ProjectileCount, Range, Spell,
+        SpellDuration, SpellType,
+    },
+    enemy::Speed,
     player::{AddToInventory, Direction, Player, spawn_player},
 };
 
@@ -15,12 +19,10 @@ use crate::gameplay::{
     Cooldown(Timer::from_seconds(4., TimerMode::Once)),
     SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
     Range(75.),
-    ProjectileConfig {
-        speed: 100.,
-        damage: 1.,
-        knockback: 750.,
-        projectile_count: 5.
-    },
+    Speed(100.),
+    Damage(1.),
+    Knockback(750.),
+    ProjectileCount(5.),
     Name::new("Orb Spell")
 )]
 pub(crate) struct Orb;
@@ -54,18 +56,18 @@ fn add_orb_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) 
 fn spawn_orb_projectile(
     _trigger: Trigger<OrbAttackEvent>,
     player_q: Query<Entity, With<Player>>,
-    orb_q: Query<(&ProjectileConfig, &Range), With<Orb>>,
+    orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let player = player_q.single()?;
-    let (config, radius) = orb_q.single()?;
+    let (orb, radius, projectile_count) = orb_q.single()?;
 
     let mut pos_x: f32;
     let mut pos_y: f32;
 
-    for n in 1..=config.projectile_count as usize {
-        let angle = (2.0 * PI) * (n as f32 / config.projectile_count);
+    for n in 1..=projectile_count.0 as usize {
+        let angle = (2.0 * PI) * (n as f32 / projectile_count.0);
         pos_x = f32::cos(angle);
         pos_y = f32::sin(angle);
 
@@ -75,13 +77,17 @@ fn spawn_orb_projectile(
 
         let orb = commands
             .spawn((
+                Range(radius.0),
+                Name::new("orb projectile"),
                 Sprite {
                     image: asset_server.load("Orb.png"),
                     ..default()
                 },
                 OrbProjectile,
-                Range(radius.0),
-                config.add_projectile(direction, orb_pos.extend(0.), SpellType::Orb),
+                CastSpell(orb),
+                Transform::from_xyz(orb_pos.x, orb_pos.y, 0.),
+                Direction(direction),
+                PlayerProjectile,
             ))
             .id();
 

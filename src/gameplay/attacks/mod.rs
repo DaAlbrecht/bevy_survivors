@@ -59,6 +59,9 @@ pub(crate) struct ExplosionRadius(pub f32);
 #[derive(Component)]
 pub(crate) struct SpellDuration(pub Timer);
 
+#[derive(Component)]
+pub(crate) struct ProjectileCount(pub f32);
+
 #[derive(Component, Clone, Copy, PartialEq, Debug)]
 pub(crate) enum SpellType {
     Scale,
@@ -71,40 +74,12 @@ pub(crate) enum SpellType {
 pub(crate) struct Spell;
 
 #[derive(Component)]
-pub(crate) struct ProjectileConfig {
-    speed: f32,
-    knockback: f32,
-    damage: f32,
-    projectile_count: f32,
-}
+#[relationship(relationship_target = SpellProjectiles)]
+struct CastSpell(pub Entity);
 
-impl ProjectileConfig {
-    pub fn add_projectile(
-        &self,
-        direction: Vec3,
-        translation: Vec3,
-        spell_type: SpellType,
-    ) -> impl Bundle {
-        let name = match spell_type {
-            SpellType::Scale => "ScaleProjectile",
-            SpellType::Fireball => "FireballProjectile",
-            SpellType::Lightning => "LightningProjectile",
-            SpellType::Orb => "OrbProjectile",
-        };
-
-        (
-            Name::new(name),
-            Transform::from_xyz(translation.x, translation.y, 0.),
-            Direction(direction),
-            Damage(self.damage),
-            Speed(self.speed),
-            PlayerProjectile,
-            Knockback(self.knockback),
-            Attack,
-            spell_type,
-        )
-    }
-}
+#[derive(Component)]
+#[relationship_target(relationship = CastSpell, linked_spawn)]
+struct SpellProjectiles(Vec<Entity>);
 
 fn attack(
     player: Query<Entity, With<Player>>,
@@ -131,32 +106,49 @@ fn attack(
 }
 
 fn move_projectile(
-    mut bullet_pos_q: Query<
-        (&mut Transform, &Speed, &Direction),
-        (With<PlayerProjectile>, Without<Player>),
-    >,
+    spells: Query<(Entity, &Speed), With<Spell>>,
+    projectiles: Query<&SpellProjectiles>,
+    mut projectile_q: Query<(&mut Transform, &Direction), With<PlayerProjectile>>,
     time: Res<Time>,
-) {
-    for (mut bullet_pos, bullet_speed, bullet_direction) in &mut bullet_pos_q {
-        let movement = bullet_direction.0 * bullet_speed.0 * time.delta_secs();
-        bullet_pos.translation += movement;
+) -> Result {
+    // Loop over all types of spells
+    for (spell, speed) in &spells {
+        // Iterate over each projectile for this given spell type
+        for projectile in projectiles.iter_descendants(spell) {
+            let (mut bullet_pos, bullet_direction) = projectile_q.get_mut(projectile)?;
+            let movement = bullet_direction.0 * speed.0 * time.delta_secs();
+            bullet_pos.translation += movement;
+        }
     }
+    Ok(())
 }
 
 fn projectile_hit_detection(
-    enemy_query: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
-    projectile_query: Query<(&Transform, Entity, &SpellType), With<PlayerProjectile>>,
+    spells: Query<(Entity, &SpellType), With<Spell>>,
+    projectiles: Query<&SpellProjectiles>,
+    enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
+    projectile_transform: Query<&Transform, With<PlayerProjectile>>,
     mut commands: Commands,
-) {
-    for (&projectile_pos, projectile_entity, &spell_type) in &projectile_query {
-        for (&enemy_pos, enemy_entity) in &enemy_query {
-            if (projectile_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
-                <= ENEMY_SIZE / 2.0
-            {
-                trigger_hit_event(&mut commands, spell_type, projectile_entity, enemy_entity);
+) -> Result {
+    // Get all spells
+    for (spell, spell_type) in &spells {
+        // Get each fired projectile for this spell
+        for projectile in projectiles.iter_descendants(spell) {
+            // Get the position of this particular projectile
+            let projectile_pos = projectile_transform.get(projectile)?;
+
+            // Loop over all the positions of the enemies and check if one matches the position of
+            // the projectile.
+            for (&enemy_pos, enemy_entity) in &enemy_q {
+                if (projectile_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
+                    <= ENEMY_SIZE / 2.0
+                {
+                    trigger_hit_event(&mut commands, spell_type, projectile, enemy_entity);
+                }
             }
         }
     }
+    Ok(())
 }
 
 fn update_attack_timers(
@@ -175,7 +167,7 @@ fn update_attack_timers(
 
 pub(crate) fn trigger_hit_event(
     commands: &mut Commands,
-    spell_type: SpellType,
+    spell_type: &SpellType,
     projectile: Entity,
     enemy: Entity,
 ) {
