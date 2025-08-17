@@ -3,7 +3,7 @@ use bevy_seedling::sample::SamplePlayer;
 
 use crate::{
     gameplay::{
-        attacks::{Attack, Cooldown, Damage, Range, Spell, SpellType},
+        attacks::{Cooldown, Damage, Range, Spell, SpellType},
         enemy::{Enemy, EnemyDamageEvent},
         player::{AddToInventory, Player, spawn_player},
     },
@@ -21,19 +21,14 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_observer(lightning_hit);
 }
 
-const LIGHTNING_BASE_COOLDOWN: f32 = 3.0;
-const LIGHTNING_BASE_DMG: f32 = 5.0;
-const LIGHTNING_BASE_JUMPS: i32 = 3;
-const LIGHTNING_BASE_RANGE: f32 = 300.0;
-
 #[derive(Component)]
 #[require(
     Spell,
     SpellType::Lightning,
     Damage(5.),
-    Cooldown(Timer::from_seconds(LIGHTNING_BASE_COOLDOWN, TimerMode::Once,)),
-    Jumps(LIGHTNING_BASE_JUMPS),
-    Range(LIGHTNING_BASE_RANGE)
+    Cooldown(Timer::from_seconds(3., TimerMode::Once,)),
+    Jumps(3),
+    Range(300.)
 )]
 pub(crate) struct Lightning;
 
@@ -49,7 +44,7 @@ pub(crate) struct LightningHitEvent {
 }
 
 #[derive(Component)]
-pub(crate) struct Jumps(pub i32);
+pub(crate) struct Jumps(pub u32);
 
 fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
@@ -126,9 +121,6 @@ fn spawn_lightning_bolt(
                 rotation: Quat::from_rotation_z(angle),
                 ..default()
             },
-            Attack,
-            Damage(LIGHTNING_BASE_DMG),
-            SpellType::Lightning,
             LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
         ));
 
