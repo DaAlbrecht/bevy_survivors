@@ -1,18 +1,25 @@
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::{Attack, Cooldown, Damage, Knockback, PlayerProjectile, ProjectileConfig, SpellType},
-    enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent, Speed},
-    player::{Direction, Player, spawn_player},
+    attacks::{Cooldown, ExplosionRadius, ProjectileConfig, Spell, SpellType},
+    enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
+    player::{Player, spawn_player},
 };
 
-const FIREBALL_BASE_COOLDOWN: f32 = 5.0;
-const FIREBALL_BASE_SPEED: f32 = 600.0;
-const FIREBALL_BASE_KNOCKBACK: f32 = 1500.0;
-const FIREBALL_BASE_DMG: f32 = 5.0;
-const EXPLOSION_RADIUS: f32 = 100.0;
-
 #[derive(Component)]
+#[require(
+    Spell,
+    SpellType::Fireball,
+    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
+    ProjectileConfig{
+        speed: 600.,
+        knockback: 1500.,
+        damage: 5.,
+        projectile_count: 1.,
+    },
+    ExplosionRadius(100.),
+    Name::new("Fireball")
+)]
 pub(crate) struct Fireball;
 
 #[derive(Event)]
@@ -33,20 +40,7 @@ pub(crate) fn plugin(app: &mut App) {
 fn spawn_fireball(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
 
-    let fireball = commands
-        .spawn((
-            Attack,
-            Fireball,
-            SpellType::Fireball,
-            Cooldown(Timer::from_seconds(FIREBALL_BASE_COOLDOWN, TimerMode::Once)),
-            ProjectileConfig {
-                speed: FIREBALL_BASE_SPEED,
-                knockback: FIREBALL_BASE_KNOCKBACK,
-                damage: FIREBALL_BASE_DMG,
-            },
-            Name::new("Fireball"),
-        ))
-        .id();
+    let fireball = commands.spawn((Fireball,)).id();
 
     commands.entity(player).add_child(fireball);
 
@@ -89,15 +83,11 @@ fn spawn_fireball_projectile(
                 image: asset_server.load("Fireball.png"),
                 ..default()
             },
-            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
-            Attack,
-            PlayerProjectile,
-            SpellType::Fireball,
-            Speed(config.speed),
-            Knockback(config.knockback),
-            Damage(config.damage),
-            Direction(direction.extend(0.0)),
-            Name::new("FireballProjectile"),
+            config.add_projectile(
+                direction.extend(0.),
+                player_pos.translation,
+                SpellType::Fireball,
+            ),
         ));
     }
 
@@ -108,14 +98,16 @@ fn fireball_hit(
     trigger: Trigger<FireballHitEvent>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     mut commands: Commands,
-) {
+    fireball_q: Query<&ExplosionRadius, With<Fireball>>,
+) -> Result {
     let enemy_entity = trigger.enemy;
-    let projectile_entity = trigger.projectile;
+    let spell_entity = trigger.projectile;
+    let explosion_radius = fireball_q.single()?;
 
     //Deal damage
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy_entity,
-        spell_entity: projectile_entity,
+        spell_entity,
     });
 
     //Deal damage to all enemys in explosion radius
@@ -130,10 +122,10 @@ fn fireball_hit(
                 .truncate()
                 .distance(other_enemy_pos.translation.truncate());
 
-            if distance < EXPLOSION_RADIUS {
+            if distance < explosion_radius.0 {
                 commands.trigger(EnemyDamageEvent {
                     entity_hit: other_enemy,
-                    spell_entity: projectile_entity,
+                    spell_entity,
                 });
             }
         }
@@ -142,8 +134,10 @@ fn fireball_hit(
     //Knockback
     commands.trigger(EnemyKnockbackEvent {
         entity_hit: enemy_entity,
-        spell_entity: projectile_entity,
+        spell_entity,
     });
 
-    commands.entity(projectile_entity).despawn();
+    commands.entity(spell_entity).despawn();
+
+    Ok(())
 }

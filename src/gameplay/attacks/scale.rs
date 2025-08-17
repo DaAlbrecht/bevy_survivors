@@ -3,21 +3,28 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::{
-    attacks::{Attack, Damage, ProjectileConfig, SpellType},
-    enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
-    player::{Direction, Player, spawn_player},
+    attacks::{ProjectileConfig, Spell, SpellType},
+    enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
+    player::{AddToInventory, Player, spawn_player},
 };
 
-use super::{Cooldown, Knockback, PlayerProjectile};
+use super::Cooldown;
 
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 
-const SCALE_BASE_COOLDOWN: f32 = 1.0;
-const SCALE_BASE_SPEED: f32 = 600.0;
-const SCALE_BASE_KNOCKBACK: f32 = 1500.0;
-const SCALE_BASE_DMG: f32 = 5.0;
-
 #[derive(Component)]
+#[require(
+    Spell,
+    SpellType::Scale,
+    Cooldown(Timer::from_seconds(1., TimerMode::Once)),
+    ProjectileConfig{
+        speed: 600.,
+        knockback: 1500.,
+        damage: 5.,
+        projectile_count: 1.,
+    },
+    Name::new("Scale")
+)]
 pub(crate) struct Scale;
 
 #[derive(Event)]
@@ -30,32 +37,16 @@ pub(crate) struct ScaleHitEvent {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, (spawn_scale).after(spawn_player));
+    app.add_systems(Startup, (add_scale_spell).after(spawn_player));
 
     app.add_observer(spawn_scale_projectile);
     app.add_observer(scale_hit);
 }
 
-fn spawn_scale(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
+fn add_scale_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
 
-    let scale = commands
-        .spawn((
-            Attack,
-            Scale,
-            SpellType::Scale,
-            Cooldown(Timer::from_seconds(SCALE_BASE_COOLDOWN, TimerMode::Once)),
-            //Lets us change all projectile stats at one place
-            ProjectileConfig {
-                speed: SCALE_BASE_SPEED,
-                knockback: SCALE_BASE_KNOCKBACK,
-                damage: SCALE_BASE_DMG,
-            },
-            Name::new("Scale"),
-        ))
-        .id();
-
-    commands.entity(player).add_child(scale);
+    commands.spawn((Scale, AddToInventory(player)));
 
     Ok(())
 }
@@ -78,33 +69,25 @@ fn spawn_scale_projectile(
             image: asset_server.load("Bullet.png"),
             ..default()
         },
-        Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
-        Attack,
-        PlayerProjectile,
-        SpellType::Scale,
-        Speed(config.speed),
-        Knockback(config.knockback),
-        Damage(config.damage),
-        Direction(direction),
-        Name::new("ScaleProjectile"),
+        config.add_projectile(direction, player_pos.translation, SpellType::Scale),
     ));
 
     Ok(())
 }
 
 fn scale_hit(trigger: Trigger<ScaleHitEvent>, mut commands: Commands) {
-    let enemy_entity = trigger.enemy;
-    let projectile_entity = trigger.projectile;
+    let enemy = trigger.enemy;
+    let spell_entity = trigger.projectile;
 
     commands.trigger(EnemyDamageEvent {
-        entity_hit: enemy_entity,
-        spell_entity: projectile_entity,
+        entity_hit: enemy,
+        spell_entity,
     });
 
     commands.trigger(EnemyKnockbackEvent {
-        entity_hit: enemy_entity,
-        spell_entity: projectile_entity,
+        entity_hit: enemy,
+        spell_entity,
     });
 
-    commands.entity(projectile_entity).despawn();
+    commands.entity(spell_entity).despawn();
 }

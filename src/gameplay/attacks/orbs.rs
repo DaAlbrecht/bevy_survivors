@@ -4,44 +4,29 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::{
-        Attack, Cooldown, Damage, Knockback, PlayerProjectile, ProjectileConfig, Range,
-        SpellDuration, SpellType,
-    },
-    enemy::Speed,
+    attacks::{Cooldown, ProjectileConfig, Range, Spell, SpellDuration, SpellType},
     player::{AddToInventory, Direction, Player, spawn_player},
 };
 
-const ORB_BASE_COOLDOWN: f32 = 4.0;
-const ORB_BASE_DURATION: f32 = 2.0;
-const ORB_BASE_DAMAGE: f32 = 1.0;
-const ORB_BASE_KNOCKBACK: f32 = 750.0;
-const ORB_BASE_SPEED: f32 = 100.0;
-const ORB_BASE_COUNT: f32 = 5.0;
-const ORB_BASE_RANGE: f32 = 75.0;
-
 #[derive(Component)]
 #[require(
-    Attack,
+    Spell,
     SpellType::Orb,
-    Cooldown(Timer::from_seconds(ORB_BASE_COOLDOWN, TimerMode::Once)),
-    SpellDuration(Timer::from_seconds(ORB_BASE_DURATION, TimerMode::Once)),
-    Range(ORB_BASE_RANGE),
-    OrbCount(ORB_BASE_COUNT),
+    Cooldown(Timer::from_seconds(4., TimerMode::Once)),
+    SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
+    Range(75.),
     ProjectileConfig {
-        speed: ORB_BASE_SPEED,
-        damage: ORB_BASE_DAMAGE,
-        knockback: ORB_BASE_KNOCKBACK,
+        speed: 100.,
+        damage: 1.,
+        knockback: 750.,
+        projectile_count: 5.
     },
+    Name::new("Orb Spell")
 )]
 pub(crate) struct Orb;
 
 #[derive(Component)]
 pub(crate) struct OrbProjectile;
-
-//angular speed
-#[derive(Component)]
-pub(crate) struct OrbSpeed(pub f32);
 
 #[derive(Event)]
 pub(crate) struct OrbAttackEvent;
@@ -52,38 +37,35 @@ pub(crate) struct OrbHitEvent {
     pub projectile: Entity,
 }
 
-#[derive(Component)]
-pub(crate) struct OrbCount(pub f32);
-
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Startup, add_spell.after(spawn_player));
+    app.add_systems(Startup, add_orb_spell.after(spawn_player));
     app.add_systems(Update, (update_orb_direction, orb_lifetime));
-    app.add_observer(fire);
+    app.add_observer(spawn_orb_projectile);
 }
 
-fn add_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
+fn add_orb_spell(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
 
-    commands.spawn((Orb, AddToInventory(player), Name::new("Orb Spell")));
+    commands.spawn((Orb, AddToInventory(player)));
 
     Ok(())
 }
 
-fn fire(
+fn spawn_orb_projectile(
     _trigger: Trigger<OrbAttackEvent>,
     player_q: Query<Entity, With<Player>>,
-    orb_q: Query<(&ProjectileConfig, &Range, &OrbCount), With<Orb>>,
+    orb_q: Query<(&ProjectileConfig, &Range), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let player = player_q.single()?;
-    let (config, radius, count) = orb_q.single()?;
+    let (config, radius) = orb_q.single()?;
 
     let mut pos_x: f32;
     let mut pos_y: f32;
 
-    for n in 1..=count.0 as usize {
-        let angle = (2.0 * PI) * (n as f32 / count.0);
+    for n in 1..=config.projectile_count as usize {
+        let angle = (2.0 * PI) * (n as f32 / config.projectile_count);
         pos_x = f32::cos(angle);
         pos_y = f32::sin(angle);
 
@@ -97,17 +79,9 @@ fn fire(
                     image: asset_server.load("Orb.png"),
                     ..default()
                 },
-                Transform::from_xyz(orb_pos.x, orb_pos.y, 0.0),
-                Attack,
-                PlayerProjectile,
                 OrbProjectile,
-                SpellType::Orb,
                 Range(radius.0),
-                Speed(config.speed),
-                Knockback(config.knockback),
-                Damage(config.damage),
-                Direction(direction),
-                Name::new("OrbProjectile"),
+                config.add_projectile(direction, orb_pos.extend(0.), SpellType::Orb),
             ))
             .id();
 

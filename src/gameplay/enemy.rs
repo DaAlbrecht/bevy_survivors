@@ -232,7 +232,7 @@ fn enemy_pushing(
     move_action: Single<&Action<Move>>,
     mut enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Player>)>,
     time: Res<Time>,
-) -> Result {
+) {
     let push_entity = trigger.event().0;
 
     for (mut enemy_pos, enemy_entity) in &mut enemy_query {
@@ -240,8 +240,6 @@ fn enemy_pushing(
             enemy_pos.translation += move_action.extend(0.0) * time.delta_secs();
         }
     }
-
-    Ok(())
 }
 
 fn attack(
@@ -267,14 +265,16 @@ fn enemy_take_dmg(
     let enemy_entity = trigger.entity_hit;
     let spell_entity = trigger.spell_entity;
 
+    info!("enemy take dmg");
+
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
         if let Ok(spell_damage) = spell_q.get(spell_entity) {
+            info!("spell dmg {}", spell_damage.0);
             health.0 -= spell_damage.0;
             if health.0 <= 0.0 {
                 commands.entity(enemy_entity).despawn();
                 commands.trigger(EnemyDeathEvent(*transform));
             }
-            // commands.entity(spell_entity).despawn();
         }
     }
 }

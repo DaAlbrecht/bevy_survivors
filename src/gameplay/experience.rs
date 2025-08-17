@@ -43,7 +43,7 @@ fn spawn_xp_gem(
     trigger: Trigger<EnemyDeathEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-) -> Result {
+) {
     let enemy_pos = trigger.0.translation;
 
     commands.spawn((
@@ -56,8 +56,6 @@ fn spawn_xp_gem(
         XpGem,
         Speed(200.),
     ));
-
-    Ok(())
 }
 
 fn collect_xp_gem(

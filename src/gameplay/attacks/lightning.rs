@@ -3,9 +3,9 @@ use bevy_seedling::sample::SamplePlayer;
 
 use crate::{
     gameplay::{
-        attacks::{Attack, Cooldown, Damage, Range, SpellType},
+        attacks::{Attack, Cooldown, Damage, Range, Spell, SpellType},
         enemy::{Enemy, EnemyDamageEvent},
-        player::{Player, spawn_player},
+        player::{AddToInventory, Player, spawn_player},
     },
     screens::Screen,
 };
@@ -27,6 +27,13 @@ const LIGHTNING_BASE_JUMPS: i32 = 3;
 const LIGHTNING_BASE_RANGE: f32 = 300.0;
 
 #[derive(Component)]
+#[require(
+    Spell,
+    SpellType::Lightning,
+    Cooldown(Timer::from_seconds(LIGHTNING_BASE_COOLDOWN, TimerMode::Once,)),
+    Jumps(LIGHTNING_BASE_JUMPS),
+    Range(LIGHTNING_BASE_RANGE)
+)]
 pub(crate) struct Lightning;
 
 #[derive(Event)]
@@ -47,22 +54,7 @@ pub(crate) struct Jumps(pub i32);
 fn spawn_lightning(mut commands: Commands, player_q: Query<Entity, With<Player>>) -> Result {
     let player = player_q.single()?;
 
-    let lightning = commands
-        .spawn((
-            Attack,
-            Lightning,
-            SpellType::Lightning,
-            Cooldown(Timer::from_seconds(
-                LIGHTNING_BASE_COOLDOWN,
-                TimerMode::Once,
-            )),
-            Damage(LIGHTNING_BASE_DMG),
-            Jumps(LIGHTNING_BASE_JUMPS),
-            Range(LIGHTNING_BASE_RANGE),
-        ))
-        .id();
-
-    commands.entity(player).add_child(lightning);
+    commands.spawn((Lightning, AddToInventory(player)));
 
     Ok(())
 }
@@ -72,11 +64,11 @@ fn spawn_lightning_bolt(
     mut commands: Commands,
     player_q: Query<(&Transform, Entity), (With<Player>, Without<Enemy>)>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<Player>)>,
-    lightning_q: Query<(&Damage, &Jumps, &Range), With<Lightning>>,
+    lightning_q: Query<(&Jumps, &Range), With<Lightning>>,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let (player_pos, player_entity) = player_q.single()?;
-    let (lightning_dmg, lightning_jumps, lightning_range) = lightning_q.single()?;
+    let (lightning_jumps, lightning_range) = lightning_q.single()?;
 
     let mut current_source_pos = player_pos;
     let mut current_source_entity: Option<Entity> = Some(player_entity);
@@ -123,6 +115,7 @@ fn spawn_lightning_bolt(
 
         let lightning_bolt = commands
             .spawn((
+                Name::new("LightningBolt"),
                 Sprite {
                     image: asset_server.load("Lightning.png"),
                     custom_size: Some(Vec2::new(length, 13.0)),
@@ -135,10 +128,9 @@ fn spawn_lightning_bolt(
                     ..default()
                 },
                 Attack,
+                Damage(LIGHTNING_BASE_DMG),
                 SpellType::Lightning,
-                Damage(lightning_dmg.0),
                 LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
-                Name::new("LightningBolt"),
             ))
             .id();
 
@@ -173,11 +165,11 @@ fn cleanup_lightning_bolt(
 }
 
 fn lightning_hit(trigger: Trigger<LightningHitEvent>, mut commands: Commands) {
-    let enemy_entity = trigger.enemy;
-    let lightning_entity = trigger.lightning_bolt;
+    let enemy = trigger.enemy;
+    let spell_entity = trigger.lightning_bolt;
 
     commands.trigger(EnemyDamageEvent {
-        entity_hit: enemy_entity,
-        spell_entity: lightning_entity,
+        entity_hit: enemy,
+        spell_entity,
     });
 }

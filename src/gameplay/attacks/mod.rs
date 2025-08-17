@@ -10,7 +10,7 @@ use crate::{
             scale::{ScaleAttackEvent, ScaleHitEvent},
         },
         enemy::{Enemy, Speed},
-        player::{Direction, Player},
+        player::{Direction, Inventory, Player},
     },
     screens::Screen,
 };
@@ -35,6 +35,9 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(FixedUpdate, move_projectile);
 }
 
+#[derive(Component, Default)]
+pub(crate) struct Attack;
+
 #[derive(Component)]
 pub(crate) struct PlayerProjectile;
 
@@ -50,8 +53,8 @@ pub(crate) struct Damage(pub f32);
 #[derive(Component)]
 pub(crate) struct Range(pub f32);
 
-#[derive(Component, Default)]
-pub(crate) struct Attack;
+#[derive(Component)]
+pub(crate) struct ExplosionRadius(pub f32);
 
 #[derive(Component)]
 pub(crate) struct SpellDuration(pub Timer);
@@ -64,15 +67,55 @@ pub(crate) enum SpellType {
     Orb,
 }
 
+#[derive(Component, Default)]
+pub(crate) struct Spell;
+
 #[derive(Component)]
 pub(crate) struct ProjectileConfig {
     speed: f32,
     knockback: f32,
     damage: f32,
+    projectile_count: f32,
 }
 
-fn attack(mut attack_q: Query<(&mut Cooldown, &SpellType), With<Attack>>, mut commands: Commands) {
-    for (mut cooldown, &spell_type) in &mut attack_q {
+impl ProjectileConfig {
+    pub fn add_projectile(
+        &self,
+        direction: Vec3,
+        translation: Vec3,
+        spell_type: SpellType,
+    ) -> impl Bundle {
+        let name = match spell_type {
+            SpellType::Scale => "ScaleProjectile",
+            SpellType::Fireball => "FireballProjectile",
+            SpellType::Lightning => "LightningProjectile",
+            SpellType::Orb => "OrbProjectile",
+        };
+
+        (
+            Name::new(name),
+            Transform::from_xyz(translation.x, translation.y, 0.),
+            Direction(direction),
+            Damage(self.damage),
+            Speed(self.speed),
+            PlayerProjectile,
+            Knockback(self.knockback),
+            Attack,
+            spell_type,
+        )
+    }
+}
+
+fn attack(
+    player: Query<Entity, With<Player>>,
+    inventory: Query<&Inventory>,
+    mut spells: Query<(&mut Cooldown, &SpellType), With<Spell>>,
+    mut commands: Commands,
+) -> Result {
+    let player = player.single()?;
+    for inventory_slot in inventory.iter_descendants(player) {
+        let (mut cooldown, spell_type) = spells.get_mut(inventory_slot)?;
+
         if cooldown.0.finished() {
             match spell_type {
                 SpellType::Scale => commands.trigger(ScaleAttackEvent),
@@ -83,6 +126,8 @@ fn attack(mut attack_q: Query<(&mut Cooldown, &SpellType), With<Attack>>, mut co
             cooldown.0.reset();
         }
     }
+
+    Ok(())
 }
 
 fn move_projectile(
@@ -108,6 +153,7 @@ fn projectile_hit_detection(
             if (projectile_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
                 <= ENEMY_SIZE / 2.0
             {
+                info!("hitting: {:?}", spell_type);
                 trigger_hit_event(&mut commands, spell_type, projectile_entity, enemy_entity);
             }
         }
@@ -116,8 +162,8 @@ fn projectile_hit_detection(
 
 fn update_attack_timers(
     time: Res<Time>,
-    mut cooldowns: Query<&mut Cooldown, With<Attack>>,
-    mut durations: Query<&mut SpellDuration, With<Attack>>,
+    mut cooldowns: Query<&mut Cooldown, With<Spell>>,
+    mut durations: Query<&mut SpellDuration, With<Spell>>,
 ) {
     for mut cooldown in &mut cooldowns {
         cooldown.0.tick(time.delta());
