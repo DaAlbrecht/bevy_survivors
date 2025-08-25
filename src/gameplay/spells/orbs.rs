@@ -4,12 +4,12 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::{
+    enemy::Speed,
+    player::{Direction, Player},
+    spells::{
         CastSpell, Cooldown, Damage, Knockback, PlayerProjectile, ProjectileCount, Range, Spell,
         SpellDuration, SpellType,
     },
-    enemy::Speed,
-    player::{Direction, Player},
 };
 
 #[derive(Component)]

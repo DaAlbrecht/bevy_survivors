@@ -10,15 +10,15 @@ use crate::{
     AppSystem,
     gameplay::{
         Health,
-        attacks::{CastSpell, Spell},
         player::{Direction, Move, PlayerHitEvent},
+        spells::{CastSpell, Spell},
     },
     screens::Screen,
 };
 
 use super::player::Player;
 
-use super::attacks::{Knockback, PlayerProjectile};
+use super::spells::{Knockback, PlayerProjectile};
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(

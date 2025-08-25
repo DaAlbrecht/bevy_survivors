@@ -4,14 +4,14 @@ use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
         PickUpSpell,
-        attacks::{
+        enemy::{Enemy, Speed},
+        player::{AddToInventory, Direction, Inventory, Player},
+        spells::{
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
             lightning::{Lightning, LightningAttackEvent},
             orbs::{Orb, OrbAttackEvent},
             scale::{Scale, ScaleAttackEvent, ScaleHitEvent},
         },
-        enemy::{Enemy, Speed},
-        player::{AddToInventory, Direction, Inventory, Player},
     },
     screens::Screen,
 };

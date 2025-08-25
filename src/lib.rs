@@ -5,7 +5,7 @@ use bevy_seedling::prelude::*;
 use gameplay::player::Player;
 use screens::Screen;
 
-use crate::gameplay::{attacks, enemy, experience, healthbar, player};
+use crate::gameplay::{enemy, experience, healthbar, player, spells};
 
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -40,7 +40,7 @@ pub fn plugin(app: &mut App) {
         player::plugin,
         experience::plugin,
         healthbar::plugin,
-        attacks::plugin,
+        spells::plugin,
     ));
 
     #[cfg(feature = "dev")]

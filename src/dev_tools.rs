@@ -12,8 +12,8 @@ use bevy_inspector_egui::{
 use crate::{
     gameplay::{
         PickUpSpell,
-        attacks::{Spell, SpellType},
         experience::LevelUpEvent,
+        spells::{Spell, SpellType},
     },
     screens::Screen,
 };

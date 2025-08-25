@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    attacks::{
-        CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
-    },
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player},
+    spells::{
+        CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
+    },
 };
 
 #[derive(Component)]

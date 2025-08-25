@@ -3,9 +3,9 @@ use bevy_seedling::sample::SamplePlayer;
 
 use crate::{
     gameplay::{
-        attacks::{Cooldown, Damage, Range, Spell, SpellType},
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
+        spells::{Cooldown, Damage, Range, Spell, SpellType},
     },
     screens::Screen,
 };

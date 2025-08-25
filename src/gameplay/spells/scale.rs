@@ -3,9 +3,9 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::{
-    attacks::{CastSpell, Damage, Knockback, PlayerProjectile, Spell, SpellType},
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player},
+    spells::{CastSpell, Damage, Knockback, PlayerProjectile, Spell, SpellType},
 };
 
 use super::Cooldown;
