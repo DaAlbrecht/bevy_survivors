@@ -36,10 +36,9 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(FixedUpdate, move_projectile);
 
     app.add_observer(add_spell_to_inventory);
-}
 
-#[derive(Component, Default)]
-pub(crate) struct Attack;
+    app.register_type::<SpellType>();
+}
 
 #[derive(Component)]
 pub(crate) struct PlayerProjectile;
@@ -65,12 +64,21 @@ pub(crate) struct SpellDuration(pub Timer);
 #[derive(Component)]
 pub(crate) struct ProjectileCount(pub f32);
 
-#[derive(Component, Clone, Copy, PartialEq, Debug)]
+#[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum SpellType {
     Scale,
     Fireball,
     Lightning,
     Orb,
+}
+
+impl SpellType {
+    pub const ALL: [SpellType; 4] = [
+        SpellType::Scale,
+        SpellType::Fireball,
+        SpellType::Lightning,
+        SpellType::Orb,
+    ];
 }
 
 #[derive(Component, Default)]
