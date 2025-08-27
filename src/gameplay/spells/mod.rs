@@ -95,8 +95,17 @@ pub(crate) struct SpellProjectiles(Vec<Entity>);
 pub(crate) fn add_spell_to_inventory(
     trigger: Trigger<PickUpSpell>,
     mut commands: Commands,
-    player: Query<Entity, With<Player>>,
+    player: Query<Entity, (With<Player>, Without<Spell>)>,
+    mut owned_spells: Query<&SpellType, With<Spell>>,
 ) -> Result {
+    for owned_spell in owned_spells {
+        if *owned_spell == trigger.spell_type {
+            //TODO: upgrade spell instead
+            info!("spell_type already owned {:?}", owned_spell);
+            return Ok(());
+        }
+    }
+
     let player = player.single()?;
     let mut e = commands.spawn(AddToInventory(player));
 
