@@ -5,7 +5,7 @@ use bevy::{
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
-use crate::gameplay::spells::SpellType;
+use crate::gameplay::{PickUpSpell, spells::SpellType};
 
 use super::Screen;
 
@@ -51,7 +51,10 @@ fn spawn_level_up_screen(
                     SpellType::Orb => asset_server.load("Orb_icon.png"),
                 };
                 parent
-                    .spawn(item_choice_widget(border_image.clone(), spell_image))
+                    .spawn((
+                        item_choice_widget(border_image.clone(), spell_image),
+                        SpellType::ALL[spell_index],
+                    ))
                     .observe(upgrade);
             }
         });
@@ -89,7 +92,23 @@ fn item_choice_widget(border_image: Handle<Image>, spell_image: Handle<Image>) -
     )
 }
 
-fn upgrade(_: Trigger<Pointer<Click>>, mut next_state: ResMut<NextState<Screen>>) {
-    info!("upgrade");
+fn upgrade(
+    trigger: Trigger<Pointer<Click>>,
+    mut commands: Commands,
+    mut next_state: ResMut<NextState<Screen>>,
+    spell_types: Query<&SpellType>,
+) {
+    let selected_spell = trigger.target();
+
+    let pickup_event = PickUpSpell {
+        spell_type: *spell_types
+            .get(selected_spell)
+            .expect("We should always find the SpellType the player chose"),
+    };
+
+    // Pickup spell
+    commands.trigger(pickup_event);
+
+    // Transition back to the gameplay
     next_state.set(Screen::Gameplay);
 }
