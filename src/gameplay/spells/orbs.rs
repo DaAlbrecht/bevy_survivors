@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    enemy::Speed,
+    enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player},
     spells::{
         CastSpell, Cooldown, Damage, Knockback, PlayerProjectile, ProjectileCount, Range, Spell,
@@ -22,7 +22,7 @@ use crate::gameplay::{
     Speed(100.),
     Damage(1.),
     Knockback(750.),
-    ProjectileCount(5.),
+    ProjectileCount(1.),
     Name::new("Orb Spell")
 )]
 pub(crate) struct Orb;
@@ -42,6 +42,7 @@ pub(crate) struct OrbHitEvent {
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(Update, (update_orb_direction, orb_lifetime));
     app.add_observer(spawn_orb_projectile);
+    app.add_observer(orb_hit);
 }
 
 fn spawn_orb_projectile(
@@ -79,7 +80,7 @@ fn spawn_orb_projectile(
                 Transform::from_xyz(orb_pos.x, orb_pos.y, 0.),
                 Direction(direction),
                 PlayerProjectile,
-                SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
+                SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
             ))
             .id();
 
@@ -112,6 +113,30 @@ fn update_orb_direction(
 
         direction.0 = Vec3::new(-pos_vec.y, pos_vec.x, 0.0).normalize();
     }
+}
+
+fn orb_hit(
+    trigger: Trigger<OrbHitEvent>,
+    mut commands: Commands,
+    orb_dmg: Query<&Damage, With<Orb>>,
+) -> Result {
+    let enemy = trigger.enemy;
+    let spell_entity = trigger.projectile;
+    let dmg = orb_dmg.single()?.0;
+
+    info!("Orb hit");
+
+    // commands.trigger(EnemyDamageEvent {
+    //     entity_hit: enemy,
+    //     dmg,
+    // });
+
+    // commands.trigger(EnemyKnockbackEvent {
+    //     entity_hit: enemy,
+    //     spell_entity,
+    // });
+
+    Ok(())
 }
 
 fn orb_lifetime(

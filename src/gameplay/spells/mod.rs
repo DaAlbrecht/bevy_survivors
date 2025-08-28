@@ -9,7 +9,7 @@ use crate::{
         spells::{
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
             lightning::{Lightning, LightningAttackEvent},
-            orbs::{Orb, OrbAttackEvent},
+            orbs::{Orb, OrbAttackEvent, OrbHitEvent},
             scale::{Scale, ScaleAttackEvent, ScaleHitEvent},
         },
     },
@@ -220,6 +220,7 @@ pub(crate) fn trigger_hit_event(
     match spell_type {
         SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
         SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
-        _ => {}
+        SpellType::Orb => commands.trigger(OrbHitEvent { enemy, projectile }),
+        _ => (),
     }
 }
