@@ -200,7 +200,7 @@ fn projectile_hit_detection(
 fn update_attack_timers(
     time: Res<Time>,
     mut cooldowns: Query<&mut Cooldown, With<Spell>>,
-    mut durations: Query<&mut SpellDuration, With<Spell>>,
+    mut durations: Query<&mut SpellDuration, With<PlayerProjectile>>,
 ) {
     for mut cooldown in &mut cooldowns {
         cooldown.0.tick(time.delta());

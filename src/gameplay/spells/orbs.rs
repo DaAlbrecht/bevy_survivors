@@ -17,7 +17,7 @@ use crate::gameplay::{
     Spell,
     SpellType::Orb,
     Cooldown(Timer::from_seconds(4., TimerMode::Once)),
-    SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
+    // SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
     Range(75.),
     Speed(100.),
     Damage(1.),
@@ -79,6 +79,7 @@ fn spawn_orb_projectile(
                 Transform::from_xyz(orb_pos.x, orb_pos.y, 0.),
                 Direction(direction),
                 PlayerProjectile,
+                SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
             ))
             .id();
 
@@ -115,15 +116,11 @@ fn update_orb_direction(
 
 fn orb_lifetime(
     mut commands: Commands,
-    mut orb_q: Query<&mut SpellDuration, With<Orb>>,
-    projectile_q: Query<Entity, With<OrbProjectile>>,
+    mut orb_q: Query<(Entity, &mut SpellDuration), With<OrbProjectile>>,
 ) {
-    for mut orb_duration in &mut orb_q {
-        if orb_duration.0.finished() {
-            for orb in projectile_q {
-                commands.entity(orb).despawn();
-            }
-            orb_duration.0.reset();
+    for (orb, duration) in &mut orb_q {
+        if duration.0.finished() {
+            commands.entity(orb).despawn();
         }
     }
 }

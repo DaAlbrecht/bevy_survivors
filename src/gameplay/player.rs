@@ -100,7 +100,7 @@ pub(crate) fn spawn_player(
 
     //Default player has Scale attack
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Scale,
+        spell_type: crate::gameplay::spells::SpellType::Orb,
     });
 }
 
