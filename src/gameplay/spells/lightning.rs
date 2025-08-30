@@ -2,6 +2,7 @@ use bevy::{platform::collections::HashSet, prelude::*, sprite::Anchor};
 use bevy_seedling::sample::SamplePlayer;
 
 use crate::{
+    audio::SfxPool,
     gameplay::{
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
@@ -114,7 +115,10 @@ fn spawn_lightning_bolt(
             LightningVisualTimer(Timer::from_seconds(0.1, TimerMode::Once)),
         ));
 
-        commands.spawn(SamplePlayer::new(asset_server.load("sounds/pew.wav")));
+        commands.spawn((
+            SamplePlayer::new(asset_server.load("sounds/pew.wav")),
+            SfxPool,
+        ));
 
         commands.trigger(LightningHitEvent { enemy });
 

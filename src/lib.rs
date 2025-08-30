@@ -7,11 +7,12 @@ use screens::Screen;
 
 use crate::gameplay::{enemy, experience, healthbar, player, spells};
 
+mod audio;
 #[cfg(feature = "dev")]
 mod dev_tools;
 mod gameplay;
 mod screens;
-pub mod widgets;
+mod widgets;
 
 pub fn plugin(app: &mut App) {
     app.configure_sets(Update, (AppSystem::RecordInput, AppSystem::Update).chain());
@@ -41,6 +42,7 @@ pub fn plugin(app: &mut App) {
         experience::plugin,
         healthbar::plugin,
         spells::plugin,
+        audio::plugin,
     ));
 
     #[cfg(feature = "dev")]
