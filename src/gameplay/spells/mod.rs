@@ -92,11 +92,14 @@ pub(crate) struct CastSpell(pub Entity);
 #[relationship_target(relationship = CastSpell, linked_spawn)]
 pub(crate) struct SpellProjectiles(Vec<Entity>);
 
+#[derive(Component, Default)]
+pub(crate) struct Orbiting;
+
 pub(crate) fn add_spell_to_inventory(
     trigger: Trigger<PickUpSpell>,
     mut commands: Commands,
     player: Query<Entity, (With<Player>, Without<Spell>)>,
-    mut owned_spells: Query<&SpellType, With<Spell>>,
+    owned_spells: Query<&SpellType, With<Spell>>,
 ) -> Result {
     for owned_spell in owned_spells {
         if *owned_spell == trigger.spell_type {
@@ -107,6 +110,7 @@ pub(crate) fn add_spell_to_inventory(
     }
 
     let player = player.single()?;
+    //Get Inventory of Player
     let mut e = commands.spawn(AddToInventory(player));
 
     match trigger.spell_type {
@@ -171,6 +175,8 @@ fn move_projectile(
 
 fn projectile_hit_detection(
     spells: Query<(Entity, &SpellType), With<Spell>>,
+    orbiting_q: Query<&Orbiting>,
+    player_transform: Query<&Transform, With<Player>>,
     projectiles: Query<&SpellProjectiles>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
     projectile_transform: Query<&Transform, With<PlayerProjectile>>,
@@ -181,12 +187,18 @@ fn projectile_hit_detection(
         // Get each fired projectile for this spell
         for projectile in projectiles.iter_descendants(spell) {
             // Get the position of this particular projectile
-            let projectile_pos = projectile_transform.get(projectile)?;
+            let mut projectile_pos = projectile_transform.get(projectile)?.translation;
+
+            // If projectile is orbiting the player get gloabl pos
+            if orbiting_q.get(spell).is_ok() {
+                let player_pos = player_transform.single()?;
+                projectile_pos += player_pos.translation;
+            }
 
             // Loop over all the positions of the enemies and check if one matches the position of
             // the projectile.
             for (&enemy_pos, enemy_entity) in &enemy_q {
-                if (projectile_pos.translation.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
+                if (projectile_pos.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
                     <= ENEMY_SIZE / 2.0
                 {
                     trigger_hit_event(&mut commands, spell_type, projectile, enemy_entity);

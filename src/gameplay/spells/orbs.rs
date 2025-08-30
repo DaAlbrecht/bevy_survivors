@@ -7,8 +7,8 @@ use crate::gameplay::{
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player},
     spells::{
-        CastSpell, Cooldown, Damage, Knockback, PlayerProjectile, ProjectileCount, Range, Spell,
-        SpellDuration, SpellType,
+        CastSpell, Cooldown, Damage, Knockback, Orbiting, PlayerProjectile, ProjectileCount, Range,
+        Spell, SpellDuration, SpellType,
     },
 };
 
@@ -17,12 +17,13 @@ use crate::gameplay::{
     Spell,
     SpellType::Orb,
     Cooldown(Timer::from_seconds(4., TimerMode::Once)),
+    Orbiting,
     // SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
     Range(75.),
     Speed(100.),
     Damage(1.),
     Knockback(750.),
-    ProjectileCount(1.),
+    ProjectileCount(3.),
     Name::new("Orb Spell")
 )]
 pub(crate) struct Orb;
@@ -112,6 +113,8 @@ fn update_orb_direction(
         orb_pos.translation = pos_vec.extend(0.0);
 
         direction.0 = Vec3::new(-pos_vec.y, pos_vec.x, 0.0).normalize();
+
+        // info!("Transfrom: {:?}", orb_pos);
     }
 }
 
@@ -126,15 +129,15 @@ fn orb_hit(
 
     info!("Orb hit");
 
-    // commands.trigger(EnemyDamageEvent {
-    //     entity_hit: enemy,
-    //     dmg,
-    // });
+    commands.trigger(EnemyDamageEvent {
+        entity_hit: enemy,
+        dmg,
+    });
 
-    // commands.trigger(EnemyKnockbackEvent {
-    //     entity_hit: enemy,
-    //     spell_entity,
-    // });
+    commands.trigger(EnemyKnockbackEvent {
+        entity_hit: enemy,
+        spell_entity,
+    });
 
     Ok(())
 }
