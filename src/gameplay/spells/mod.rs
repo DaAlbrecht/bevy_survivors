@@ -11,6 +11,7 @@ use crate::{
             lightning::{Lightning, LightningAttackEvent},
             orbs::{Orb, OrbAttackEvent, OrbHitEvent},
             scale::{Scale, ScaleAttackEvent, ScaleHitEvent},
+            thorn::{Thorn, ThornAttackEvent},
         },
     },
     screens::Screen,
@@ -20,6 +21,7 @@ pub mod fireball;
 pub mod lightning;
 pub mod orbs;
 pub mod scale;
+pub mod thorn;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -27,6 +29,7 @@ pub(crate) fn plugin(app: &mut App) {
         fireball::plugin,
         lightning::plugin,
         orbs::plugin,
+        thorn::plugin,
     ));
 
     app.add_systems(
@@ -64,20 +67,25 @@ pub(crate) struct SpellDuration(pub Timer);
 #[derive(Component)]
 pub(crate) struct ProjectileCount(pub f32);
 
+#[derive(Component)]
+pub(crate) struct Halt;
+
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum SpellType {
     Scale,
     Fireball,
     Lightning,
     Orb,
+    Thorn,
 }
 
 impl SpellType {
-    pub const ALL: [SpellType; 4] = [
+    pub const ALL: [SpellType; 5] = [
         SpellType::Scale,
         SpellType::Fireball,
         SpellType::Lightning,
         SpellType::Orb,
+        SpellType::Thorn,
     ];
 }
 
@@ -126,6 +134,9 @@ pub(crate) fn add_spell_to_inventory(
         SpellType::Orb => {
             e.insert(Orb);
         }
+        SpellType::Thorn => {
+            e.insert(Thorn);
+        }
     }
 
     Ok(())
@@ -147,6 +158,7 @@ fn attack(
                 SpellType::Fireball => commands.trigger(FireballAttackEvent),
                 SpellType::Lightning => commands.trigger(LightningAttackEvent),
                 SpellType::Orb => commands.trigger(OrbAttackEvent),
+                SpellType::Thorn => commands.trigger(ThornAttackEvent),
             }
             cooldown.0.reset();
         }
@@ -158,14 +170,18 @@ fn attack(
 fn move_projectile(
     spells: Query<(Entity, &Speed), With<Spell>>,
     projectiles: Query<&SpellProjectiles>,
-    mut projectile_q: Query<(&mut Transform, &Direction), With<PlayerProjectile>>,
+    mut projectile_q: Query<(&mut Transform, &Direction), (With<PlayerProjectile>, Without<Halt>)>,
     time: Res<Time>,
 ) -> Result {
     // Loop over all types of spells
     for (spell, speed) in &spells {
         // Iterate over each projectile for this given spell type
+
         for projectile in projectiles.iter_descendants(spell) {
-            let (mut bullet_pos, bullet_direction) = projectile_q.get_mut(projectile)?;
+            let Ok((mut bullet_pos, bullet_direction)) = projectile_q.get_mut(projectile) else {
+                return Ok(());
+            };
+
             let movement = bullet_direction.0 * speed.0 * time.delta_secs();
             bullet_pos.translation += movement;
         }

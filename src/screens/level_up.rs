@@ -49,6 +49,7 @@ fn spawn_level_up_screen(
                     SpellType::Fireball => asset_server.load("Fireball_icon.png"),
                     SpellType::Lightning => asset_server.load("Lightning_icon.png"),
                     SpellType::Orb => asset_server.load("Orb_icon.png"),
+                    SpellType::Thorn => asset_server.load("Orb_icon.png"),
                 };
                 parent
                     .spawn((
