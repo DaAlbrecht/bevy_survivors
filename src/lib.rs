@@ -5,8 +5,6 @@ use bevy_seedling::prelude::*;
 use gameplay::player::Player;
 use screens::Screen;
 
-use crate::gameplay::{enemy, experience, healthbar, player, spells};
-
 mod audio;
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -36,14 +34,7 @@ pub fn plugin(app: &mut App) {
         SeedlingPlugin::default(),
     ));
 
-    app.add_plugins((
-        enemy::plugin,
-        player::plugin,
-        experience::plugin,
-        healthbar::plugin,
-        spells::plugin,
-        audio::plugin,
-    ));
+    app.add_plugins((gameplay::plugin, audio::plugin));
 
     #[cfg(feature = "dev")]
     app.add_plugins(dev_tools::plugin);
