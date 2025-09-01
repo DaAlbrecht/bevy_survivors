@@ -35,6 +35,7 @@ fn initialize_audio(mut master: Single<&mut VolumeNode, With<MainBus>>, mut comm
         SamplerPool(MusicPool),
         VolumeNode {
             volume: DEFAULT_POOL_VOLUME,
+            ..Default::default()
         },
     ));
 
@@ -44,6 +45,7 @@ fn initialize_audio(mut master: Single<&mut VolumeNode, With<MainBus>>, mut comm
         sample_effects![(SpatialBasicNode::default(), SpatialScale(Vec3::splat(2.0)))],
         VolumeNode {
             volume: DEFAULT_POOL_VOLUME,
+            ..Default::default()
         },
     ));
 
@@ -52,6 +54,7 @@ fn initialize_audio(mut master: Single<&mut VolumeNode, With<MainBus>>, mut comm
         SamplerPool(SfxPool),
         VolumeNode {
             volume: DEFAULT_POOL_VOLUME,
+            ..Default::default()
         },
     ));
 }

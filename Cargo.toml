@@ -36,6 +36,7 @@ bevy = { version = "0.16", default-features = false, features = [
     "webgl2",
     "x11",
 ] }
+
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
 log = { version = "0.4", features = [
     "max_level_debug",
@@ -46,14 +47,14 @@ tracing = { version = "0.1", features = [
     "release_max_level_warn",
 ] }
 
-bevy_rand = { version = "0.10", features = ["wyrand"] }
-rand_core = "0.6"
-rand = "0.8"
+bevy_rand = { version = "0.11", features = ["wyrand"] }
+rand_core = "0.9"
+rand = "0.9"
 
 leafwing-input-manager = "0.17.0"
 bevy-inspector-egui = "0.33.1"
-bevy_enhanced_input = "0.16.0"
-bevy_seedling = "0.4"
+bevy_enhanced_input = "0.18.1"
+bevy_seedling = "0.5"
 
 [features]
 
