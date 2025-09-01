@@ -1,7 +1,4 @@
-use bevy::{
-    prelude::*,
-    ui::Val::{Percent, Px},
-};
+use bevy::prelude::*;
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
@@ -24,40 +21,50 @@ fn spawn_level_up_screen(
 
     commands
         .spawn((
-            Name::new("LevelUp"),
+            Name::new("LevelUpRoot"),
             Node {
                 position_type: PositionType::Absolute,
-                width: Percent(100.0),
-                height: Percent(30.0),
-                align_items: AlignItems::Center,
-                align_self: AlignSelf::Center,
+                width: Val::Percent(100.0),
+                height: Val::Percent(80.0),
                 justify_content: JustifyContent::Center,
-                flex_direction: FlexDirection::Row,
-                column_gap: Percent(10.0),
-                padding: UiRect::new(Px(50.0), Px(50.0), Px(50.0), Px(50.0)),
+                align_items: AlignItems::Center,
                 ..default()
             },
+            BackgroundColor(Color::linear_rgba(0.012, 0.011, 0.011, 1.)),
             StateScoped(Screen::LevelUp),
         ))
         .with_children(|parent| {
-            for _ in 0..NUMBER_OF_ITEM_CHOICES {
-                let spell_index = rng.gen_range(0..SpellType::ALL.len());
+            parent
+                .spawn((
+                    Name::new("LevelUp"),
+                    Node {
+                        position_type: PositionType::Relative,
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(30.0),
+                        column_gap: Val::Percent(10.0),
+                        padding: UiRect::all(Val::Px(50.0)),
+                        ..default()
+                    },
+                ))
+                .with_children(|parent| {
+                    for _ in 0..NUMBER_OF_ITEM_CHOICES {
+                        let spell_index = rng.gen_range(0..SpellType::ALL.len());
 
-                let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
-                    //TODO: use Scale icon
-                    SpellType::Scale => asset_server.load("Fireball_icon.png"),
-                    SpellType::Fireball => asset_server.load("Fireball_icon.png"),
-                    SpellType::Lightning => asset_server.load("Lightning_icon.png"),
-                    SpellType::Orb => asset_server.load("Orb_icon.png"),
-                    SpellType::Thorn => asset_server.load("Orb_icon.png"),
-                };
-                parent
-                    .spawn((
-                        item_choice_widget(border_image.clone(), spell_image),
-                        SpellType::ALL[spell_index],
-                    ))
-                    .observe(upgrade);
-            }
+                        let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
+                            SpellType::Scale => asset_server.load("Bullet.png"),
+                            SpellType::Fireball => asset_server.load("Fireball_icon.png"),
+                            SpellType::Lightning => asset_server.load("Lightning_icon.png"),
+                            SpellType::Orb => asset_server.load("Orb_icon.png"),
+                            SpellType::Thorn => asset_server.load("Thorn_base.png"),
+                        };
+                        parent
+                            .spawn((
+                                item_choice_widget(border_image.clone(), spell_image),
+                                SpellType::ALL[spell_index],
+                            ))
+                            .observe(upgrade);
+                    }
+                });
         });
 }
 
