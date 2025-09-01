@@ -25,7 +25,7 @@ fn spawn_level_up_screen(
             Node {
                 position_type: PositionType::Absolute,
                 width: Val::Percent(100.0),
-                height: Val::Percent(80.0),
+                height: Val::Percent(100.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
