@@ -13,7 +13,10 @@ mod screens;
 mod widgets;
 
 pub fn plugin(app: &mut App) {
-    app.configure_sets(Update, (AppSystem::RecordInput, AppSystem::Update).chain());
+    app.configure_sets(
+        Update,
+        (AppSystems::RecordInput, AppSystems::Update).chain(),
+    );
 
     app.add_systems(Startup, spawn_camera);
 
@@ -52,7 +55,7 @@ const CAMERA_DECAY_RATE: f32 = 2.;
 
 /// High-level groupings of systems for the app in the `Update` schedule.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum AppSystem {
+enum AppSystems {
     /// Record player input.
     RecordInput,
     /// Do everything else

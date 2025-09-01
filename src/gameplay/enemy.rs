@@ -7,7 +7,7 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSystem,
+    AppSystems,
     gameplay::{
         Health,
         player::{Direction, Move, PlayerHitEvent},
@@ -26,7 +26,7 @@ pub(crate) fn plugin(app: &mut App) {
         spawn_enemy
             .run_if(on_timer(Duration::from_millis(2000)))
             .run_if(in_state(Screen::Gameplay))
-            .in_set(AppSystem::Update),
+            .in_set(AppSystems::Update),
     );
     app.add_systems(
         Update,
@@ -105,8 +105,8 @@ fn spawn_enemy(
 ) -> Result {
     let player_pos = player_query.single()?;
 
-    let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
-    let random_radius: f32 = rng.gen_range(0.0..10.);
+    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
+    let random_radius: f32 = rng.random_range(0.0..10.);
     let offset_x = (SPAWN_RADIUS + random_radius) * f32::sin(random_angle);
     let offset_y = (SPAWN_RADIUS + random_radius) * f32::cos(random_angle);
 

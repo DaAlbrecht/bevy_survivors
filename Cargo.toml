@@ -55,6 +55,7 @@ leafwing-input-manager = "0.17.0"
 bevy-inspector-egui = "0.33.1"
 bevy_enhanced_input = "0.18.1"
 bevy_seedling = "0.5"
+bevy_ecs_tilemap = "0.16.0"
 
 [features]
 

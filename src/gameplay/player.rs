@@ -5,7 +5,7 @@ use bevy_enhanced_input::action::Action;
 use bevy_enhanced_input::actions;
 
 use super::healthbar::HealthBarMaterial;
-use crate::{AppSystem, gameplay::Health, screens::Screen};
+use crate::{AppSystems, gameplay::Health, screens::Screen};
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_input_context::<Player>();
@@ -16,7 +16,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (move_player.in_set(AppSystem::RecordInput)).run_if(in_state(Screen::Gameplay)),
+        (move_player.in_set(AppSystems::RecordInput)).run_if(in_state(Screen::Gameplay)),
     );
 
     app.add_observer(player_hit);

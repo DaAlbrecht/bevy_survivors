@@ -190,8 +190,7 @@ fn move_projectile(
 }
 
 fn projectile_hit_detection(
-    spells: Query<(Entity, &SpellType), With<Spell>>,
-    orbiting_q: Query<&Orbiting>,
+    spells: Query<(Entity, &SpellType, Option<&Orbiting>), With<Spell>>,
     player_transform: Query<&Transform, With<Player>>,
     projectiles: Query<&SpellProjectiles>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
@@ -199,21 +198,21 @@ fn projectile_hit_detection(
     mut commands: Commands,
 ) -> Result {
     // Get all spells
-    for (spell, spell_type) in &spells {
+    for (spell, spell_type, orbiting) in &spells {
         // Get each fired projectile for this spell
         for projectile in projectiles.iter_descendants(spell) {
             // Get the position of this particular projectile
             let mut projectile_pos = projectile_transform.get(projectile)?.translation;
 
             // If projectile is orbiting the player get gloabl pos
-            if orbiting_q.get(spell).is_ok() {
+            if orbiting.is_some() {
                 let player_pos = player_transform.single()?;
                 projectile_pos += player_pos.translation;
             }
 
             // Loop over all the positions of the enemies and check if one matches the position of
             // the projectile.
-            for (&enemy_pos, enemy_entity) in &enemy_q {
+            for (enemy_pos, enemy_entity) in enemy_q {
                 if (projectile_pos.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
                     <= ENEMY_SIZE / 2.0
                 {
