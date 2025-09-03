@@ -1,13 +1,13 @@
-use bevy::{ecs::system::command, prelude::*};
+use bevy::prelude::*;
 
 use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
         enemy::{Enemy, Speed},
-        player::{self, Direction, Player},
+        player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, Halt, Knockback, PlayerProjectile, ProjectileCount, Spell,
-            SpellProjectiles, SpellType,
+            SpellType, StartPosition,
         },
     },
     screens::Screen,
@@ -29,11 +29,11 @@ pub(crate) struct Thorn;
 #[derive(Component)]
 pub(crate) struct ThornTip;
 
-#[derive(Event)]
-pub(crate) struct ThornAttackEvent;
+#[derive(Component, Default)]
+pub(crate) struct ThornSegments(i32);
 
 #[derive(Event)]
-pub(crate) struct ThornBaseSpawnEvent;
+pub(crate) struct ThornAttackEvent;
 
 #[derive(Event)]
 pub(crate) struct ThornHitEvent {
@@ -52,12 +52,11 @@ pub(crate) fn plugin(app: &mut App) {
 fn spawn_thorn_projectile(
     _trigger: Trigger<ThornAttackEvent>,
     player_pos_q: Query<&Transform, With<Player>>,
-    thorn_q: Query<(Entity), With<Thorn>>,
+    thorn_q: Query<Entity, With<Thorn>>,
     enemy_pos_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    info!("shoot");
     let player_pos = player_pos_q.single()?.translation.truncate();
     let thorn = thorn_q.single()?;
 
@@ -90,7 +89,9 @@ fn spawn_thorn_projectile(
                 ..default()
             },
             Direction(direction.extend(0.0)),
+            StartPosition(Vec2::new(thorn_pos.x, thorn_pos.y)),
             ThornTip,
+            ThornSegments::default(),
             PlayerProjectile,
         ));
     }
@@ -98,27 +99,65 @@ fn spawn_thorn_projectile(
 }
 
 fn thorn_range_keeper(
-    mut thorn_q: Query<(&ProjectileCount, &mut Speed), With<Thorn>>,
-    mut thorn_tip_q: Query<(Entity, &Transform), With<ThornTip>>,
-    player_q: Query<&Transform, With<Player>>,
+    thorn_q: Query<(Entity, &ProjectileCount), With<Thorn>>,
+    mut thorn_tip_q: Query<
+        (
+            Entity,
+            &Transform,
+            &Direction,
+            Option<&Halt>,
+            &StartPosition,
+            &mut ThornSegments,
+        ),
+        With<ThornTip>,
+    >,
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) -> Result {
-    let (thorn_count, mut speed) = thorn_q.single_mut()?;
-    let player_pos = player_q.single()?.translation.truncate();
+    let (thorn, thorn_count) = thorn_q.single()?;
 
-    //Halt component?
-    for (thron_tip, transform) in &mut thorn_tip_q {
-        let distance = transform.translation.truncate().distance(player_pos);
+    for (thorn_tip, transform, direction, halt, start_pos, mut segments_spawned) in &mut thorn_tip_q
+    {
+        let thorn_pos = transform.translation.truncate();
+        //Get the angle of the thorn_tip to player
+        let dir2 = direction.0.truncate();
+        let distance = (thorn_pos - start_pos.0).dot(dir2);
 
-        info!("Thorn_count: {}", thorn_count.0);
-        info!("Thorn_speed: {}", speed.0);
+        let offset = PLAYER_SIZE * 0.5 + SPELL_SIZE * 0.5;
+        let distance_after_offset = distance - offset;
 
-        if distance >= thorn_count.0 * SPELL_SIZE {
-            commands.entity(thron_tip).insert(Halt);
+        if distance_after_offset >= segments_spawned.0 as f32 * SPELL_SIZE {
+            info!("Spawntrigger");
+            let thorn_base = commands
+                .spawn((
+                    Name::new("ThornBase"),
+                    Sprite {
+                        image: asset_server.load("Thorn_base.png"),
+                        ..default()
+                    },
+                    CastSpell(thorn),
+                    PlayerProjectile,
+                    Transform {
+                        translation: Vec3::new(
+                            -SPELL_SIZE * (segments_spawned.0 + 1) as f32,
+                            0.0,
+                            0.0,
+                        ),
+                        rotation: Quat::IDENTITY,
+                        ..default()
+                    },
+                ))
+                .id();
+
+            commands.entity(thorn_tip).add_child(thorn_base);
+            segments_spawned.0 += 1;
+        }
+
+        if distance >= thorn_count.0 * SPELL_SIZE && halt.is_none() {
+            info!("insert halt");
+            commands.entity(thorn_tip).insert(Halt);
         }
     }
 
     Ok(())
 }
-
-fn thorn_base_spawner() {}

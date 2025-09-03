@@ -70,6 +70,9 @@ pub(crate) struct ProjectileCount(pub f32);
 #[derive(Component)]
 pub(crate) struct Halt;
 
+#[derive(Component)]
+pub(crate) struct StartPosition(Vec2);
+
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum SpellType {
     Scale,
@@ -179,7 +182,7 @@ fn move_projectile(
 
         for projectile in projectiles.iter_descendants(spell) {
             let Ok((mut bullet_pos, bullet_direction)) = projectile_q.get_mut(projectile) else {
-                return Ok(());
+                continue;
             };
 
             let movement = bullet_direction.0 * speed.0 * time.delta_secs();
