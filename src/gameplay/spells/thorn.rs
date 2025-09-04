@@ -7,7 +7,7 @@ use crate::{
         player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, Halt, Knockback, PlayerProjectile, ProjectileCount, Spell,
-            SpellType, StartPosition,
+            SpellDuration, SpellType, StartPosition,
         },
     },
     screens::Screen,
@@ -44,7 +44,10 @@ pub(crate) struct ThornHitEvent {
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        thorn_range_keeper.run_if(in_state(Screen::Gameplay)),
+        (
+            thorn_range_keeper.run_if(in_state(Screen::Gameplay)),
+            thorn_lifetime.run_if(in_state(Screen::Gameplay)),
+        ),
     );
     app.add_observer(spawn_thorn_projectile);
 }
@@ -126,8 +129,7 @@ fn thorn_range_keeper(
         let offset = PLAYER_SIZE * 0.5 + SPELL_SIZE * 0.5;
         let distance_after_offset = distance - offset;
 
-        if distance_after_offset >= segments_spawned.0 as f32 * SPELL_SIZE {
-            info!("Spawntrigger");
+        if distance_after_offset >= segments_spawned.0 as f32 * SPELL_SIZE && halt.is_none() {
             let thorn_base = commands
                 .spawn((
                     Name::new("ThornBase"),
@@ -154,10 +156,35 @@ fn thorn_range_keeper(
         }
 
         if distance >= thorn_count.0 * SPELL_SIZE && halt.is_none() {
-            info!("insert halt");
             commands.entity(thorn_tip).insert(Halt);
+            commands
+                .entity(thorn_tip)
+                .insert(SpellDuration(Timer::from_seconds(0.1, TimerMode::Once)));
         }
     }
 
     Ok(())
+}
+
+fn thorn_lifetime(
+    mut thorn_tip_q: Query<(
+        Entity,
+        Option<&Children>,
+        &mut SpellDuration,
+        &mut ThornSegments,
+    )>,
+    mut commands: Commands,
+) {
+    for (thorn_tip, children, mut duration, mut segments) in &mut thorn_tip_q {
+        if duration.0.finished() {
+            let index = (segments.0 - 1) as usize;
+            if let Some(child) = children {
+                commands.entity(child[index]).despawn();
+                segments.0 -= 1;
+                duration.0.reset();
+            } else {
+                commands.entity(thorn_tip).despawn();
+            }
+        }
+    }
 }
