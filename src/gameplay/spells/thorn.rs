@@ -3,11 +3,11 @@ use bevy::prelude::*;
 use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
-        enemy::{Enemy, Speed},
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Speed},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, Halt, Knockback, PlayerProjectile, ProjectileCount, Spell,
-            SpellDuration, SpellType, StartPosition,
+            CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
+            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail,
         },
     },
     screens::Screen,
@@ -17,10 +17,11 @@ use crate::{
 #[require(
     Spell,
     SpellType::Thorn,
+    Segmented,
     Cooldown(Timer::from_seconds(1., TimerMode::Once)),
+    DamageCooldown(Timer::from_seconds(0.5, TimerMode::Once)),
     Speed(600.),
-    Knockback(1500.),
-    Damage(5.),
+    Damage(1.),
     ProjectileCount(5.0),
     Name::new("Thorn")
 )]
@@ -43,13 +44,14 @@ pub(crate) struct ThornHitEvent {
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
-        Update,
+        FixedUpdate,
         (
             thorn_range_keeper.run_if(in_state(Screen::Gameplay)),
             thorn_lifetime.run_if(in_state(Screen::Gameplay)),
         ),
     );
     app.add_observer(spawn_thorn_projectile);
+    app.add_observer(thorn_hit);
 }
 
 fn spawn_thorn_projectile(
@@ -116,8 +118,10 @@ fn thorn_range_keeper(
     >,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-) -> Result {
-    let (thorn, thorn_count) = thorn_q.single()?;
+) {
+    let Ok((thorn, thorn_count)) = thorn_q.single() else {
+        return;
+    };
 
     for (thorn_tip, transform, direction, halt, start_pos, mut segments_spawned) in &mut thorn_tip_q
     {
@@ -139,6 +143,7 @@ fn thorn_range_keeper(
                     },
                     CastSpell(thorn),
                     PlayerProjectile,
+                    Tail,
                     Transform {
                         translation: Vec3::new(
                             -SPELL_SIZE * (segments_spawned.0 + 1) as f32,
@@ -157,13 +162,12 @@ fn thorn_range_keeper(
 
         if distance >= thorn_count.0 * SPELL_SIZE && halt.is_none() {
             commands.entity(thorn_tip).insert(Halt);
+
             commands
                 .entity(thorn_tip)
-                .insert(SpellDuration(Timer::from_seconds(0.1, TimerMode::Once)));
+                .insert(SpellDuration(Timer::from_seconds(0.2, TimerMode::Once)));
         }
     }
-
-    Ok(())
 }
 
 fn thorn_lifetime(
@@ -187,4 +191,31 @@ fn thorn_lifetime(
             }
         }
     }
+}
+
+fn thorn_hit(
+    trigger: Trigger<ThornHitEvent>,
+    mut thorn_q: Query<(&Damage, &mut DamageCooldown), (With<Thorn>, Without<Despawn>)>,
+    enemy_q: Query<Entity, With<Enemy>>,
+    mut commands: Commands,
+) -> Result {
+    let enemy = trigger.enemy;
+    let _thorn = trigger.projectile;
+    let (damage, mut cooldown) = thorn_q.single_mut()?;
+
+    if cooldown.0.finished() {
+        commands.trigger(EnemyDamageEvent {
+            entity_hit: enemy,
+            dmg: damage.0,
+        });
+        cooldown.0.reset();
+    }
+
+    if enemy_q.get(enemy).is_ok() {
+        commands
+            .entity(enemy)
+            .insert_if_new(Root(Timer::from_seconds(0.5, TimerMode::Once)));
+    }
+
+    Ok(())
 }

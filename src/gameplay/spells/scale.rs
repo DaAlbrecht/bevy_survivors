@@ -49,7 +49,7 @@ fn spawn_scale_projectile(
     let player_pos = player_pos_q.single()?;
     let scale = scale.single()?;
 
-    let random_angle: f32 = rng.gen_range(0.0..(2. * PI));
+    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
     let direction = Vec3::new(f32::cos(random_angle), f32::sin(random_angle), 0.).normalize();
 
     commands.spawn((

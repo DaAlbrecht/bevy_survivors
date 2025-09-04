@@ -11,7 +11,7 @@ use crate::{
     gameplay::{
         Health,
         player::{Direction, Move, PlayerHitEvent},
-        spells::{CastSpell, Spell},
+        spells::{CastSpell, Despawn, Root, Spell},
     },
     screens::Screen,
 };
@@ -37,6 +37,7 @@ pub(crate) fn plugin(app: &mut App) {
             enemy_push_detection,
             move_enemy_from_knockback,
             attack,
+            enemy_despawner,
         )
             .run_if(in_state(Screen::Gameplay)),
     )
@@ -128,7 +129,7 @@ fn spawn_enemy(
 }
 
 fn enemy_movement(
-    enemy_query: Query<(&mut Transform, &Speed, &Knockback), With<Enemy>>,
+    enemy_query: Query<(&mut Transform, &Speed, &Knockback, Option<&Root>), With<Enemy>>,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
 ) -> Result {
@@ -139,9 +140,9 @@ fn enemy_movement(
         .map(|t| t.0.translation)
         .collect::<Vec<Vec3>>();
 
-    for (mut transform, speed, knockback) in enemy_query {
-        if knockback.0 > 1.0 {
-            //skip movement if enemy gets knockedback
+    for (mut transform, speed, knockback, rooted) in enemy_query {
+        if knockback.0 > 1.0 || rooted.is_some() {
+            //skip movement if enemy gets knockedback or is rooted
             continue;
         }
         let direction = (player_transform.translation - transform.translation).normalize();
@@ -258,15 +259,16 @@ fn attack(
 
 fn enemy_take_dmg(
     trigger: Trigger<EnemyDamageEvent>,
-    mut enemy_q: Query<(&mut Health, &Transform), With<Enemy>>,
+    mut enemy_q: Query<(&mut Health, &Transform), (With<Enemy>, Without<Despawn>)>,
     mut commands: Commands,
 ) {
     let enemy_entity = trigger.entity_hit;
 
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
         health.0 -= trigger.dmg;
+        info!("Enemy Hit! Health:{:?}", health.0);
         if health.0 <= 0.0 {
-            commands.entity(enemy_entity).despawn();
+            commands.entity(enemy_entity).insert(Despawn);
             commands.trigger(EnemyDeathEvent(*transform));
         }
     }
@@ -320,5 +322,11 @@ fn move_enemy_from_knockback(
                 enemy_knockback.0 = 0.0;
             }
         }
+    }
+}
+
+fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut commands: Commands) {
+    for enemy in &enemy_q {
+        commands.entity(enemy).despawn();
     }
 }

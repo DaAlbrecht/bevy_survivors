@@ -4,14 +4,14 @@ use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
         PickUpSpell,
-        enemy::{Enemy, Speed},
+        enemy::{DamageCooldown, Enemy, Speed},
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
             lightning::{Lightning, LightningAttackEvent},
             orbs::{Orb, OrbAttackEvent, OrbHitEvent},
             scale::{Scale, ScaleAttackEvent, ScaleHitEvent},
-            thorn::{Thorn, ThornAttackEvent},
+            thorn::{Thorn, ThornAttackEvent, ThornHitEvent},
         },
     },
     screens::Screen,
@@ -34,7 +34,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (attack, update_attack_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
+        (attack, handle_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
     );
     app.add_systems(FixedUpdate, move_projectile);
 
@@ -73,6 +73,9 @@ pub(crate) struct Halt;
 #[derive(Component)]
 pub(crate) struct StartPosition(Vec2);
 
+#[derive(Component)]
+pub(crate) struct Despawn;
+
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum SpellType {
     Scale,
@@ -105,6 +108,15 @@ pub(crate) struct SpellProjectiles(Vec<Entity>);
 
 #[derive(Component, Default)]
 pub(crate) struct Orbiting;
+
+#[derive(Component, Default)]
+pub(crate) struct Segmented;
+
+#[derive(Component)]
+pub(crate) struct Root(pub Timer);
+
+#[derive(Component)]
+pub(crate) struct Tail;
 
 pub(crate) fn add_spell_to_inventory(
     trigger: Trigger<PickUpSpell>,
@@ -195,6 +207,7 @@ fn move_projectile(
 fn projectile_hit_detection(
     spells: Query<(Entity, &SpellType, Option<&Orbiting>), With<Spell>>,
     player_transform: Query<&Transform, With<Player>>,
+    tail_transform: Query<&GlobalTransform, With<Tail>>,
     projectiles: Query<&SpellProjectiles>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
     projectile_transform: Query<&Transform, With<PlayerProjectile>>,
@@ -213,6 +226,11 @@ fn projectile_hit_detection(
                 projectile_pos += player_pos.translation;
             }
 
+            //Get Globaltransform if projectile is a tail
+            if tail_transform.get(projectile).is_ok() {
+                projectile_pos = tail_transform.get(projectile)?.translation();
+            }
+
             // Loop over all the positions of the enemies and check if one matches the position of
             // the projectile.
             for (enemy_pos, enemy_entity) in enemy_q {
@@ -227,10 +245,13 @@ fn projectile_hit_detection(
     Ok(())
 }
 
-fn update_attack_timers(
+fn handle_timers(
     time: Res<Time>,
     mut cooldowns: Query<&mut Cooldown, With<Spell>>,
     mut durations: Query<&mut SpellDuration, With<PlayerProjectile>>,
+    mut thorn_dmg_timer: Query<&mut DamageCooldown, With<Thorn>>,
+    mut root_timer: Query<(Entity, &mut Root), With<Enemy>>,
+    mut commands: Commands,
 ) {
     for mut cooldown in &mut cooldowns {
         cooldown.0.tick(time.delta());
@@ -238,6 +259,17 @@ fn update_attack_timers(
 
     for mut duration in &mut durations {
         duration.0.tick(time.delta());
+    }
+
+    for mut dmg_timer in &mut thorn_dmg_timer {
+        dmg_timer.0.tick(time.delta());
+    }
+
+    for (entity, mut root) in &mut root_timer {
+        root.0.tick(time.delta());
+        if root.0.finished() {
+            commands.entity(entity).remove::<Root>();
+        }
     }
 }
 
@@ -251,6 +283,7 @@ pub(crate) fn trigger_hit_event(
         SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
         SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
         SpellType::Orb => commands.trigger(OrbHitEvent { enemy, projectile }),
+        SpellType::Thorn => commands.trigger(ThornHitEvent { enemy, projectile }),
         _ => (),
     }
 }
