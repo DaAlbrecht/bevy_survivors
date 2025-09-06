@@ -48,7 +48,7 @@ fn spawn_level_up_screen(
                 ))
                 .with_children(|parent| {
                     for _ in 0..NUMBER_OF_ITEM_CHOICES {
-                        let spell_index = rng.gen_range(0..SpellType::ALL.len());
+                        let spell_index = rng.random_range(0..SpellType::ALL.len());
 
                         let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
                             SpellType::Scale => asset_server.load("Bullet.png"),
