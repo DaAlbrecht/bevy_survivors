@@ -15,10 +15,12 @@ use super::player::Player;
 
 use super::spells::{Knockback, PlayerProjectile};
 
+mod shooter;
 mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_plugins(walker::plugin);
+    // app.add_plugins(walker::plugin);
+    app.add_plugins(shooter::plugin);
 
     app.add_systems(
         Update,
@@ -235,4 +237,32 @@ fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut com
     for enemy in &enemy_q {
         commands.entity(enemy).despawn();
     }
+}
+
+//Calc is short for calculator btw
+fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos: Vec2) -> Vec2 {
+    let mut separation_force = Vec2::ZERO;
+    for &other_pos in enemy_positions {
+        // skip ourselves
+        if other_pos == own_pos {
+            continue;
+        }
+        // Check if the distance between enemy `A` and all other enemies is less than the
+        // `SEPARATION_RADIUS`. If so, push enemy `A` away from the other enemy to maintain spacing.
+        let distance = own_pos.distance(other_pos);
+        if distance < SEPARATION_RADIUS {
+            let push_dir = (own_pos - other_pos).normalize();
+            let push_strength = (SEPARATION_RADIUS - distance) / SEPARATION_RADIUS;
+            separation_force += push_dir * push_strength * SEPARATION_FORCE;
+        }
+    }
+    // Separation force calculation for the player
+    let distance_to_player = own_pos.distance(player_pos);
+    if distance_to_player < SEPARATION_RADIUS {
+        let push_dir = (own_pos - player_pos).normalize();
+        let push_strength = (SEPARATION_RADIUS - distance_to_player) / SEPARATION_RADIUS;
+        separation_force += push_dir * push_strength * SEPARATION_FORCE;
+    }
+
+    separation_force
 }
