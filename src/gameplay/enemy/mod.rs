@@ -118,7 +118,7 @@ fn spawn_enemy(
         Name::new("Default Enemy"),
         Enemy,
         Sprite {
-            image: asset_server.load("Enemy.png"),
+            image: asset_server.load("enemies/Walker.png"),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
