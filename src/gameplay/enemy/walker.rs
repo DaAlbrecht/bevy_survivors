@@ -124,3 +124,4 @@ fn walker_movement(
     }
     Ok(())
 }
+

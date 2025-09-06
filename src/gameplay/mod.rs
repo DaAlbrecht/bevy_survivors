@@ -5,7 +5,7 @@ use crate::gameplay::spells::SpellType;
 pub mod enemy;
 pub mod experience;
 pub mod healthbar;
-pub mod levels;
+pub mod level;
 pub mod player;
 pub mod spells;
 
@@ -24,5 +24,6 @@ pub(crate) fn plugin(app: &mut App) {
         experience::plugin,
         healthbar::plugin,
         spells::plugin,
+        level::plugin,
     ));
 }
