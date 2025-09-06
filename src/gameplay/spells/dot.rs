@@ -57,7 +57,7 @@ fn remove_bleed_visual(
 
     for &child in children {
         if visual_q.get(child).is_ok() {
-            commands.entity(child).despawn();
+            commands.entity(child).try_despawn();
         }
     }
 }
