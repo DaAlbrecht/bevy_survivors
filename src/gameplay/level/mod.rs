@@ -16,25 +16,10 @@ use crate::screens::Screen;
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(Update, handle_game_timer);
 }
-//
-//fn spawn_chunk() {}
-//
 
 fn handle_game_timer(mut time: ResMut<Time<Virtual>>, scren: Res<State<Screen>>) {
     match scren.get() {
         Screen::Gameplay => time.unpause(),
         _ => time.pause(),
     }
-
-    info!(
-        "this will be virtual time for this update: delta {:?}, elapsed {:?}",
-        time.delta(),
-        time.elapsed()
-    );
-    info!(
-        "also the relative speed of the game is now {}",
-        time.effective_speed()
-    );
 }
-
-fn display_timer() {}
