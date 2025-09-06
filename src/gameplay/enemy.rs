@@ -266,7 +266,6 @@ fn enemy_take_dmg(
 
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
         health.0 -= trigger.dmg;
-        info!("Enemy Hit! Health:{:?}", health.0);
         if health.0 <= 0.0 {
             commands.entity(enemy_entity).insert(Despawn);
             commands.trigger(EnemyDeathEvent(*transform));

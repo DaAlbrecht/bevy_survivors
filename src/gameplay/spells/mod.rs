@@ -4,9 +4,10 @@ use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
         PickUpSpell,
-        enemy::{DamageCooldown, Enemy, Speed},
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Speed},
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
+            dot::Bleed,
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
             lightning::{Lightning, LightningAttackEvent},
             orbs::{Orb, OrbAttackEvent, OrbHitEvent},
@@ -17,6 +18,7 @@ use crate::{
     screens::Screen,
 };
 
+pub mod dot;
 pub mod fireball;
 pub mod lightning;
 pub mod orbs;
@@ -30,6 +32,7 @@ pub(crate) fn plugin(app: &mut App) {
         lightning::plugin,
         orbs::plugin,
         thorn::plugin,
+        dot::plugin,
     ));
 
     app.add_systems(
@@ -251,6 +254,7 @@ fn handle_timers(
     mut durations: Query<&mut SpellDuration, With<PlayerProjectile>>,
     mut thorn_dmg_timer: Query<&mut DamageCooldown, With<Thorn>>,
     mut root_timer: Query<(Entity, &mut Root), With<Enemy>>,
+    mut bleed_timer: Query<(Entity, &mut Bleed), With<Enemy>>,
     mut commands: Commands,
 ) {
     for mut cooldown in &mut cooldowns {
@@ -269,6 +273,22 @@ fn handle_timers(
         root.0.tick(time.delta());
         if root.0.finished() {
             commands.entity(entity).remove::<Root>();
+        }
+    }
+
+    for (target, mut bleed) in &mut bleed_timer {
+        bleed.duration.tick(time.delta());
+        bleed.tick.tick(time.delta());
+        if bleed.tick.finished() {
+            info!("Bleed deals dmg");
+            commands.trigger(EnemyDamageEvent {
+                entity_hit: target,
+                dmg: bleed.dmg_per_tick,
+            });
+            bleed.tick.reset();
+        }
+        if bleed.duration.finished() {
+            commands.entity(target).remove::<Bleed>();
         }
     }
 }
