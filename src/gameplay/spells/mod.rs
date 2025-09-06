@@ -47,36 +47,46 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct PlayerProjectile;
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct Cooldown(pub Timer);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Knockback(pub f32);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Damage(pub f32);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Range(pub f32);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct ExplosionRadius(pub f32);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct SpellDuration(pub Timer);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct ProjectileCount(pub f32);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Halt;
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct StartPosition(Vec2);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Despawn;
 
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
@@ -99,26 +109,33 @@ impl SpellType {
 }
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct Spell;
 
 #[derive(Component)]
 #[relationship(relationship_target = SpellProjectiles)]
+#[derive(Reflect)]
 pub(crate) struct CastSpell(pub Entity);
 
 #[derive(Component)]
 #[relationship_target(relationship = CastSpell, linked_spawn)]
+#[derive(Reflect)]
 pub(crate) struct SpellProjectiles(Vec<Entity>);
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct Orbiting;
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct Segmented;
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Root(pub Timer);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Tail;
 
 pub(crate) fn add_spell_to_inventory(

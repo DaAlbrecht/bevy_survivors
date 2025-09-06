@@ -27,18 +27,23 @@ use crate::{
     ProjectileCount(5.0),
     Name::new("Thorn")
 )]
+#[derive(Reflect)]
 pub(crate) struct Thorn;
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct ThornTip;
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct ThornSegments(i32);
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct ThornAttackEvent;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct ThornHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,

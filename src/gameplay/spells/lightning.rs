@@ -29,20 +29,25 @@ pub(crate) fn plugin(app: &mut App) {
     Jumps(3),
     Range(300.)
 )]
+#[derive(Reflect)]
 pub(crate) struct Lightning;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct LightningAttackEvent;
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct LightningVisualTimer(pub Timer);
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct LightningHitEvent {
     pub enemy: Entity,
 }
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Jumps(pub u32);
 
 fn spawn_lightning_bolt(

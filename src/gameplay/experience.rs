@@ -29,12 +29,15 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct XpGem;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct GainXpEvent;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct LevelUpEvent;
 
 const BASE_LEVEL_XP: f32 = 100.;

@@ -22,12 +22,15 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
     Damage(5.),
     Name::new("Scale")
 )]
+#[derive(Reflect)]
 pub(crate) struct Scale;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct ScaleAttackEvent;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct ScaleHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,

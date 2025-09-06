@@ -44,6 +44,7 @@ pub(crate) fn plugin(app: &mut App) {
     Knockback(0.0),
     Enemy,
 )]
+#[derive(Reflect)]
 pub(crate) struct Walker;
 
 fn spawn_walker(

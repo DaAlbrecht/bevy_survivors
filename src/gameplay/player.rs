@@ -32,17 +32,21 @@ pub(crate) fn plugin(app: &mut App) {
     XP(0.),
     Level(1.)
 )]
+#[derive(Reflect)]
 pub(crate) struct Player;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct PlayerHitEvent {
     pub dmg: f32,
 }
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Direction(pub Vec3);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct XpCollectionRange(pub f32);
 
 #[derive(Component, Reflect)]
@@ -57,10 +61,12 @@ pub(crate) struct Move;
 
 #[derive(Component)]
 #[relationship_target(relationship = AddToInventory)]
+#[derive(Reflect)]
 pub(crate) struct Inventory(Vec<Entity>);
 
 #[derive(Component)]
 #[relationship(relationship_target = Inventory)]
+#[derive(Reflect)]
 pub(crate) struct AddToInventory(pub Entity);
 
 pub(crate) fn spawn_player(

@@ -43,33 +43,41 @@ const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Speed(pub f32);
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component, Default)]
+#[derive(Reflect)]
 pub(crate) struct Enemy;
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct PlayerPushingEvent(pub Entity);
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct EnemyDamageEvent {
     pub entity_hit: Entity,
     pub dmg: f32,
 }
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct EnemyKnockbackEvent {
     pub entity_hit: Entity,
     pub spell_entity: Entity,
 }
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct EnemyDeathEvent(pub Transform);
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Colliding;
 
 //type shenanigans

@@ -10,9 +10,11 @@ pub mod player;
 pub mod spells;
 
 #[derive(Component)]
+#[derive(Reflect)]
 pub(crate) struct Health(pub f32);
 
 #[derive(Event)]
+#[derive(Reflect)]
 pub(crate) struct PickUpSpell {
     pub spell_type: SpellType,
 }
