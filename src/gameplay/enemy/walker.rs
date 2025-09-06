@@ -7,8 +7,12 @@ use rand::Rng;
 use crate::{
     AppSystems,
     gameplay::{
-        enemy::{DamageCooldown, Enemy, SEPARATION_FORCE, SEPARATION_RADIUS, SPAWN_RADIUS, Speed},
-        player::Player,
+        Health,
+        enemy::{
+            DamageCooldown, Enemy, KnockbackDirection, SEPARATION_FORCE, SEPARATION_RADIUS,
+            SPAWN_RADIUS, Speed,
+        },
+        player::{Direction, Player},
         spells::{Knockback, Root},
     },
     screens::Screen,
@@ -25,6 +29,22 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(Update, (walker_movement).run_if(in_state(Screen::Gameplay)));
 }
+
+#[derive(Component)]
+#[require(
+    Health(10.),
+    Speed(50.),
+    DamageCooldown,
+    Transform,
+    KnockbackDirection(Direction(Vec3 {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+        })),
+    Knockback(0.0),
+    Enemy,
+)]
+pub(crate) struct Walker;
 
 fn spawn_walker(
     mut commands: Commands,
@@ -44,7 +64,7 @@ fn spawn_walker(
 
     commands.spawn((
         Name::new("Default Enemy"),
-        Enemy,
+        Walker,
         Sprite {
             image: asset_server.load("enemies/Walker.png"),
             ..default()

@@ -52,20 +52,7 @@ pub(crate) struct Speed(pub f32);
 #[derive(Component, Default)]
 pub(crate) struct DamageCooldown(pub Timer);
 
-#[derive(Component)]
-#[require(
-    Health(10.),
-    Speed(50.),
-    DamageCooldown,
-    Sprite,
-    Transform,
-    KnockbackDirection(Direction(Vec3 {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-        })),
-    Knockback(0.0),
-)]
+#[derive(Component, Default)]
 pub(crate) struct Enemy;
 
 #[derive(Event)]
