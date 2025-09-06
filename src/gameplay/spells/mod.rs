@@ -280,7 +280,6 @@ fn handle_timers(
         bleed.duration.tick(time.delta());
         bleed.tick.tick(time.delta());
         if bleed.tick.finished() {
-            info!("Bleed deals dmg");
             commands.trigger(EnemyDamageEvent {
                 entity_hit: target,
                 dmg: bleed.dmg_per_tick,

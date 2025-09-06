@@ -127,8 +127,6 @@ fn orb_hit(
     let spell_entity = trigger.projectile;
     let dmg = orb_dmg.single()?.0;
 
-    info!("Orb hit");
-
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy,
         dmg,

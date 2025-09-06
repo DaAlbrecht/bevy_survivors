@@ -206,7 +206,6 @@ fn thorn_hit(
     let (damage, mut cooldown, dot) = thorn_q.single_mut()?;
 
     if cooldown.0.finished() {
-        info!("Thorn deals dmg"); 
         commands.trigger(EnemyDamageEvent {
             entity_hit: enemy,
             dmg: damage.0,
