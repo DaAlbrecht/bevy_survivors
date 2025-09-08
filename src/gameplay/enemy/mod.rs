@@ -5,8 +5,9 @@ use bevy::prelude::*;
 use crate::{
     gameplay::{
         Health,
+        enemy::shooter::{Shooter, ShooterAttackEvent},
         player::{Direction, Move, PlayerHitEvent},
-        spells::{CastSpell, Despawn, Spell},
+        spells::{CastSpell, Cooldown, Despawn, Halt, Spell},
     },
     screens::Screen,
 };
@@ -31,6 +32,7 @@ pub(crate) fn plugin(app: &mut App) {
             move_enemy_from_knockback,
             attack,
             enemy_despawner,
+            enemy_timer_handle,
         )
             .run_if(in_state(Screen::Gameplay)),
     )
@@ -44,47 +46,42 @@ const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Speed(pub f32);
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct DamageCooldown(pub Timer);
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct Enemy;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct PlayerPushingEvent(pub Entity);
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct EnemyDamageEvent {
     pub entity_hit: Entity,
     pub dmg: f32,
 }
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct EnemyKnockbackEvent {
     pub entity_hit: Entity,
     pub spell_entity: Entity,
 }
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct EnemyDeathEvent(pub Transform);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Colliding;
 
 //type shenanigans
 #[derive(Component)]
 pub(crate) struct KnockbackDirection(pub Direction);
+
+#[derive(Component)]
+pub(crate) struct EnemyProjectile;
 
 fn enemy_colliding_detection(
     enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
@@ -151,7 +148,7 @@ fn enemy_pushing(
         }
     }
 }
-
+//maybe refactor with timer handle later?
 fn attack(
     time: Res<Time>,
     mut commands: Commands,
@@ -265,4 +262,19 @@ fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos:
     }
 
     separation_force
+}
+
+fn enemy_timer_handle(
+    mut shooter_cooldown_q: Query<(Entity, &mut Cooldown), (With<Shooter>, With<Halt>)>,
+    time: Res<Time>,
+    mut commands: Commands,
+) {
+    for (shooter, mut cooldown_timer) in &mut shooter_cooldown_q {
+        cooldown_timer.0.tick(time.delta());
+
+        if cooldown_timer.0.finished() {
+            commands.trigger(ShooterAttackEvent(shooter));
+            cooldown_timer.0.reset();
+        }
+    }
 }
