@@ -3,7 +3,7 @@ use std::{f32::consts::PI, time::Duration};
 use bevy::{
     ecs::relationship::RelationshipSourceCollection, prelude::*, time::common_conditions::on_timer,
 };
-use bevy_ecs_tilemap::helpers::projection;
+
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
@@ -12,8 +12,8 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
-            DamageCooldown, Enemy, EnemyProjectile, KnockbackDirection, SPAWN_RADIUS, Speed,
-            separation_force_calc,
+            DamageCooldown, Enemy, EnemyProjectile, KnockbackDirection, ProjectileOf,
+            ProjectileSpeed, SPAWN_RADIUS, Speed, separation_force_calc,
         },
         player::{Direction, Player},
         spells::{Cooldown, Damage, Halt, Knockback, Range, Root},
@@ -34,7 +34,7 @@ pub(crate) fn plugin(app: &mut App) {
         (
             shooter_movement,
             shooter_range_keeper,
-            move_shooter_projectiles,
+            // move_shooter_projectiles,
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -49,17 +49,20 @@ const RANGE_BUFFER: f32 = 50.0;
 #[derive(Component)]
 #[require(
     Health(10.),
-    Speed(50.),
+    Speed(100.),
+    Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
         x: 0.,
         y: 0.,
         z: 0.,
     })),
-    Knockback(0.0),
-    Damage(5.0),
+    //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
+    //Shoot cd
     Cooldown(Timer::from_seconds(2.0,TimerMode::Once)),
-    Range(200.0)
+    Damage(5.0),
+    Range(200.0),
+    ProjectileSpeed(125.),
 )]
 pub(crate) struct Shooter;
 
@@ -199,21 +202,9 @@ fn shooter_attack(
             ..default()
         },
         EnemyProjectile,
+        ProjectileOf(shooter),
         Direction(direction.extend(0.0)),
-        //refactor later
-        Speed(100.0),
     ));
 
     Ok(())
-}
-
-//refactor later
-fn move_shooter_projectiles(
-    mut projectile_q: Query<(&Direction, &Speed, &mut Transform), With<EnemyProjectile>>,
-    time: Res<Time>,
-) {
-    for (direction, speed, mut transform) in &mut projectile_q {
-        let movement = direction.0 * speed.0 * time.delta_secs();
-        transform.translation += movement;
-    }
 }

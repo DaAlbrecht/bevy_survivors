@@ -33,6 +33,7 @@ pub(crate) fn plugin(app: &mut App) {
             attack,
             enemy_despawner,
             enemy_timer_handle,
+            move_enemy_projectile,
         )
             .run_if(in_state(Screen::Gameplay)),
     )
@@ -81,7 +82,20 @@ pub(crate) struct Colliding;
 pub(crate) struct KnockbackDirection(pub Direction);
 
 #[derive(Component)]
+pub(crate) struct ProjectileSpeed(pub f32);
+
+#[derive(Component)]
 pub(crate) struct EnemyProjectile;
+
+#[derive(Component)]
+#[relationship(relationship_target = EnemyProjectiles)]
+#[derive(Reflect)]
+pub(crate) struct ProjectileOf(pub Entity);
+
+#[derive(Component)]
+#[relationship_target(relationship = ProjectileOf, linked_spawn)]
+#[derive(Reflect)]
+pub(crate) struct EnemyProjectiles(Vec<Entity>);
 
 fn enemy_colliding_detection(
     enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
@@ -275,6 +289,26 @@ fn enemy_timer_handle(
         if cooldown_timer.0.finished() {
             commands.trigger(ShooterAttackEvent(shooter));
             cooldown_timer.0.reset();
+        }
+    }
+}
+
+fn move_enemy_projectile(
+    enemy_q: Query<(Entity, &ProjectileSpeed), With<Enemy>>,
+    projectiles: Query<&EnemyProjectiles>,
+    mut projectile_q: Query<(&mut Transform, &Direction), (With<EnemyProjectile>, Without<Halt>)>,
+    time: Res<Time>,
+) {
+    //Loop over all types of enemys
+    for (enemy, speed) in &enemy_q {
+        // Iter over each projectile for this given enemy type
+        for projectile in projectiles.iter_descendants(enemy) {
+            let Ok((mut transform, direction)) = projectile_q.get_mut(projectile) else {
+                continue;
+            };
+
+            let movement = direction.0 * speed.0 * time.delta_secs();
+            transform.translation += movement;
         }
     }
 }
