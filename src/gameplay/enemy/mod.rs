@@ -3,9 +3,10 @@ use bevy_enhanced_input::action::Action;
 use bevy::prelude::*;
 
 use crate::{
+    PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
         Health,
-        enemy::shooter::{Shooter, ShooterAttackEvent},
+        enemy::shooter::{Shooter, ShooterAttackEvent, ShooterProjectileHitEvent},
         player::{Direction, Move, PlayerHitEvent},
         spells::{CastSpell, Cooldown, Despawn, Halt, Spell},
     },
@@ -34,6 +35,7 @@ pub(crate) fn plugin(app: &mut App) {
             enemy_despawner,
             enemy_timer_handle,
             move_enemy_projectile,
+            projectile_hit_detection,
         )
             .run_if(in_state(Screen::Gameplay)),
     )
@@ -96,6 +98,11 @@ pub(crate) struct ProjectileOf(pub Entity);
 #[relationship_target(relationship = ProjectileOf, linked_spawn)]
 #[derive(Reflect)]
 pub(crate) struct EnemyProjectiles(Vec<Entity>);
+
+#[derive(Component)]
+pub(crate) enum EnemyType {
+    Shooter,
+}
 
 fn enemy_colliding_detection(
     enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
@@ -310,5 +317,45 @@ fn move_enemy_projectile(
             let movement = direction.0 * speed.0 * time.delta_secs();
             transform.translation += movement;
         }
+    }
+}
+
+fn projectile_hit_detection(
+    enemy_q: Query<(Entity, &EnemyType), With<Enemy>>,
+    player_q: Query<&Transform, With<Player>>,
+    projectiles: Query<&EnemyProjectiles>,
+    projectile_q: Query<&Transform, With<EnemyProjectile>>,
+    mut commands: Commands,
+) -> Result {
+    let player_transform = player_q.single()?;
+    let player_pos = player_transform.translation.truncate();
+    // Get all enemies
+    for (enemy, enemy_type) in &enemy_q {
+        // Get each projectile of this enemy
+        for projectile in projectiles.iter_descendants(enemy) {
+            // Get position of this particular projectile
+            let projectile_pos = projectile_q.get(projectile)?.translation.truncate();
+
+            //Check if player is hit by this projectile
+            if (player_pos.distance(projectile_pos) - (SPELL_SIZE / 2.0)) <= (PLAYER_SIZE / 2.0) {
+                trigger_player_hit_event(enemy_type, projectile, enemy, &mut commands);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn trigger_player_hit_event(
+    enemy_type: &EnemyType,
+    projectile: Entity,
+    enemy: Entity,
+    commands: &mut Commands,
+) {
+    match enemy_type {
+        EnemyType::Shooter => commands.trigger(ShooterProjectileHitEvent {
+            projectile,
+            source: enemy,
+        }),
     }
 }

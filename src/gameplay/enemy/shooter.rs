@@ -12,10 +12,10 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
-            DamageCooldown, Enemy, EnemyProjectile, KnockbackDirection, ProjectileOf,
+            DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection, ProjectileOf,
             ProjectileSpeed, SPAWN_RADIUS, Speed, separation_force_calc,
         },
-        player::{Direction, Player},
+        player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Knockback, Range, Root},
     },
     screens::Screen,
@@ -40,6 +40,7 @@ pub(crate) fn plugin(app: &mut App) {
     );
 
     app.add_observer(shooter_attack);
+    app.add_observer(shooter_projectile_hit);
 
     // app.add_systems(Update, (walker_movement).run_if(in_state(Screen::Gameplay)));
 }
@@ -48,6 +49,7 @@ const RANGE_BUFFER: f32 = 50.0;
 
 #[derive(Component)]
 #[require(
+    EnemyType::Shooter,
     Health(10.),
     Speed(100.),
     Knockback(0.0),
@@ -68,6 +70,12 @@ pub(crate) struct Shooter;
 
 #[derive(Event)]
 pub(crate) struct ShooterAttackEvent(pub Entity);
+
+#[derive(Event)]
+pub(crate) struct ShooterProjectileHitEvent {
+    pub projectile: Entity,
+    pub source: Entity,
+}
 
 fn spawn_shooter(
     mut commands: Commands,
@@ -207,4 +215,22 @@ fn shooter_attack(
     ));
 
     Ok(())
+}
+
+fn shooter_projectile_hit(
+    trigger: Trigger<ShooterProjectileHitEvent>,
+    shooter_q: Query<&Damage, With<Shooter>>,
+    mut commands: Commands,
+) {
+    info!("hit player");
+    let projectile = trigger.projectile;
+    let shooter = trigger.source;
+
+    let Ok(damage) = shooter_q.get(shooter) else {
+        return;
+    };
+
+    commands.trigger(PlayerHitEvent { dmg: damage.0 });
+
+    commands.entity(projectile).despawn();
 }
