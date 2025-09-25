@@ -35,18 +35,15 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Reflect)]
 pub(crate) struct Player;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct PlayerHitEvent {
     pub dmg: f32,
 }
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Direction(pub Vec3);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct XpCollectionRange(pub f32);
 
 #[derive(Component, Reflect)]
@@ -106,7 +103,7 @@ pub(crate) fn spawn_player(
 
     //Default player has Scale attack
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Thorn,
+        spell_type: crate::gameplay::spells::SpellType::Fireball,
     });
 }
 

@@ -8,12 +8,9 @@ use crate::{
     AppSystems,
     gameplay::{
         Health,
-        enemy::{
-            DamageCooldown, Enemy, KnockbackDirection, SEPARATION_FORCE, SEPARATION_RADIUS,
-            SPAWN_RADIUS, Speed,
-        },
+        enemy::{DamageCooldown, Enemy, KnockbackDirection, SPAWN_RADIUS, Speed},
         player::{Direction, Player},
-        spells::{Knockback, Root},
+        spells::Knockback,
     },
     screens::Screen,
 };
@@ -26,8 +23,6 @@ pub(crate) fn plugin(app: &mut App) {
             .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
     );
-
-    app.add_systems(Update, (walker_movement).run_if(in_state(Screen::Gameplay)));
 }
 
 #[derive(Component)]
@@ -76,53 +71,3 @@ fn spawn_walker(
 
     Ok(())
 }
-
-fn walker_movement(
-    enemy_query: Query<(&mut Transform, &Speed, &Knockback, Option<&Root>), With<Enemy>>,
-    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
-    time: Res<Time>,
-) -> Result {
-    let player_transform = player_query.single()?;
-
-    let enemy_positions = enemy_query
-        .iter()
-        .map(|t| t.0.translation)
-        .collect::<Vec<Vec3>>();
-
-    for (mut transform, speed, knockback, rooted) in enemy_query {
-        if knockback.0 > 1.0 || rooted.is_some() {
-            //skip movement if enemy gets knockedback or is rooted
-            continue;
-        }
-        let direction = (player_transform.translation - transform.translation).normalize();
-
-        // Separation force calculation for enemies
-        let mut separation_force = Vec3::ZERO;
-        for &other_pos in &enemy_positions {
-            // skip ourselves
-            if other_pos == transform.translation {
-                continue;
-            }
-            // Check if the distance between enemy `A` and all other enemies is less than the
-            // `SEPARATION_RADIUS`. If so, push enemy `A` away from the other enemy to maintain spacing.
-            let distance = transform.translation.distance(other_pos);
-            if distance < SEPARATION_RADIUS {
-                let push_dir = (transform.translation - other_pos).normalize();
-                let push_strength = (SEPARATION_RADIUS - distance) / SEPARATION_RADIUS;
-                separation_force += push_dir * push_strength * SEPARATION_FORCE;
-            }
-        }
-        // Separation force calculation for the player
-        let distance_to_player = transform.translation.distance(player_transform.translation);
-        if distance_to_player < SEPARATION_RADIUS {
-            let push_dir = (transform.translation - player_transform.translation).normalize();
-            let push_strength = (SEPARATION_RADIUS - distance_to_player) / SEPARATION_RADIUS;
-            separation_force += push_dir * push_strength * SEPARATION_FORCE;
-        }
-
-        let movement = (direction + separation_force).normalize() * (speed.0 * time.delta_secs());
-        transform.translation += movement;
-    }
-    Ok(())
-}
-

@@ -1,8 +1,6 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::{
-    ecs::relationship::RelationshipSourceCollection, prelude::*, time::common_conditions::on_timer,
-};
+use bevy::{prelude::*, time::common_conditions::on_timer};
 
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
@@ -13,10 +11,10 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
-            ProjectileOf, ProjectileSpeed, SPAWN_RADIUS, Speed, separation_force_calc,
+            ProjectileOf, ProjectileSpeed, SPAWN_RADIUS, Speed,
         },
         player::{Direction, Player, PlayerHitEvent},
-        spells::{Cooldown, Damage, Halt, Knockback, Range, Root},
+        spells::{Cooldown, Damage, Knockback, Range},
     },
     screens::Screen,
 };
@@ -29,23 +27,10 @@ pub(crate) fn plugin(app: &mut App) {
             .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
     );
-    app.add_systems(
-        FixedUpdate,
-        (
-            shooter_movement,
-            shooter_range_keeper,
-            // move_shooter_projectiles,
-        )
-            .run_if(in_state(Screen::Gameplay)),
-    );
 
     app.add_observer(shooter_attack);
     app.add_observer(shooter_projectile_hit);
-
-    // app.add_systems(Update, (walker_movement).run_if(in_state(Screen::Gameplay)));
 }
-
-const RANGE_BUFFER: f32 = 50.0;
 
 #[derive(Component)]
 #[require(
@@ -108,76 +93,6 @@ fn spawn_shooter(
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
     ));
-
-    Ok(())
-}
-
-fn shooter_movement(
-    shooter_q: Query<
-        (
-            &mut Transform,
-            &Speed,
-            &Knockback,
-            Option<&Root>,
-            Option<&Halt>,
-        ),
-        With<Shooter>,
-    >,
-    player_q: Query<&Transform, (With<Player>, Without<Shooter>)>,
-    time: Res<Time>,
-) -> Result {
-    let player_pos = player_q.single()?.translation.truncate();
-
-    let shooter_positions = shooter_q
-        .iter()
-        .map(|t| t.0.translation.truncate())
-        .collect::<Vec<Vec2>>();
-
-    for (mut transform, speed, knockback, root, halt) in shooter_q {
-        let shoter_pos = transform.translation.truncate();
-        if knockback.0 > 1.0 || root.is_some() || halt.is_some() {
-            //skip movement if enemy gets knockedback or is rooted
-            continue;
-        }
-
-        let direction = (player_pos - shoter_pos).normalize();
-
-        let separation_force = separation_force_calc(&shooter_positions, shoter_pos, player_pos);
-
-        let movement = (direction + separation_force).normalize() * (speed.0 * time.delta_secs());
-        transform.translation += movement.extend(0.0);
-    }
-
-    Ok(())
-}
-
-fn shooter_range_keeper(
-    shooter_q: Query<(Entity, &Transform, &Range, Option<&Halt>), With<Shooter>>,
-    player_q: Query<&Transform, With<Player>>,
-    mut commands: Commands,
-) -> Result {
-    let player_pos = player_q.single()?.translation.truncate();
-
-    for (shooter, transform, range, halt) in &shooter_q {
-        let shooter_pos = transform.translation.truncate();
-        let distance = shooter_pos.distance(player_pos);
-
-        if distance < range.0 && halt.is_none() {
-            if shooter.is_empty() {
-                continue;
-            }
-            info!("inserting halt");
-
-            commands.entity(shooter).insert(Halt);
-        } else if distance > (RANGE_BUFFER + range.0) && halt.is_some() {
-            if shooter.is_empty() {
-                continue;
-            }
-            info!("removing halt");
-
-            commands.entity(shooter).remove::<Halt>();
-        }
-    }
 
     Ok(())
 }

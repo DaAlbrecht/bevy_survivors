@@ -1,6 +1,6 @@
 use bevy_enhanced_input::action::Action;
 
-use bevy::prelude::*;
+use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
     PLAYER_SIZE, SPELL_SIZE,
@@ -8,7 +8,7 @@ use crate::{
         Health,
         enemy::shooter::{Shooter, ShooterAttackEvent, ShooterProjectileHitEvent},
         player::{Direction, Move, PlayerHitEvent},
-        spells::{CastSpell, Cooldown, Despawn, Halt, Spell},
+        spells::{CastSpell, Cooldown, Despawn, Halt, Range, Root, Spell},
     },
     screens::Screen,
 };
@@ -21,7 +21,7 @@ mod shooter;
 mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
-    // app.add_plugins(walker::plugin);
+    app.add_plugins(walker::plugin);
     app.add_plugins(shooter::plugin);
 
     app.add_systems(
@@ -36,6 +36,8 @@ pub(crate) fn plugin(app: &mut App) {
             enemy_timer_handle,
             move_enemy_projectile,
             projectile_hit_detection,
+            enemy_movement,
+            enemy_range_keeper,
         )
             .run_if(in_state(Screen::Gameplay)),
     )
@@ -48,6 +50,7 @@ const SPAWN_RADIUS: f32 = 200.0;
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
+const RANGE_BUFFER: f32 = 50.0;
 
 #[derive(Component, Reflect)]
 pub(crate) struct Speed(pub f32);
@@ -260,6 +263,45 @@ fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut com
     }
 }
 
+fn enemy_movement(
+    enemy_q: Query<
+        (
+            &mut Transform,
+            &Speed,
+            &Knockback,
+            Option<&Root>,
+            Option<&Halt>,
+        ),
+        With<Enemy>,
+    >,
+    player_q: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    time: Res<Time>,
+) -> Result {
+    let player_pos = player_q.single()?.translation.truncate();
+
+    let enemy_positions = enemy_q
+        .iter()
+        .map(|t| t.0.translation.truncate())
+        .collect::<Vec<Vec2>>();
+
+    for (mut transform, speed, knockback, root, halt) in enemy_q {
+        let shoter_pos = transform.translation.truncate();
+        if knockback.0 > 1.0 || root.is_some() || halt.is_some() {
+            //skip movement if enemy gets knockedback or is rooted
+            continue;
+        }
+
+        let direction = (player_pos - shoter_pos).normalize();
+
+        let separation_force = separation_force_calc(&enemy_positions, shoter_pos, player_pos);
+
+        let movement = (direction + separation_force).normalize() * (speed.0 * time.delta_secs());
+        transform.translation += movement.extend(0.0);
+    }
+
+    Ok(())
+}
+
 //Calc is short for calculator btw
 fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos: Vec2) -> Vec2 {
     let mut separation_force = Vec2::ZERO;
@@ -286,6 +328,38 @@ fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos:
     }
 
     separation_force
+}
+
+//Inserts Halt if enemy is in range to player
+fn enemy_range_keeper(
+    enemy_q: Query<(Entity, &Transform, &Range, Option<&Halt>), With<Enemy>>,
+    player_q: Query<&Transform, With<Player>>,
+    mut commands: Commands,
+) -> Result {
+    let player_pos = player_q.single()?.translation.truncate();
+
+    for (enemy, transform, range, halt) in &enemy_q {
+        let enemy_pos = transform.translation.truncate();
+        let distance = enemy_pos.distance(player_pos);
+
+        if distance < range.0 && halt.is_none() {
+            if enemy.is_empty() {
+                continue;
+            }
+            info!("inserting halt");
+
+            commands.entity(enemy).insert(Halt);
+        } else if distance > (RANGE_BUFFER + range.0) && halt.is_some() {
+            if enemy.is_empty() {
+                continue;
+            }
+            info!("removing halt");
+
+            commands.entity(enemy).remove::<Halt>();
+        }
+    }
+
+    Ok(())
 }
 
 fn enemy_timer_handle(
