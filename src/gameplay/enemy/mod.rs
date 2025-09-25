@@ -6,7 +6,10 @@ use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
         Health,
-        enemy::shooter::{Shooter, ShooterAttackEvent, ShooterProjectileHitEvent},
+        enemy::{
+            shooter::{Shooter, ShooterAttackEvent, ShooterProjectileHitEvent},
+            sprinter::SprinterAttackEvent,
+        },
         player::{Direction, Move, PlayerHitEvent},
         spells::{CastSpell, Cooldown, Despawn, Halt, Range, Root, Spell},
     },
@@ -18,11 +21,13 @@ use super::player::Player;
 use super::spells::{Knockback, PlayerProjectile};
 
 mod shooter;
+mod sprinter;
 mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins(walker::plugin);
     app.add_plugins(shooter::plugin);
+    app.add_plugins(sprinter::plugin);
 
     app.add_systems(
         Update,
@@ -105,10 +110,17 @@ pub(crate) struct EnemyProjectiles(Vec<Entity>);
 #[derive(Component)]
 pub(crate) enum EnemyType {
     Shooter,
+    Sprinter,
 }
 
 #[derive(Component)]
 pub(crate) struct AbilityDamage(pub f32);
+
+#[derive(Component)]
+pub(crate) struct AbilitySpeed(pub f32);
+
+#[derive(Component)]
+pub(crate) struct Charge;
 
 fn enemy_colliding_detection(
     enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
@@ -208,7 +220,7 @@ fn enemy_take_dmg(
 
 fn enemy_get_pushed_from_hit(
     trigger: Trigger<EnemyKnockbackEvent>,
-    mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection), With<Enemy>>,
+    mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection, Option<&Charge>), With<Enemy>>,
     knockback: Query<&Knockback, (With<Spell>, Without<Enemy>)>,
     projectile_direction: Query<&Direction, With<PlayerProjectile>>,
     spells: Query<&CastSpell>,
@@ -226,8 +238,14 @@ fn enemy_get_pushed_from_hit(
 
     let direction = projectile_direction.get(projectile_entity)?.0;
 
-    if let Ok((mut enemy_knockback, mut enemy_knockback_direction)) = enemy_q.get_mut(enemy_entity)
+    if let Ok((mut enemy_knockback, mut enemy_knockback_direction, charge)) =
+        enemy_q.get_mut(enemy_entity)
     {
+        //Charging enemys cant be knockedback
+        if charge.is_some() {
+            return Ok(());
+        }
+
         enemy_knockback.0 = knockback;
         //type shenanigans continue
         enemy_knockback_direction.0.0 = direction;
@@ -263,6 +281,7 @@ fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut com
     }
 }
 
+//BUG: Enemies with Halt get dragged by the player refactor collison handle and halt
 fn enemy_movement(
     enemy_q: Query<
         (
@@ -271,6 +290,7 @@ fn enemy_movement(
             &Knockback,
             Option<&Root>,
             Option<&Halt>,
+            Option<&Charge>,
         ),
         With<Enemy>,
     >,
@@ -284,9 +304,9 @@ fn enemy_movement(
         .map(|t| t.0.translation.truncate())
         .collect::<Vec<Vec2>>();
 
-    for (mut transform, speed, knockback, root, halt) in enemy_q {
+    for (mut transform, speed, knockback, root, halt, charge) in enemy_q {
         let shoter_pos = transform.translation.truncate();
-        if knockback.0 > 1.0 || root.is_some() || halt.is_some() {
+        if knockback.0 > 1.0 || root.is_some() || halt.is_some() || charge.is_some() {
             //skip movement if enemy gets knockedback or is rooted
             continue;
         }
@@ -363,15 +383,19 @@ fn enemy_range_keeper(
 }
 
 fn enemy_timer_handle(
-    mut shooter_cooldown_q: Query<(Entity, &mut Cooldown), (With<Shooter>, With<Halt>)>,
+    mut cooldown_q: Query<(Entity, &mut Cooldown, &EnemyType), (With<Enemy>, With<Halt>)>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    for (shooter, mut cooldown_timer) in &mut shooter_cooldown_q {
+    for (shooter, mut cooldown_timer, enemy_tye) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
 
         if cooldown_timer.0.finished() {
-            commands.trigger(ShooterAttackEvent(shooter));
+            match enemy_tye {
+                EnemyType::Shooter => commands.trigger(ShooterAttackEvent(shooter)),
+                EnemyType::Sprinter => commands.trigger(SprinterAttackEvent(shooter)),
+            }
+
             cooldown_timer.0.reset();
         }
     }
@@ -434,5 +458,6 @@ fn trigger_player_hit_event(
             projectile,
             source: enemy,
         }),
+        EnemyType::Sprinter => todo!(),
     }
 }
