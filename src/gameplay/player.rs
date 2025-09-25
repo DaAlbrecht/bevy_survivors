@@ -103,7 +103,7 @@ pub(crate) fn spawn_player(
 
     //Default player has Scale attack
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Fireball,
+        spell_type: crate::gameplay::spells::SpellType::Scale,
     });
 }
 
@@ -115,7 +115,7 @@ fn player_hit(
 ) -> Result {
     let mut health = player_q.single_mut()?;
     health.0 -= trigger.dmg;
-    debug!("attacking player, player_health: {}", health.0);
+    info!("attacking player, player_health: {}", health.0);
     let per = health.0 / 100.;
 
     let handle = healthbar_material_q.single()?.clone_weak();

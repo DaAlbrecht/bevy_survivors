@@ -7,8 +7,8 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
-            shooter::{Shooter, ShooterAttackEvent, ShooterProjectileHitEvent},
-            sprinter::SprinterAttackEvent,
+            shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
+            sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
         },
         player::{Direction, Move, PlayerHitEvent},
         spells::{CastSpell, Cooldown, Despawn, Halt, Range, Root, Spell},
@@ -120,20 +120,34 @@ pub(crate) struct AbilityDamage(pub f32);
 pub(crate) struct AbilitySpeed(pub f32);
 
 #[derive(Component)]
-pub(crate) struct Charge;
+pub(crate) struct Charge {
+    active: bool,
+    hit_target: bool,
+}
 
 fn enemy_colliding_detection(
-    enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
-    player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,
+    mut enemy_query: Query<
+        (&Transform, Entity, Option<&mut Charge>),
+        (With<Enemy>, Without<Colliding>),
+    >,
+    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
     let player_pos = player_query.single()?;
 
-    for (&enemy_pos, enemy) in &enemy_query {
+    for (enemy_pos, enemy, charge) in &mut enemy_query {
         let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
 
         if distance_to_player <= SEPARATION_RADIUS {
-            commands.entity(enemy).insert(Colliding);
+            //Charging enemies handle collision themself
+            if let Some(mut charge) = charge {
+                if charge.active && !charge.hit_target {
+                    charge.hit_target = true;
+                    commands.trigger(SprinterAbilityHitEvent(enemy));
+                }
+            } else {
+                commands.entity(enemy).insert(Colliding);
+            }
         }
     }
     Ok(())
@@ -141,7 +155,7 @@ fn enemy_colliding_detection(
 
 fn enemy_stop_colliding_detection(
     enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, With<Colliding>)>,
-    player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,
+    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
     let player_pos = player_query.single()?;
@@ -157,13 +171,17 @@ fn enemy_stop_colliding_detection(
 }
 
 fn enemy_push_detection(
-    enemy_query: Query<(&mut Transform, Entity), With<Enemy>>,
+    enemy_query: Query<(&mut Transform, Entity, Option<&Charge>), With<Enemy>>,
     player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
     let player_pos = player_query.single()?;
 
-    for (&enemy_pos, enemy) in &enemy_query {
+    for (&enemy_pos, enemy, charge) in &enemy_query {
+        //Player cant push charging enemies
+        if charge.is_some() {
+            continue;
+        }
         let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
 
         if distance_to_player <= SEPARATION_RADIUS - 5.0 {
@@ -188,6 +206,7 @@ fn enemy_pushing(
     }
 }
 //maybe refactor with timer handle later?
+//this is where the player get damaged form touching an enemy
 fn attack(
     time: Res<Time>,
     mut commands: Commands,
@@ -241,7 +260,7 @@ fn enemy_get_pushed_from_hit(
     if let Ok((mut enemy_knockback, mut enemy_knockback_direction, charge)) =
         enemy_q.get_mut(enemy_entity)
     {
-        //Charging enemys cant be knockedback
+        //Charging enemies cant be knockedback
         if charge.is_some() {
             return Ok(());
         }
@@ -352,29 +371,25 @@ fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos:
 
 //Inserts Halt if enemy is in range to player
 fn enemy_range_keeper(
-    enemy_q: Query<(Entity, &Transform, &Range, Option<&Halt>), With<Enemy>>,
+    enemy_q: Query<(Entity, &Transform, &Range, Option<&Halt>, Option<&Charge>), With<Enemy>>,
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
 ) -> Result {
     let player_pos = player_q.single()?.translation.truncate();
 
-    for (enemy, transform, range, halt) in &enemy_q {
+    for (enemy, transform, range, halt, charge) in &enemy_q {
         let enemy_pos = transform.translation.truncate();
         let distance = enemy_pos.distance(player_pos);
 
         if distance < range.0 && halt.is_none() {
-            if enemy.is_empty() {
+            if enemy.is_empty() || charge.is_some() {
                 continue;
             }
-            info!("inserting halt");
-
             commands.entity(enemy).insert(Halt);
         } else if distance > (RANGE_BUFFER + range.0) && halt.is_some() {
             if enemy.is_empty() {
                 continue;
             }
-            info!("removing halt");
-
             commands.entity(enemy).remove::<Halt>();
         }
     }
@@ -407,7 +422,7 @@ fn move_enemy_projectile(
     mut projectile_q: Query<(&mut Transform, &Direction), (With<EnemyProjectile>, Without<Halt>)>,
     time: Res<Time>,
 ) {
-    //Loop over all types of enemys
+    //Loop over all types of enemies
     for (enemy, speed) in &enemy_q {
         // Iter over each projectile for this given enemy type
         for projectile in projectiles.iter_descendants(enemy) {

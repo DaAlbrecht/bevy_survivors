@@ -138,7 +138,6 @@ fn shooter_projectile_hit(
     shooter_q: Query<&AbilityDamage, With<Shooter>>,
     mut commands: Commands,
 ) {
-    info!("hit player");
     let projectile = trigger.projectile;
     let shooter = trigger.source;
 
