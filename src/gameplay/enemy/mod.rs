@@ -104,6 +104,9 @@ pub(crate) enum EnemyType {
     Shooter,
 }
 
+#[derive(Component)]
+pub(crate) struct AbilityDamage(pub f32);
+
 fn enemy_colliding_detection(
     enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Colliding>)>,
     player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,

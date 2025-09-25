@@ -12,8 +12,8 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
-            DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection, ProjectileOf,
-            ProjectileSpeed, SPAWN_RADIUS, Speed, separation_force_calc,
+            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
+            ProjectileOf, ProjectileSpeed, SPAWN_RADIUS, Speed, separation_force_calc,
         },
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Knockback, Range, Root},
@@ -62,7 +62,8 @@ const RANGE_BUFFER: f32 = 50.0;
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     //Shoot cd
     Cooldown(Timer::from_seconds(2.0,TimerMode::Once)),
-    Damage(5.0),
+    Damage(1.0),
+    AbilityDamage(5.0),
     Range(200.0),
     ProjectileSpeed(125.),
 )]
@@ -219,7 +220,7 @@ fn shooter_attack(
 
 fn shooter_projectile_hit(
     trigger: Trigger<ShooterProjectileHitEvent>,
-    shooter_q: Query<&Damage, With<Shooter>>,
+    shooter_q: Query<&AbilityDamage, With<Shooter>>,
     mut commands: Commands,
 ) {
     info!("hit player");
