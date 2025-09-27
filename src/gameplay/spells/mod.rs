@@ -37,7 +37,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (attack, handle_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
+        (/*attack,*/ handle_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
     );
     app.add_systems(FixedUpdate, move_projectile);
 

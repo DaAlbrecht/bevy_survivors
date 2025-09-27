@@ -8,7 +8,7 @@ use crate::{
     AppSystems,
     gameplay::{
         Health,
-        enemy::{DamageCooldown, Enemy, KnockbackDirection, SPAWN_RADIUS, Speed},
+        enemy::{DamageCooldown, Enemy, KnockbackDirection, Meele, SPAWN_RADIUS, Speed},
         player::{Direction, Player},
         spells::Knockback,
     },
@@ -27,6 +27,7 @@ pub(crate) fn plugin(app: &mut App) {
 
 #[derive(Component)]
 #[require(
+    Meele,
     Health(10.),
     Speed(50.),
     DamageCooldown,

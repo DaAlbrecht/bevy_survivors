@@ -10,7 +10,7 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType,
-            KnockbackDirection, RANGE_BUFFER, SPAWN_RADIUS, Speed,
+            KnockbackDirection, Meele, RANGE_BUFFER, SPAWN_RADIUS, Speed,
         },
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Knockback, Range},
@@ -38,8 +38,9 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Component)]
 #[require(
     EnemyType::Sprinter,
+    Meele,
     Health(10.),
-    Speed(100.),
+    Speed(50.),
     Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
         x: 0.,
@@ -54,7 +55,7 @@ pub(crate) fn plugin(app: &mut App) {
     AbilityDamage(5.0),
     AbilitySpeed(500.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
-    Range(250.0),
+    Range(500.0),
 )]
 pub(crate) struct Sprinter;
 

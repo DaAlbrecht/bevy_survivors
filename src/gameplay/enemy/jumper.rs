@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::{prelude::*, time::common_conditions::on_timer, transform};
+use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 use rand::Rng;
 
@@ -10,10 +10,10 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, Jump,
-            KnockbackDirection, SPAWN_RADIUS, Speed,
+            KnockbackDirection, Meele, SPAWN_RADIUS, Speed,
         },
         player::{Direction, Player},
-        spells::{Cooldown, Damage, Halt, Knockback, Range},
+        spells::{Cooldown, Damage, Knockback, Range},
     },
     screens::Screen,
 };
@@ -22,7 +22,7 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         spawn_jumper
-            .run_if(on_timer(Duration::from_millis(3000)))
+            .run_if(on_timer(Duration::from_millis(5000)))
             .run_if(in_state(Screen::Gameplay))
             .in_set(AppSystems::Update),
     );
@@ -38,8 +38,9 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Component)]
 #[require(
     EnemyType::Jumper,
+    Meele,
     Health(10.),
-    Speed(100.),
+    Speed(30.),
     Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
         x: 0.,
@@ -52,9 +53,9 @@ pub(crate) fn plugin(app: &mut App) {
     Cooldown(Timer::from_seconds(4.0,TimerMode::Once)),
     Damage(1.0),
     AbilityDamage(5.0),
-    AbilitySpeed(100.0),
+    AbilitySpeed(350.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
-    Range(300.0),
+    Range(500.0),
 )]
 pub(crate) struct Jumper;
 
@@ -67,7 +68,7 @@ pub(crate) struct AbilityVisual;
 #[derive(Component)]
 pub(crate) struct JumperVisual;
 
-const JUMPER_BUFFER: f32 = 20.0;
+const JUMPER_BUFFER: f32 = 10.0;
 const CURVATURE_COEFFICIENT: f32 = 6.0 / 5.0;
 
 fn spawn_jumper(
@@ -139,13 +140,7 @@ fn spawn_jumper(
 fn jumper_attack(
     trigger: Trigger<JumperAttackEvent>,
     mut jumper_q: Query<
-        (
-            &Transform,
-            &mut Direction,
-            &mut Visibility,
-            Option<&Halt>,
-            &Children,
-        ),
+        (&Transform, &mut Direction, &mut Visibility, &Children),
         (With<Jumper>, Without<JumperVisual>),
     >,
     mut visual_q: Query<&mut Visibility, (With<AbilityVisual>, Without<Jumper>)>,
@@ -155,23 +150,25 @@ fn jumper_attack(
     let jumper = trigger.0;
     let player_pos = player_q.single()?.translation.truncate();
 
-    let Ok((transform, mut direction, mut visibility, halt, children)) = jumper_q.get_mut(jumper)
-    else {
+    let Ok((transform, mut direction, mut visibility, children)) = jumper_q.get_mut(jumper) else {
         return Ok(());
     };
 
     let jumper_pos = transform.translation.truncate();
-    direction.0 = (player_pos - jumper_pos).normalize().extend(0.0);
+    let target_offset = Vec2::new(
+        rand::random_range(0..=15) as f32,
+        rand::random_range(0..=15) as f32,
+    );
 
-    //Start the jump
-    if halt.is_some() {
-        commands.entity(jumper).remove::<Halt>();
-    }
+    let target_pos = player_pos + target_offset;
+
+    direction.0 = (target_pos - jumper_pos).normalize().extend(0.0);
 
     commands.entity(jumper).insert(Jump {
         start_pos: transform.translation.truncate(),
-        target_pos: player_pos,
+        target_pos,
     });
+
     //Hide Jumper Sprite
     *visibility = Visibility::Hidden;
 
@@ -208,7 +205,7 @@ fn move_jumping_jumper(
 ) -> Result {
     for (mut transform, jumper, speed, direction, jump, children, mut visibility) in &mut jumper_q {
         let jumper_pos = transform.translation.truncate();
-        // let distance = player_pos.distance(jumper_pos);
+
         if let Some(jump) = jump {
             let distance = jumper_pos.distance(jump.target_pos);
             let radius = jump.target_pos.distance(jump.start_pos);
@@ -226,7 +223,6 @@ fn move_jumping_jumper(
                 };
 
                 if jumper_visual.is_some() {
-                    // *child_visibility = Visibility::Hidden;
                     let jumped_distance = jump.start_pos.distance(jumper_pos);
 
                     let jump_hight = CURVATURE_COEFFICIENT

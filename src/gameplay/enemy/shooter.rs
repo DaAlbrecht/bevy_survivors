@@ -11,7 +11,7 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
-            ProjectileOf, ProjectileSpeed, SPAWN_RADIUS, Speed,
+            ProjectileOf, ProjectileSpeed, Ranged, SPAWN_RADIUS, Speed,
         },
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Knockback, Range},
@@ -35,6 +35,7 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Component)]
 #[require(
     EnemyType::Shooter,
+    Ranged,
     Health(10.),
     Speed(100.),
     Knockback(0.0),

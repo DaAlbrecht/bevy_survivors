@@ -135,6 +135,12 @@ pub(crate) struct Jump {
     target_pos: Vec2,
 }
 
+#[derive(Component, Default)]
+pub(crate) struct Ranged;
+
+#[derive(Component, Default)]
+pub(crate) struct Meele;
+
 fn enemy_colliding_detection(
     mut enemy_query: Query<
         (&Transform, Entity, Option<&mut Charge>, Option<&Jump>),
@@ -389,20 +395,20 @@ fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos:
     separation_force
 }
 
-//Inserts Halt if enemy is in range to player
+//Inserts Halt if enemy is in range to player and is ranged
 fn enemy_range_keeper(
-    enemy_q: Query<(Entity, &Transform, &Range, Option<&Halt>, Option<&Charge>), With<Enemy>>,
+    enemy_q: Query<(Entity, &Transform, &Range, Option<&Halt>), (With<Enemy>, With<Ranged>)>,
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
 ) -> Result {
     let player_pos = player_q.single()?.translation.truncate();
 
-    for (enemy, transform, range, halt, charge) in &enemy_q {
+    for (enemy, transform, range, halt) in &enemy_q {
         let enemy_pos = transform.translation.truncate();
         let distance = enemy_pos.distance(player_pos);
 
         if distance < range.0 && halt.is_none() {
-            if enemy.is_empty() || charge.is_some() {
+            if enemy.is_empty() {
                 continue;
             }
             commands.entity(enemy).insert(Halt);
@@ -418,16 +424,20 @@ fn enemy_range_keeper(
 }
 
 fn enemy_timer_handle(
-    mut cooldown_q: Query<(Entity, &mut Cooldown, &EnemyType), (With<Enemy>, With<Halt>)>,
+    mut cooldown_q: Query<(Entity, &mut Cooldown, &EnemyType, Option<&Halt>), With<Enemy>>,
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    for (enemy, mut cooldown_timer, enemy_tye) in &mut cooldown_q {
+    for (enemy, mut cooldown_timer, enemy_tye, halt) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
 
         if cooldown_timer.0.finished() {
             match enemy_tye {
-                EnemyType::Shooter => commands.trigger(ShooterAttackEvent(enemy)),
+                EnemyType::Shooter => {
+                    if halt.is_some() {
+                        commands.trigger(ShooterAttackEvent(enemy));
+                    }
+                }
                 EnemyType::Sprinter => commands.trigger(SprinterAttackEvent(enemy)),
                 EnemyType::Jumper => commands.trigger(JumperAttackEvent(enemy)),
                 _ => (),
