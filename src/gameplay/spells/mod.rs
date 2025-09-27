@@ -4,7 +4,7 @@ use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
         PickUpSpell,
-        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Speed},
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump, Speed},
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
             dot::Bleed,
@@ -46,47 +46,37 @@ pub(crate) fn plugin(app: &mut App) {
     app.register_type::<SpellType>();
 }
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct PlayerProjectile;
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct Cooldown(pub Timer);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Knockback(pub f32);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Damage(pub f32);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Range(pub f32);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct ExplosionRadius(pub f32);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct SpellDuration(pub Timer);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct ProjectileCount(pub f32);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Halt;
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct StartPosition(Vec2);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Despawn;
 
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
@@ -108,8 +98,7 @@ impl SpellType {
     ];
 }
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct Spell;
 
 #[derive(Component)]
@@ -122,20 +111,16 @@ pub(crate) struct CastSpell(pub Entity);
 #[derive(Reflect)]
 pub(crate) struct SpellProjectiles(Vec<Entity>);
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct Orbiting;
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct Segmented;
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Root(pub Timer);
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Tail;
 
 pub(crate) fn add_spell_to_inventory(
@@ -229,7 +214,7 @@ fn projectile_hit_detection(
     player_transform: Query<&Transform, With<Player>>,
     tail_transform: Query<&GlobalTransform, With<Tail>>,
     projectiles: Query<&SpellProjectiles>,
-    enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<PlayerProjectile>)>,
+    enemy_q: Query<(&Transform, Entity, Option<&Jump>), (With<Enemy>, Without<PlayerProjectile>)>,
     projectile_transform: Query<&Transform, With<PlayerProjectile>>,
     mut commands: Commands,
 ) -> Result {
@@ -253,7 +238,12 @@ fn projectile_hit_detection(
 
             // Loop over all the positions of the enemies and check if one matches the position of
             // the projectile.
-            for (enemy_pos, enemy_entity) in enemy_q {
+            for (enemy_pos, enemy_entity, jump) in enemy_q {
+                //Jumping enemies can not be hit
+                if jump.is_some() {
+                    continue;
+                }
+
                 if (projectile_pos.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
                     <= ENEMY_SIZE / 2.0
                 {

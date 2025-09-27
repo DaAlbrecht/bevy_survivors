@@ -7,6 +7,7 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
+            jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
             sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
         },
@@ -20,14 +21,16 @@ use super::player::Player;
 
 use super::spells::{Knockback, PlayerProjectile};
 
+mod jumper;
 mod shooter;
 mod sprinter;
 mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_plugins(walker::plugin);
-    app.add_plugins(shooter::plugin);
-    app.add_plugins(sprinter::plugin);
+    // app.add_plugins(walker::plugin);
+    // app.add_plugins(shooter::plugin);
+    // app.add_plugins(sprinter::plugin);
+    app.add_plugins(jumper::plugin);
 
     app.add_systems(
         Update,
@@ -111,6 +114,7 @@ pub(crate) struct EnemyProjectiles(Vec<Entity>);
 pub(crate) enum EnemyType {
     Shooter,
     Sprinter,
+    Jumper,
 }
 
 #[derive(Component)]
@@ -125,9 +129,15 @@ pub(crate) struct Charge {
     hit_target: bool,
 }
 
+#[derive(Component)]
+pub(crate) struct Jump {
+    start_pos: Vec2,
+    target_pos: Vec2,
+}
+
 fn enemy_colliding_detection(
     mut enemy_query: Query<
-        (&Transform, Entity, Option<&mut Charge>),
+        (&Transform, Entity, Option<&mut Charge>, Option<&Jump>),
         (With<Enemy>, Without<Colliding>),
     >,
     player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
@@ -135,7 +145,7 @@ fn enemy_colliding_detection(
 ) -> Result {
     let player_pos = player_query.single()?;
 
-    for (enemy_pos, enemy, charge) in &mut enemy_query {
+    for (enemy_pos, enemy, charge, jump) in &mut enemy_query {
         let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
 
         if distance_to_player <= SEPARATION_RADIUS {
@@ -145,6 +155,9 @@ fn enemy_colliding_detection(
                     charge.hit_target = true;
                     commands.trigger(SprinterAbilityHitEvent(enemy));
                 }
+            } else if jump.is_some() {
+                //Jumping enemies can't collide with player
+                continue;
             } else {
                 commands.entity(enemy).insert(Colliding);
             }
@@ -171,15 +184,15 @@ fn enemy_stop_colliding_detection(
 }
 
 fn enemy_push_detection(
-    enemy_query: Query<(&mut Transform, Entity, Option<&Charge>), With<Enemy>>,
+    enemy_query: Query<(&mut Transform, Entity, Option<&Charge>, Option<&Jump>), With<Enemy>>,
     player_query: Query<&mut Transform, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
     let player_pos = player_query.single()?;
 
-    for (&enemy_pos, enemy, charge) in &enemy_query {
-        //Player cant push charging enemies
-        if charge.is_some() {
+    for (&enemy_pos, enemy, charge, jump) in &enemy_query {
+        //Player cant push charging or jumping enemies
+        if charge.is_some() || jump.is_some() {
             continue;
         }
         let distance_to_player = enemy_pos.translation.distance(player_pos.translation);
@@ -205,6 +218,7 @@ fn enemy_pushing(
         }
     }
 }
+
 //maybe refactor with timer handle later?
 //this is where the player get damaged form touching an enemy
 fn attack(
@@ -310,6 +324,7 @@ fn enemy_movement(
             Option<&Root>,
             Option<&Halt>,
             Option<&Charge>,
+            Option<&Jump>,
         ),
         With<Enemy>,
     >,
@@ -323,16 +338,21 @@ fn enemy_movement(
         .map(|t| t.0.translation.truncate())
         .collect::<Vec<Vec2>>();
 
-    for (mut transform, speed, knockback, root, halt, charge) in enemy_q {
-        let shoter_pos = transform.translation.truncate();
-        if knockback.0 > 1.0 || root.is_some() || halt.is_some() || charge.is_some() {
+    for (mut transform, speed, knockback, root, halt, charge, jump) in enemy_q {
+        let enemy_pos = transform.translation.truncate();
+        if knockback.0 > 1.0
+            || root.is_some()
+            || halt.is_some()
+            || charge.is_some()
+            || jump.is_some()
+        {
             //skip movement if enemy gets knockedback or is rooted
             continue;
         }
 
-        let direction = (player_pos - shoter_pos).normalize();
+        let direction = (player_pos - enemy_pos).normalize();
 
-        let separation_force = separation_force_calc(&enemy_positions, shoter_pos, player_pos);
+        let separation_force = separation_force_calc(&enemy_positions, enemy_pos, player_pos);
 
         let movement = (direction + separation_force).normalize() * (speed.0 * time.delta_secs());
         transform.translation += movement.extend(0.0);
@@ -402,13 +422,15 @@ fn enemy_timer_handle(
     time: Res<Time>,
     mut commands: Commands,
 ) {
-    for (shooter, mut cooldown_timer, enemy_tye) in &mut cooldown_q {
+    for (enemy, mut cooldown_timer, enemy_tye) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
 
         if cooldown_timer.0.finished() {
             match enemy_tye {
-                EnemyType::Shooter => commands.trigger(ShooterAttackEvent(shooter)),
-                EnemyType::Sprinter => commands.trigger(SprinterAttackEvent(shooter)),
+                EnemyType::Shooter => commands.trigger(ShooterAttackEvent(enemy)),
+                EnemyType::Sprinter => commands.trigger(SprinterAttackEvent(enemy)),
+                EnemyType::Jumper => commands.trigger(JumperAttackEvent(enemy)),
+                _ => (),
             }
 
             cooldown_timer.0.reset();
@@ -473,6 +495,6 @@ fn trigger_player_hit_event(
             projectile,
             source: enemy,
         }),
-        EnemyType::Sprinter => todo!(),
+        _ => (),
     }
 }
