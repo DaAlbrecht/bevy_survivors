@@ -123,6 +123,9 @@ pub(crate) struct Root(pub Timer);
 #[derive(Component, Reflect)]
 pub(crate) struct Tail;
 
+#[derive(Component)]
+pub struct SpellTick(pub Timer);
+
 pub(crate) fn add_spell_to_inventory(
     trigger: Trigger<PickUpSpell>,
     mut commands: Commands,

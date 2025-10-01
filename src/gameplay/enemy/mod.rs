@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy_enhanced_input::action::Action;
 
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
@@ -12,7 +14,10 @@ use crate::{
             sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
         },
         player::{Direction, Move, PlayerHitEvent},
-        spells::{CastSpell, Cooldown, Despawn, Halt, Range, Root, Spell},
+        spells::{
+            CastSpell, Cooldown, Damage, Despawn, Halt, Range, Root, Spell, SpellDuration,
+            SpellTick,
+        },
     },
     screens::Screen,
 };
@@ -46,6 +51,7 @@ pub(crate) fn plugin(app: &mut App) {
             projectile_hit_detection,
             enemy_movement,
             enemy_range_keeper,
+            terrain_manager,
         )
             .run_if(in_state(Screen::Gameplay)),
     )
@@ -140,6 +146,12 @@ pub(crate) struct Ranged;
 
 #[derive(Component, Default)]
 pub(crate) struct Meele;
+
+#[derive(Component)]
+pub(crate) struct HazardousTerrain;
+
+#[derive(Component)]
+pub(crate) struct Size(pub f32);
 
 fn enemy_colliding_detection(
     mut enemy_query: Query<
@@ -507,4 +519,44 @@ fn trigger_player_hit_event(
         }),
         _ => (),
     }
+}
+
+//Handles terrain collision lifetime damge etc
+fn terrain_manager(
+    mut terrain_q: Query<
+        (
+            Entity,
+            &Transform,
+            &Damage,
+            &mut SpellDuration,
+            &mut SpellTick,
+            &Size,
+        ),
+        With<HazardousTerrain>,
+    >,
+    player_q: Query<&Transform, With<Player>>,
+    mut commands: Commands,
+    time: Res<Time>,
+) -> Result {
+    let player_pos = player_q.single()?.translation.truncate();
+
+    for (terrain, transform, damage, mut duration, mut ticker, size) in &mut terrain_q {
+        let terrain_pos = transform.translation.truncate();
+        let distance = terrain_pos.distance(player_pos);
+
+        duration.0.tick(time.delta());
+        ticker.0.tick(time.delta());
+
+        if ticker.0.finished() && distance <= size.0 {
+            commands.trigger(PlayerHitEvent { dmg: damage.0 });
+            info!("Terrain_dmg");
+            ticker.0.reset();
+        }
+
+        if duration.0.finished() {
+            commands.entity(terrain).despawn();
+        }
+    }
+
+    Ok(())
 }

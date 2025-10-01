@@ -9,11 +9,11 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
-            AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, Jump,
-            KnockbackDirection, Meele, SPAWN_RADIUS, Speed,
+            AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
+            KnockbackDirection, Meele, SPAWN_RADIUS, Size, Speed,
         },
         player::{Direction, Player},
-        spells::{Cooldown, Damage, Knockback, Range},
+        spells::{Cooldown, Damage, Knockback, Range, SpellDuration, SpellTick},
     },
     screens::Screen,
 };
@@ -33,6 +33,7 @@ pub(crate) fn plugin(app: &mut App) {
     );
 
     app.add_observer(jumper_attack);
+    app.add_observer(spawn_jumper_aoe);
 }
 
 #[derive(Component)]
@@ -54,6 +55,9 @@ pub(crate) fn plugin(app: &mut App) {
     Damage(1.0),
     AbilityDamage(5.0),
     AbilitySpeed(350.0),
+    SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),
+    SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
+    Size(60.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
     Range(500.0),
 )]
@@ -61,6 +65,9 @@ pub(crate) struct Jumper;
 
 #[derive(Event)]
 pub(crate) struct JumperAttackEvent(pub Entity);
+
+#[derive(Event)]
+pub(crate) struct JumperLandingEvent(pub Entity);
 
 #[derive(Component)]
 pub(crate) struct AbilityVisual;
@@ -156,8 +163,8 @@ fn jumper_attack(
 
     let jumper_pos = transform.translation.truncate();
     let target_offset = Vec2::new(
-        rand::random_range(0..=15) as f32,
-        rand::random_range(0..=15) as f32,
+        rand::random_range(-7.5..=7.5) as f32,
+        rand::random_range(-7.5..=7.5) as f32,
     );
 
     let target_pos = player_pos + target_offset;
@@ -241,9 +248,49 @@ fn move_jumping_jumper(
             // If we are close to player
             if distance <= JUMPER_BUFFER {
                 commands.entity(jumper).remove::<Jump>();
+                commands.trigger(JumperLandingEvent(jumper));
             }
         }
     }
 
     Ok(())
+}
+
+fn spawn_jumper_aoe(
+    trigger: Trigger<JumperLandingEvent>,
+    jumper_q: Query<
+        (
+            &Transform,
+            &AbilityDamage,
+            &SpellDuration,
+            &SpellTick,
+            &Size,
+        ),
+        With<Jumper>,
+    >,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    let jumper = trigger.0;
+    let Ok((transform, damage, duration, ticker, size)) = jumper_q.get(jumper) else {
+        return;
+    };
+
+    let jumper_pos = transform.translation.truncate();
+
+    commands.spawn((
+        Sprite {
+            image: asset_server.load("enemies/Jumper_aoe.png"),
+            ..default()
+        },
+        Transform {
+            translation: jumper_pos.extend(-1.0),
+            ..default()
+        },
+        HazardousTerrain,
+        Damage(damage.0),
+        SpellDuration(duration.0.clone()),
+        SpellTick(ticker.0.clone()),
+        Size(size.0),
+    ));
 }
