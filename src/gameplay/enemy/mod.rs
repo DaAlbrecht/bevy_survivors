@@ -141,6 +141,9 @@ pub(crate) struct Jump {
     target_pos: Vec2,
 }
 
+#[derive(Component)]
+pub(crate) struct Owner(pub Entity);
+
 #[derive(Component, Default)]
 pub(crate) struct Ranged;
 

@@ -10,7 +10,7 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
-            KnockbackDirection, Meele, SPAWN_RADIUS, Size, Speed,
+            KnockbackDirection, Meele, Owner, SPAWN_RADIUS, Size, Speed,
         },
         player::{Direction, Player},
         spells::{Cooldown, Damage, Knockback, Range, SpellDuration, SpellTick},
@@ -74,6 +74,9 @@ pub(crate) struct AbilityVisual;
 
 #[derive(Component)]
 pub(crate) struct JumperVisual;
+
+#[derive(Component)]
+pub(crate) struct JumperAttackIndicator;
 
 const JUMPER_BUFFER: f32 = 10.0;
 const CURVATURE_COEFFICIENT: f32 = 6.0 / 5.0;
@@ -153,6 +156,7 @@ fn jumper_attack(
     mut visual_q: Query<&mut Visibility, (With<AbilityVisual>, Without<Jumper>)>,
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) -> Result {
     let jumper = trigger.0;
     let player_pos = player_q.single()?.translation.truncate();
@@ -175,6 +179,19 @@ fn jumper_attack(
         start_pos: transform.translation.truncate(),
         target_pos,
     });
+
+    commands.spawn((
+        Sprite {
+            image: asset_server.load("enemies/jumper_aoe_indicator.png"),
+            ..default()
+        },
+        Transform {
+            translation: target_pos.extend(-1.0),
+            ..default()
+        },
+        JumperAttackIndicator,
+        Owner(jumper),
+    ));
 
     //Hide Jumper Sprite
     *visibility = Visibility::Hidden;
@@ -268,6 +285,7 @@ fn spawn_jumper_aoe(
         ),
         With<Jumper>,
     >,
+    indicator_q: Query<(Entity, &Owner), With<JumperAttackIndicator>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
@@ -275,8 +293,13 @@ fn spawn_jumper_aoe(
     let Ok((transform, damage, duration, ticker, size)) = jumper_q.get(jumper) else {
         return;
     };
-
     let jumper_pos = transform.translation.truncate();
+
+    for (indicator, owner) in indicator_q {
+        if owner.0 == jumper {
+            commands.entity(indicator).despawn();
+        }
+    }
 
     commands.spawn((
         Sprite {
