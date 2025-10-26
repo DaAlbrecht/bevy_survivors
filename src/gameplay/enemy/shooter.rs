@@ -11,8 +11,9 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
-            ProjectileOf, ProjectileSpeed, Ranged, SPAWN_RADIUS, Speed,
+            ProjectileOf, ProjectileSpeed, Ranged, SPAWN_RADIUS, spawn_enemy_health_bar,
         },
+        healthbar::HealthBarMaterial,
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Knockback, Range},
     },
@@ -70,6 +71,8 @@ fn spawn_shooter(
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     shooter_q: Query<&Shooter>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    mut mesh: ResMut<Assets<Mesh>>,
 ) -> Result {
     let player_pos = player_query.single()?;
 
@@ -84,16 +87,22 @@ fn spawn_shooter(
     let mut shooter_count = shooter_q.iter().count();
     shooter_count += 1;
 
-    commands.spawn((
-        Name::new(format!("Shooter {shooter_count}")),
-        Enemy,
-        Shooter,
-        Sprite {
-            image: asset_server.load("enemies/shooter.png"),
-            ..default()
-        },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
-    ));
+    let shooter = commands
+        .spawn((
+            Name::new(format!("Shooter {shooter_count}")),
+            Enemy,
+            Shooter,
+            Sprite {
+                image: asset_server.load("enemies/shooter.png"),
+                ..default()
+            },
+            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        ))
+        .id();
+
+    let health_bar =
+        spawn_enemy_health_bar(&mut commands, &mut health_bar_materials, &mut mesh, 10.0);
+    commands.entity(shooter).add_child(health_bar);
 
     Ok(())
 }

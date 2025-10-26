@@ -7,8 +7,11 @@ use rand::Rng;
 use crate::{
     AppSystems,
     gameplay::{
-        Health,
-        enemy::{DamageCooldown, Enemy, KnockbackDirection, Meele, SPAWN_RADIUS, Speed},
+        Health, Speed,
+        enemy::{
+            DamageCooldown, Enemy, KnockbackDirection, Meele, SPAWN_RADIUS, spawn_enemy_health_bar,
+        },
+        healthbar::HealthBarMaterial,
         player::{Direction, Player},
         spells::Knockback,
     },
@@ -48,6 +51,8 @@ fn spawn_walker(
     asset_server: Res<AssetServer>,
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    mut mesh: ResMut<Assets<Mesh>>,
 ) -> Result {
     let player_pos = player_query.single()?;
 
@@ -59,16 +64,22 @@ fn spawn_walker(
     let enemy_pos_x = player_pos.translation.x + offset_x;
     let enemy_pos_y = player_pos.translation.y + offset_y;
 
-    commands.spawn((
-        Name::new("Default Enemy"),
-        Walker,
-        Sprite {
-            image: asset_server.load("enemies/walker.png"),
-            ..default()
-        },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
-        DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-    ));
+    let walker = commands
+        .spawn((
+            Name::new("Default Enemy"),
+            Walker,
+            Sprite {
+                image: asset_server.load("enemies/walker.png"),
+                ..default()
+            },
+            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+            DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
+        ))
+        .id();
+
+    let health_bar =
+        spawn_enemy_health_bar(&mut commands, &mut health_bar_materials, &mut mesh, 10.0);
+    commands.entity(walker).add_child(health_bar);
 
     Ok(())
 }

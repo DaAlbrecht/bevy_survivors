@@ -40,6 +40,9 @@ pub(crate) struct PlayerHitEvent {
     pub dmg: f32,
 }
 
+#[derive(Component)]
+pub(crate) struct PlayerHealthBar;
+
 #[derive(Component, Reflect)]
 pub(crate) struct Direction(pub Vec3);
 
@@ -99,6 +102,7 @@ pub(crate) fn spawn_player(
                 percent: 1.,
             })),
             Transform::from_xyz(0.0, -25.0, 0.),
+            PlayerHealthBar,
         ));
 
     //Default player has Scale attack
@@ -111,7 +115,7 @@ fn player_hit(
     trigger: On<PlayerHitEvent>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
     mut player_q: Query<&mut Health, With<Player>>,
-    healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>>,
+    healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>, With<PlayerHealthBar>>,
 ) -> Result {
     let mut health = player_q.single_mut()?;
     health.0 -= trigger.dmg;

@@ -10,8 +10,9 @@ use crate::{
         Health,
         enemy::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType,
-            KnockbackDirection, Meele, RANGE_BUFFER, SPAWN_RADIUS, Speed,
+            KnockbackDirection, Meele, RANGE_BUFFER, SPAWN_RADIUS, spawn_enemy_health_bar,
         },
+        healthbar::HealthBarMaterial,
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Knockback, Range},
     },
@@ -71,6 +72,8 @@ fn spawn_sprinter(
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    mut mesh: ResMut<Assets<Mesh>>,
 ) -> Result {
     let player_pos = player_query.single()?;
 
@@ -85,16 +88,22 @@ fn spawn_sprinter(
     let mut sprinter_count = sprinter_q.iter().count();
     sprinter_count += 1;
 
-    commands.spawn((
-        Name::new(format!("Shooter {sprinter_count}")),
-        Enemy,
-        Sprinter,
-        Sprite {
-            image: asset_server.load("enemies/sprinter.png"),
-            ..default()
-        },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
-    ));
+    let sprinter = commands
+        .spawn((
+            Name::new(format!("Shooter {sprinter_count}")),
+            Enemy,
+            Sprinter,
+            Sprite {
+                image: asset_server.load("enemies/sprinter.png"),
+                ..default()
+            },
+            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        ))
+        .id();
+
+    let health_bar =
+        spawn_enemy_health_bar(&mut commands, &mut health_bar_materials, &mut mesh, 10.0);
+    commands.entity(sprinter).add_child(health_bar);
 
     Ok(())
 }

@@ -11,6 +11,7 @@ use crate::{
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
             sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
         },
+        healthbar::HealthBarMaterial,
         player::{Direction, Move, PlayerHitEvent},
         spells::{
             CastSpell, Cooldown, Damage, Despawn, Halt, Range, Root, Spell, SpellDuration,
@@ -54,6 +55,10 @@ pub(crate) fn plugin(app: &mut App) {
             terrain_manager,
         )
             .run_if(in_state(Screen::Gameplay)),
+    )
+    .add_systems(
+        Update,
+        update_enemy_health_bars.run_if(in_state(Screen::Gameplay)),
     )
     .add_observer(enemy_pushing)
     .add_observer(enemy_take_dmg)
@@ -155,6 +160,11 @@ pub(crate) struct HazardousTerrain;
 
 #[derive(Component)]
 pub(crate) struct Size(pub f32);
+
+#[derive(Component)]
+pub(crate) struct EnemyHealthBar {
+    pub max_health: f32,
+}
 
 fn enemy_colliding_detection(
     mut enemy_query: Query<
@@ -278,15 +288,20 @@ fn enemy_get_pushed_from_hit(
     knockback: Query<&Knockback, (With<Spell>, Without<Enemy>)>,
     projectile_direction: Query<&Direction, With<PlayerProjectile>>,
     spells: Query<&CastSpell>,
+    projectile_names: Query<&Name>,
 ) -> Result {
     let enemy_entity = trigger.entity_hit;
     let projectile_entity = trigger.spell_entity;
 
     //Get the Spell of this projectile, each projectile, this is a 1-many relationship
-    let spell = spells
-        .iter_ancestors(projectile_entity)
-        .next()
-        .expect("there should always only be one ancestor spell for each projectile");
+    let Some(spell) = spells.iter_ancestors(projectile_entity).next() else {
+        // Projectile has no spell ancestor - this shouldn't happen
+        let name = projectile_names.get(projectile_entity)
+            .map(|n| n.as_str())
+            .unwrap_or("Unknown");
+        warn!("Projectile {:?} ({}) has no spell ancestor, skipping knockback", projectile_entity, name);
+        return Ok(());
+    };
 
     let knockback = knockback.get(spell)?.0;
 
@@ -560,4 +575,44 @@ fn terrain_manager(
     }
 
     Ok(())
+}
+
+/// Helper function to spawn a health bar for any enemy type
+pub(crate) fn spawn_enemy_health_bar(
+    commands: &mut Commands,
+    health_bar_materials: &mut ResMut<Assets<HealthBarMaterial>>,
+    mesh: &mut ResMut<Assets<Mesh>>,
+    max_health: f32,
+) -> Entity {
+    use bevy::color::palettes::css;
+    
+    commands
+        .spawn((
+            Mesh2d(mesh.add(Rectangle::new(25.0, 3.0))),
+            MeshMaterial2d(health_bar_materials.add(HealthBarMaterial {
+                foreground_color: css::GREEN.into(),
+                background_color: css::RED.into(),
+                percent: 1.,
+            })),
+            Transform::from_xyz(0.0, -20.0, 1.0),
+            EnemyHealthBar { max_health },
+        ))
+        .id()
+}
+
+fn update_enemy_health_bars(
+    enemy_q: Query<(&Health, &Children), (With<Enemy>, Changed<Health>)>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    healthbar_q: Query<(&MeshMaterial2d<HealthBarMaterial>, &EnemyHealthBar)>,
+) {
+    for (health, children) in &enemy_q {
+        // Find the health bar child
+        for &child in children {
+            if let Ok((health_bar_handle, enemy_health_bar)) = healthbar_q.get(child) {
+                if let Some(material) = health_bar_materials.get_mut(&health_bar_handle.0) {
+                    material.percent = (health.0 / enemy_health_bar.max_health).clamp(0.0, 1.0);
+                }
+            }
+        }
+    }
 }

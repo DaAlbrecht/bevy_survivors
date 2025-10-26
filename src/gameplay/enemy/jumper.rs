@@ -9,9 +9,11 @@ use crate::{
     gameplay::{
         Health,
         enemy::{
-            AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
-            KnockbackDirection, Meele, Owner, SPAWN_RADIUS, Size, Speed,
+            spawn_enemy_health_bar, AbilityDamage, AbilitySpeed, DamageCooldown, Enemy,
+            EnemyType, HazardousTerrain, Jump, KnockbackDirection, Meele, Owner, SPAWN_RADIUS,
+            Size,
         },
+        healthbar::HealthBarMaterial,
         player::{Direction, Player},
         spells::{Cooldown, Damage, Knockback, Range, SpellDuration, SpellTick},
     },
@@ -87,6 +89,8 @@ fn spawn_jumper(
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     jumper_q: Query<&Jumper>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    mut mesh: ResMut<Assets<Mesh>>,
 ) -> Result {
     let player_pos = player_query.single()?;
 
@@ -128,6 +132,8 @@ fn spawn_jumper(
         ))
         .id();
 
+    let health_bar = spawn_enemy_health_bar(&mut commands, &mut health_bar_materials, &mut mesh, 10.0);
+
     let jumper_visual = commands
         .spawn((
             Name::new(format!("Jumper_Visual{jumper_count}")),
@@ -143,6 +149,7 @@ fn spawn_jumper(
 
     commands.entity(jumper).add_child(shadow);
     commands.entity(jumper).add_child(jumper_visual);
+    commands.entity(jumper).add_child(health_bar);
 
     Ok(())
 }
