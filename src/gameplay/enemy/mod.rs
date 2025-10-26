@@ -514,12 +514,11 @@ fn trigger_player_hit_event(
     enemy: Entity,
     commands: &mut Commands,
 ) {
-    match enemy_type {
-        EnemyType::Shooter => commands.trigger(ShooterProjectileHitEvent {
+    if let EnemyType::Shooter = enemy_type {
+        commands.trigger(ShooterProjectileHitEvent {
             projectile,
             source: enemy,
-        }),
-        _ => (),
+        });
     }
 }
 
