@@ -6,24 +6,21 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 //Component to give to the one apply the dot
-#[derive(Component, Clone)]
-#[derive(Reflect)]
+#[derive(Component, Clone, Reflect)]
 pub(crate) struct DoT {
     pub duration: Timer,
     pub tick: Timer,
     pub dmg_per_tick: f32,
 }
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Bleed {
     pub duration: Timer,
     pub tick: Timer,
     pub dmg_per_tick: f32,
 }
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct BleedVisual;
 
 fn add_bleed_visual(

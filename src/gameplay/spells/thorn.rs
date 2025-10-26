@@ -1,13 +1,17 @@
 use bevy::prelude::*;
 
 use crate::{
+    PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Speed},
         player::{Direction, Player},
         spells::{
-             dot::{Bleed, DoT}, CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root, Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail
+            CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
+            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail,
+            dot::{Bleed, DoT},
         },
-    }, screens::Screen, PLAYER_SIZE, SPELL_SIZE
+    },
+    screens::Screen,
 };
 
 #[derive(Component)]
@@ -20,8 +24,8 @@ use crate::{
     Speed(600.),
     Damage(1.),
     DoT{
-        duration: Timer::from_seconds(5.0, TimerMode::Once), 
-        tick: Timer::from_seconds(1.0, TimerMode::Once), 
+        duration: Timer::from_seconds(5.0, TimerMode::Once),
+        tick: Timer::from_seconds(1.0, TimerMode::Once),
         dmg_per_tick: 1.0,
     },
     ProjectileCount(5.0),
@@ -30,20 +34,16 @@ use crate::{
 #[derive(Reflect)]
 pub(crate) struct Thorn;
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct ThornTip;
 
-#[derive(Component, Default)]
-#[derive(Reflect)]
+#[derive(Component, Default, Reflect)]
 pub(crate) struct ThornSegments(i32);
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct ThornAttackEvent;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct ThornHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,
@@ -215,22 +215,20 @@ fn thorn_hit(
             entity_hit: enemy,
             dmg: damage.0,
         });
-        cooldown.0.reset();         
+        cooldown.0.reset();
     }
 
-    if enemy_q.get(enemy).is_ok() {        
+    if enemy_q.get(enemy).is_ok() {
         commands
             .entity(enemy)
             .insert_if_new(Root(Timer::from_seconds(0.5, TimerMode::Once)));
 
-        commands.entity(enemy).insert_if_new(Bleed{
+        commands.entity(enemy).insert_if_new(Bleed {
             duration: dot.duration.clone(),
             tick: dot.tick.clone(),
             dmg_per_tick: dot.dmg_per_tick,
-
         });
     }
-
 
     Ok(())
 }

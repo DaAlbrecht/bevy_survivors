@@ -29,16 +29,13 @@ use crate::gameplay::{
 #[derive(Reflect)]
 pub(crate) struct Orb;
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct OrbProjectile;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct OrbAttackEvent;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct OrbHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,

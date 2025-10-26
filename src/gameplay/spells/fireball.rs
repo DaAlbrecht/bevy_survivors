@@ -22,12 +22,10 @@ use crate::gameplay::{
 #[derive(Reflect)]
 pub(crate) struct Fireball;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct FireballAttackEvent;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct FireballHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,
