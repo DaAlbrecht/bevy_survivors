@@ -41,7 +41,7 @@ pub(crate) struct LevelUpEvent;
 const BASE_LEVEL_XP: f32 = 100.;
 
 fn spawn_xp_gem(
-    trigger: Trigger<EnemyDeathEvent>,
+    trigger: On<EnemyDeathEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
@@ -92,7 +92,7 @@ fn collect_xp_gem(
 }
 
 fn gain_xp(
-    _trigger: Trigger<GainXpEvent>,
+    _trigger: On<GainXpEvent>,
     mut player_q: Query<(&Level, &mut XP), With<Player>>,
     mut commands: Commands,
 ) -> Result {
@@ -111,7 +111,7 @@ fn gain_xp(
 }
 
 fn level_up(
-    _trigger: Trigger<LevelUpEvent>,
+    _trigger: On<LevelUpEvent>,
     mut player_q: Query<&mut Level, With<Player>>,
     mut next_state: ResMut<NextState<Screen>>,
 ) -> Result {

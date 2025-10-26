@@ -24,11 +24,11 @@ pub(crate) struct Bleed {
 pub(crate) struct BleedVisual;
 
 fn add_bleed_visual(
-    trigger: Trigger<OnInsert, Bleed>,
+    trigger: On<Insert, Bleed>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    let target = trigger.target();
+    let target = trigger.entity;
 
     let bleed_visual = commands
         .spawn((
@@ -44,12 +44,12 @@ fn add_bleed_visual(
 }
 
 fn remove_bleed_visual(
-    trigger: Trigger<OnRemove, Bleed>,
+    trigger: On<Remove, Bleed>,
     visual_q: Query<Entity, With<BleedVisual>>,
     children_q: Query<&Children>,
     mut commands: Commands,
 ) {
-    let target = trigger.target();
+    let target = trigger.entity;
 
     let Ok(children) = children_q.get(target) else {
         return;

@@ -37,7 +37,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (/*attack,*/ handle_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
+        (attack, handle_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
     );
     app.add_systems(FixedUpdate, move_projectile);
 
@@ -127,7 +127,7 @@ pub(crate) struct Tail;
 pub struct SpellTick(pub Timer);
 
 pub(crate) fn add_spell_to_inventory(
-    trigger: Trigger<PickUpSpell>,
+    trigger: On<PickUpSpell>,
     mut commands: Commands,
     player: Query<Entity, (With<Player>, Without<Spell>)>,
     owned_spells: Query<&SpellType, With<Spell>>,
@@ -175,7 +175,7 @@ fn attack(
     for inventory_slot in inventory.iter_descendants(player) {
         let (mut cooldown, spell_type) = spells.get_mut(inventory_slot)?;
 
-        if cooldown.0.finished() {
+        if cooldown.0.is_finished() {
             match spell_type {
                 SpellType::Scale => commands.trigger(ScaleAttackEvent),
                 SpellType::Fireball => commands.trigger(FireballAttackEvent),
@@ -281,7 +281,7 @@ fn handle_timers(
 
     for (entity, mut root) in &mut root_timer {
         root.0.tick(time.delta());
-        if root.0.finished() {
+        if root.0.is_finished() {
             commands.entity(entity).remove::<Root>();
         }
     }
@@ -289,14 +289,14 @@ fn handle_timers(
     for (target, mut bleed) in &mut bleed_timer {
         bleed.duration.tick(time.delta());
         bleed.tick.tick(time.delta());
-        if bleed.tick.finished() {
+        if bleed.tick.is_finished() {
             commands.trigger(EnemyDamageEvent {
                 entity_hit: target,
                 dmg: bleed.dmg_per_tick,
             });
             bleed.tick.reset();
         }
-        if bleed.duration.finished() {
+        if bleed.duration.is_finished() {
             commands.entity(target).remove::<Bleed>();
         }
     }

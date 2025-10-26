@@ -37,7 +37,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn spawn_fireball_projectile(
-    _trigger: Trigger<FireballAttackEvent>,
+    _trigger: On<FireballAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     fireball: Query<Entity, With<Fireball>>,
     enemy_q: Query<&Transform, With<Enemy>>,
@@ -84,7 +84,7 @@ fn spawn_fireball_projectile(
 }
 
 fn fireball_hit(
-    trigger: Trigger<FireballHitEvent>,
+    trigger: On<FireballHitEvent>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     mut commands: Commands,
     explosion_radius: Query<(&ExplosionRadius, &Damage), With<Fireball>>,

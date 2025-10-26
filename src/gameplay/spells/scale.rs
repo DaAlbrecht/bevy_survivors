@@ -40,7 +40,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn spawn_scale_projectile(
-    _trigger: Trigger<ScaleAttackEvent>,
+    _trigger: On<ScaleAttackEvent>,
     player_pos_q: Query<&Transform, With<Player>>,
     scale: Query<Entity, With<Scale>>,
     mut commands: Commands,
@@ -69,7 +69,7 @@ fn spawn_scale_projectile(
 }
 
 fn scale_hit(
-    trigger: Trigger<ScaleHitEvent>,
+    trigger: On<ScaleHitEvent>,
     mut commands: Commands,
     scale_dmg: Query<&Damage, With<Scale>>,
 ) -> Result {

@@ -48,7 +48,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn spawn_orb_projectile(
-    _trigger: Trigger<OrbAttackEvent>,
+    _trigger: On<OrbAttackEvent>,
     player_q: Query<Entity, With<Player>>,
     orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,
@@ -120,7 +120,7 @@ fn update_orb_direction(
 }
 
 fn orb_hit(
-    trigger: Trigger<OrbHitEvent>,
+    trigger: On<OrbHitEvent>,
     mut commands: Commands,
     orb_dmg: Query<&Damage, With<Orb>>,
 ) -> Result {
@@ -146,7 +146,7 @@ fn orb_lifetime(
     mut orb_q: Query<(Entity, &mut SpellDuration), With<OrbProjectile>>,
 ) {
     for (orb, duration) in &mut orb_q {
-        if duration.0.finished() {
+        if duration.0.is_finished() {
             commands.entity(orb).despawn();
         }
     }

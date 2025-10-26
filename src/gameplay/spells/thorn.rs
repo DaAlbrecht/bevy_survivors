@@ -62,7 +62,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn spawn_thorn_projectile(
-    _trigger: Trigger<ThornAttackEvent>,
+    _trigger: On<ThornAttackEvent>,
     player_pos_q: Query<&Transform, With<Player>>,
     thorn_q: Query<Entity, With<Thorn>>,
     enemy_pos_q: Query<&Transform, With<Enemy>>,
@@ -187,7 +187,7 @@ fn thorn_lifetime(
     mut commands: Commands,
 ) {
     for (thorn_tip, children, mut duration, mut segments) in &mut thorn_tip_q {
-        if duration.0.finished() {
+        if duration.0.is_finished() {
             let index = (segments.0 - 1) as usize;
             if let Some(child) = children {
                 commands.entity(child[index]).despawn();
@@ -201,7 +201,7 @@ fn thorn_lifetime(
 }
 
 fn thorn_hit(
-    trigger: Trigger<ThornHitEvent>,
+    trigger: On<ThornHitEvent>,
     mut thorn_q: Query<(&Damage, &mut DamageCooldown, &DoT), (With<Thorn>, Without<Despawn>)>,
     enemy_q: Query<Entity, With<Enemy>>,
     mut commands: Commands,
@@ -210,7 +210,7 @@ fn thorn_hit(
     let _thorn = trigger.projectile;
     let (damage, mut cooldown, dot) = thorn_q.single_mut()?;
 
-    if cooldown.0.finished() {
+    if cooldown.0.is_finished() {
         commands.trigger(EnemyDamageEvent {
             entity_hit: enemy,
             dmg: damage.0,

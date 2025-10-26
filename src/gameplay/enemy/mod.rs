@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use bevy_enhanced_input::action::Action;
 
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
@@ -228,7 +226,7 @@ fn enemy_push_detection(
 }
 
 fn enemy_pushing(
-    trigger: Trigger<PlayerPushingEvent>,
+    trigger: On<PlayerPushingEvent>,
     move_action: Single<&Action<Move>>,
     mut enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Player>)>,
     time: Res<Time>,
@@ -259,7 +257,7 @@ fn attack(
 }
 
 fn enemy_take_dmg(
-    trigger: Trigger<EnemyDamageEvent>,
+    trigger: On<EnemyDamageEvent>,
     mut enemy_q: Query<(&mut Health, &Transform), (With<Enemy>, Without<Despawn>)>,
     mut commands: Commands,
 ) {
@@ -275,7 +273,7 @@ fn enemy_take_dmg(
 }
 
 fn enemy_get_pushed_from_hit(
-    trigger: Trigger<EnemyKnockbackEvent>,
+    trigger: On<EnemyKnockbackEvent>,
     mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection, Option<&Charge>), With<Enemy>>,
     knockback: Query<&Knockback, (With<Spell>, Without<Enemy>)>,
     projectile_direction: Query<&Direction, With<PlayerProjectile>>,
@@ -448,7 +446,7 @@ fn enemy_timer_handle(
     for (enemy, mut cooldown_timer, enemy_tye, halt) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
 
-        if cooldown_timer.0.finished() {
+        if cooldown_timer.0.is_finished() {
             match enemy_tye {
                 EnemyType::Shooter => {
                     if halt.is_some() {
@@ -551,13 +549,13 @@ fn terrain_manager(
         duration.0.tick(time.delta());
         ticker.0.tick(time.delta());
 
-        if ticker.0.finished() && distance <= size.0 {
+        if ticker.0.is_finished() && distance <= size.0 {
             commands.trigger(PlayerHitEvent { dmg: damage.0 });
             info!("Terrain_dmg");
             ticker.0.reset();
         }
 
-        if duration.0.finished() {
+        if duration.0.is_finished() {
             commands.entity(terrain).despawn();
         }
     }

@@ -100,7 +100,7 @@ fn spawn_sprinter(
 }
 
 fn sprinter_attack(
-    trigger: Trigger<SprinterAttackEvent>,
+    trigger: On<SprinterAttackEvent>,
     mut sprinter_q: Query<(&Transform, &mut Direction, Option<&Halt>), With<Sprinter>>,
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
@@ -159,7 +159,7 @@ fn move_charging_sprinter(
 }
 
 fn sprinter_abulity_hit(
-    trigger: Trigger<SprinterAbilityHitEvent>,
+    trigger: On<SprinterAbilityHitEvent>,
     sprinter_q: Query<&AbilityDamage, With<Sprinter>>,
     mut commands: Commands,
 ) {

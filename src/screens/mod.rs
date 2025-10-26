@@ -15,7 +15,6 @@ pub(crate) enum Screen {
 
 pub(crate) fn plugin(app: &mut App) {
     app.init_state::<Screen>();
-    app.enable_state_scoped_entities::<Screen>();
 
     app.add_plugins((gameplay::plugin, title::plugin, level_up::plugin));
 

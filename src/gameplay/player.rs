@@ -108,7 +108,7 @@ pub(crate) fn spawn_player(
 }
 
 fn player_hit(
-    trigger: Trigger<PlayerHitEvent>,
+    trigger: On<PlayerHitEvent>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
     mut player_q: Query<&mut Health, With<Player>>,
     healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>>,

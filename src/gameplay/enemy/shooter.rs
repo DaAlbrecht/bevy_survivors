@@ -99,7 +99,7 @@ fn spawn_shooter(
 }
 
 fn shooter_attack(
-    trigger: Trigger<ShooterAttackEvent>,
+    trigger: On<ShooterAttackEvent>,
     shooter_q: Query<&Transform, With<Shooter>>,
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
@@ -135,7 +135,7 @@ fn shooter_attack(
 }
 
 fn shooter_projectile_hit(
-    trigger: Trigger<ShooterProjectileHitEvent>,
+    trigger: On<ShooterProjectileHitEvent>,
     shooter_q: Query<&AbilityDamage, With<Shooter>>,
     mut commands: Commands,
 ) {

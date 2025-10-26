@@ -101,12 +101,12 @@ fn item_choice_widget(border_image: Handle<Image>, spell_image: Handle<Image>) -
 }
 
 fn upgrade(
-    trigger: Trigger<Pointer<Click>>,
+    trigger: On<Pointer<Click>>,
     mut commands: Commands,
     mut next_state: ResMut<NextState<Screen>>,
     spell_types: Query<&SpellType>,
 ) {
-    let selected_spell = trigger.target();
+    let selected_spell = trigger.entity;
 
     let pickup_event = PickUpSpell {
         spell_type: *spell_types

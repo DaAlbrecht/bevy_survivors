@@ -148,7 +148,7 @@ fn spawn_jumper(
 }
 
 fn jumper_attack(
-    trigger: Trigger<JumperAttackEvent>,
+    trigger: On<JumperAttackEvent>,
     mut jumper_q: Query<
         (&Transform, &mut Direction, &mut Visibility, &Children),
         (With<Jumper>, Without<JumperVisual>),
@@ -274,7 +274,7 @@ fn move_jumping_jumper(
 }
 
 fn spawn_jumper_aoe(
-    trigger: Trigger<JumperLandingEvent>,
+    trigger: On<JumperLandingEvent>,
     jumper_q: Query<
         (
             &Transform,

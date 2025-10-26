@@ -47,7 +47,7 @@ pub(crate) struct LightningHitEvent {
 pub(crate) struct Jumps(pub u32);
 
 fn spawn_lightning_bolt(
-    _trigger: Trigger<LightningAttackEvent>,
+    _trigger: On<LightningAttackEvent>,
     mut commands: Commands,
     player_q: Query<(&Transform, Entity), (With<Player>, Without<Enemy>)>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<Player>)>,
@@ -140,14 +140,14 @@ fn cleanup_lightning_bolt(
     for (entity, mut lightning_timer) in &mut lightning_q {
         lightning_timer.0.tick(time.delta());
 
-        if lightning_timer.0.finished() {
+        if lightning_timer.0.is_finished() {
             commands.entity(entity).despawn();
         }
     }
 }
 
 fn lightning_hit(
-    trigger: Trigger<LightningHitEvent>,
+    trigger: On<LightningHitEvent>,
     mut commands: Commands,
     lightning_dmg: Query<&Damage, With<Lightning>>,
 ) -> Result {
