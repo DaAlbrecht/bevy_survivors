@@ -457,7 +457,6 @@ fn enemy_timer_handle(
                 }
                 EnemyType::Sprinter => commands.trigger(SprinterAttackEvent(enemy)),
                 EnemyType::Jumper => commands.trigger(JumperAttackEvent(enemy)),
-                _ => (),
             }
 
             cooldown_timer.0.reset();
