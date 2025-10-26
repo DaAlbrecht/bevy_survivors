@@ -7,10 +7,10 @@ use rand::Rng;
 use crate::{
     AppSystems,
     gameplay::{
-        Health,
+        Health, Speed,
         enemy::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType,
-            KnockbackDirection, Meele, RANGE_BUFFER, SPAWN_RADIUS, Speed,
+            KnockbackDirection, Meele, RANGE_BUFFER, SPAWN_RADIUS,
         },
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Knockback, Range},

@@ -3,7 +3,8 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::{
-    enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
+    Speed,
+    enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
     player::{Direction, Player},
     spells::{CastSpell, Damage, Knockback, PlayerProjectile, Spell, SpellType},
 };

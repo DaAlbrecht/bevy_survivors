@@ -48,7 +48,7 @@ pub fn plugin(app: &mut App) {
 const ENEMY_SIZE: f32 = 30.0;
 const PLAYER_SIZE: f32 = 30.0;
 const SPELL_SIZE: f32 = 16.0;
-const XP_GAIN_GEM: f32 = 10.;
+const XP_GAIN_GEM: f32 = 100.;
 
 /// How quickly should the camera snap to the desired location.
 const CAMERA_DECAY_RATE: f32 = 2.;

@@ -5,7 +5,11 @@ use bevy_enhanced_input::action::Action;
 use bevy_enhanced_input::actions;
 
 use super::healthbar::HealthBarMaterial;
-use crate::{AppSystems, gameplay::Health, screens::Screen};
+use crate::{
+    AppSystems,
+    gameplay::{Health, Speed},
+    screens::Screen,
+};
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_input_context::<Player>();
@@ -14,10 +18,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(OnEnter(Screen::Gameplay), show_player);
 
-    app.add_systems(
-        Update,
-        (move_player.in_set(AppSystems::RecordInput)).run_if(in_state(Screen::Gameplay)),
-    );
+    app.add_systems(FixedUpdate, move_player.run_if(in_state(Screen::Gameplay)));
 
     app.add_observer(player_hit);
 
@@ -27,6 +28,7 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Component)]
 #[require(
     Health(100.),
+    Speed(200.),
     Transform::from_xyz(50., 0., 0.),
     XpCollectionRange(150.0),
     XP(0.),
@@ -81,12 +83,10 @@ pub(crate) fn spawn_player(
             actions!(Player[
                 (
                     Action::<Move>::new(),
-                    SmoothNudge::default(),
                     Bindings::spawn((
                         Cardinal::wasd_keys(),
                         Axial::left_stick()
                     )),
-                    Scale::splat(100.),
                 ),
             ]),
             Visibility::Hidden,
@@ -127,12 +127,18 @@ fn player_hit(
 
 fn move_player(
     move_action: Single<&Action<Move>>,
-    mut player_transform_q: Query<&mut Transform, With<Player>>,
-    time: Res<Time>,
+    mut player_q: Query<(&mut Transform, &Speed), With<Player>>,
+    time: Res<Time<Fixed>>,
 ) -> Result {
-    let velocity = move_action.extend(0.0);
-    let mut player_transform = player_transform_q.single_mut()?;
-    player_transform.translation += velocity * time.delta_secs();
+    let (mut transform, speed) = player_q.single_mut()?;
+
+    // TODO: check if we need that. should fix faster directional movement
+    let mut dir = move_action.extend(0.0);
+    if dir.length_squared() > 1.0 {
+        dir = dir.normalize();
+    }
+
+    transform.translation += dir * speed.0 * time.delta_secs();
 
     Ok(())
 }

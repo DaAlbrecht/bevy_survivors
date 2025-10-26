@@ -7,10 +7,10 @@ use rand::Rng;
 use crate::{
     AppSystems, ENEMY_SIZE,
     gameplay::{
-        Health,
+        Health, Speed,
         enemy::{
             AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
-            KnockbackDirection, Meele, Owner, SPAWN_RADIUS, Size, Speed,
+            KnockbackDirection, Meele, Owner, SPAWN_RADIUS, Size,
         },
         player::{Direction, Player},
         spells::{Cooldown, Damage, Knockback, Range, SpellDuration, SpellTick},
@@ -54,7 +54,7 @@ pub(crate) fn plugin(app: &mut App) {
     Cooldown(Timer::from_seconds(4.0,TimerMode::Once)),
     Damage(1.0),
     AbilityDamage(5.0),
-    AbilitySpeed(350.0),
+    AbilitySpeed(200.0),
     SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),
     SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
     Size(60.0),

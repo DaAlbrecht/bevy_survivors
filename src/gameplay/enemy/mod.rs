@@ -5,7 +5,7 @@ use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
-        Health,
+        Health, Speed,
         enemy::{
             jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
@@ -38,7 +38,7 @@ pub(crate) fn plugin(app: &mut App) {
     ));
 
     app.add_systems(
-        Update,
+        FixedUpdate,
         (
             enemy_colliding_detection,
             enemy_stop_colliding_detection,
@@ -65,9 +65,6 @@ const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
 const RANGE_BUFFER: f32 = 50.0;
-
-#[derive(Component, Reflect)]
-pub(crate) struct Speed(pub f32);
 
 #[derive(Component, Default, Reflect)]
 pub(crate) struct DamageCooldown(pub Timer);

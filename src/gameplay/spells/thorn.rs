@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
-        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Speed},
+        Speed,
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
