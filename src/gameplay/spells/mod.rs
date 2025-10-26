@@ -142,7 +142,7 @@ pub(crate) fn add_spell_to_inventory(
         if *owned_spell == trigger.spell_type {
             info!("Upgrading spell: {:?}", owned_spell);
             // Trigger upgrade event on the spell entity itself
-            commands.trigger_targets(UpgradeSpellEvent { spell_entity }, spell_entity);
+            commands.trigger(UpgradeSpellEvent { spell_entity });
             return Ok(());
         }
     }
