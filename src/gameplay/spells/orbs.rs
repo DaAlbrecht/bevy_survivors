@@ -8,7 +8,7 @@ use crate::gameplay::{
     player::{Direction, Player},
     spells::{
         CastSpell, Cooldown, Damage, Knockback, Orbiting, PlayerProjectile, ProjectileCount, Range,
-        Spell, SpellDuration, SpellType,
+        Spell, SpellDuration, SpellType, UpgradeSpellEvent,
     },
 };
 
@@ -45,6 +45,18 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(Update, (update_orb_direction, orb_lifetime));
     app.add_observer(spawn_orb_projectile);
     app.add_observer(orb_hit);
+    app.add_observer(upgrade_orb);
+}
+
+fn upgrade_orb(
+    _trigger: On<UpgradeSpellEvent>,
+    mut orb_q: Query<&mut ProjectileCount, With<Orb>>,
+) -> Result {
+    let mut count = orb_q.single_mut()?;
+    count.0 *= 2.0;
+    info!("Orb projectile count upgraded to: {}", count.0);
+
+    Ok(())
 }
 
 fn spawn_orb_projectile(
