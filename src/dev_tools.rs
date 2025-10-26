@@ -1,5 +1,5 @@
 use bevy::{
-    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
+    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
     input::common_conditions::{input_just_pressed, input_toggle_active},
     prelude::*,
 };
@@ -46,6 +46,13 @@ pub(super) fn plugin(app: &mut App) {
             },
             refresh_interval: core::time::Duration::from_millis(100),
             enabled: true,
+            frame_time_graph_config: {
+                FrameTimeGraphConfig {
+                    enabled: true,
+                    min_fps: 60.,
+                    target_fps: 120.,
+                }
+            },
             ..default()
         },
     });
