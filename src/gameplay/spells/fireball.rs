@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player},
@@ -34,6 +35,17 @@ pub(crate) struct FireballHitEvent {
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_fireball_projectile);
     app.add_observer(fireball_hit);
+    app.add_observer(upgrade_fireball);
+}
+
+fn upgrade_fireball(
+    _trigger: Trigger<UpgradeSpellEvent>,
+    mut fireball_q: Query<&mut Damage, With<Fireball>>,
+) {
+    for mut damage in &mut fireball_q {
+        damage.0 += 5.0;
+        info!("Fireball damage upgraded to: {}", damage.0);
+    }
 }
 
 fn spawn_fireball_projectile(

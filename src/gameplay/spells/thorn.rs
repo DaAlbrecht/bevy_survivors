@@ -7,7 +7,7 @@ use crate::{
         player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
-            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail,
+            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent,
             dot::{Bleed, DoT},
         },
     },
@@ -59,6 +59,17 @@ pub(crate) fn plugin(app: &mut App) {
     );
     app.add_observer(spawn_thorn_projectile);
     app.add_observer(thorn_hit);
+    app.add_observer(upgrade_thorn);
+}
+
+fn upgrade_thorn(
+    _trigger: Trigger<UpgradeSpellEvent>,
+    mut thorn_q: Query<&mut ProjectileCount, With<Thorn>>,
+) {
+    for mut count in &mut thorn_q {
+        count.0 += 1.0;
+        info!("Thorn projectile count upgraded to: {}", count.0);
+    }
 }
 
 fn spawn_thorn_projectile(

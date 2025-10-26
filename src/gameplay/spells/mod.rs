@@ -126,16 +126,23 @@ pub(crate) struct Tail;
 #[derive(Component)]
 pub struct SpellTick(pub Timer);
 
+#[derive(Event)]
+pub(crate) struct UpgradeSpellEvent {
+    pub spell_entity: Entity,
+}
+
 pub(crate) fn add_spell_to_inventory(
     trigger: On<PickUpSpell>,
     mut commands: Commands,
     player: Query<Entity, (With<Player>, Without<Spell>)>,
-    owned_spells: Query<&SpellType, With<Spell>>,
+    owned_spells: Query<(Entity, &SpellType), With<Spell>>,
 ) -> Result {
-    for owned_spell in owned_spells {
+    // Check if spell is already owned - if so, upgrade it
+    for (spell_entity, owned_spell) in &owned_spells {
         if *owned_spell == trigger.spell_type {
-            //TODO: upgrade spell instead
-            info!("spell_type already owned {:?}", owned_spell);
+            info!("Upgrading spell: {:?}", owned_spell);
+            // Trigger upgrade event on the spell entity itself
+            commands.trigger_targets(UpgradeSpellEvent { spell_entity }, spell_entity);
             return Ok(());
         }
     }

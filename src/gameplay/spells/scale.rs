@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
 
+use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
     player::{Direction, Player},
@@ -37,6 +38,17 @@ pub(crate) struct ScaleHitEvent {
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_scale_projectile);
     app.add_observer(scale_hit);
+    app.add_observer(upgrade_scale);
+}
+
+fn upgrade_scale(
+    _trigger: Trigger<UpgradeSpellEvent>,
+    mut scale_q: Query<&mut Knockback, With<Scale>>,
+) {
+    for mut knockback in &mut scale_q {
+        knockback.0 += 100.0;
+        info!("Scale knockback upgraded to: {}", knockback.0);
+    }
 }
 
 fn spawn_scale_projectile(

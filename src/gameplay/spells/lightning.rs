@@ -6,7 +6,7 @@ use crate::{
     gameplay::{
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
-        spells::{Cooldown, Damage, Range, Spell, SpellType},
+        spells::{Cooldown, Damage, Range, Spell, SpellType, UpgradeSpellEvent},
     },
     screens::Screen,
 };
@@ -18,6 +18,19 @@ pub(crate) fn plugin(app: &mut App) {
     );
     app.add_observer(spawn_lightning_bolt);
     app.add_observer(lightning_hit);
+    app.add_observer(upgrade_lightning);
+}
+
+fn upgrade_lightning(
+    _trigger: Trigger<UpgradeSpellEvent>,
+    mut lightning_q: Query<&mut Cooldown, With<Lightning>>,
+) {
+    for mut cooldown in &mut lightning_q {
+        let current_duration = cooldown.0.duration().as_secs_f32();
+        let new_duration = (current_duration * 0.9).max(0.5); // Reduce by 10%, min 0.5s
+        cooldown.0.set_duration(std::time::Duration::from_secs_f32(new_duration));
+        info!("Lightning cooldown upgraded to: {}s", new_duration);
+    }
 }
 
 #[derive(Component)]
