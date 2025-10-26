@@ -126,9 +126,9 @@ pub(crate) struct Tail;
 #[derive(Component)]
 pub struct SpellTick(pub Timer);
 
-#[derive(Event)]
+#[derive(EntityEvent)]
 pub(crate) struct UpgradeSpellEvent {
-    pub spell_entity: Entity,
+    pub entity: Entity,
 }
 
 pub(crate) fn add_spell_to_inventory(
@@ -142,7 +142,9 @@ pub(crate) fn add_spell_to_inventory(
         if *owned_spell == trigger.spell_type {
             info!("Upgrading spell: {:?}", owned_spell);
             // Trigger upgrade event on the spell entity itself
-            commands.trigger(UpgradeSpellEvent { spell_entity });
+            commands.trigger(UpgradeSpellEvent {
+                entity: spell_entity,
+            });
             return Ok(());
         }
     }
