@@ -22,15 +22,18 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn upgrade_lightning(
-    _trigger: Trigger<UpgradeSpellEvent>,
+    _trigger: On<UpgradeSpellEvent>,
     mut lightning_q: Query<&mut Cooldown, With<Lightning>>,
-) {
-    for mut cooldown in &mut lightning_q {
-        let current_duration = cooldown.0.duration().as_secs_f32();
-        let new_duration = (current_duration * 0.9).max(0.5); // Reduce by 10%, min 0.5s
-        cooldown.0.set_duration(std::time::Duration::from_secs_f32(new_duration));
-        info!("Lightning cooldown upgraded to: {}s", new_duration);
-    }
+) -> Result {
+    let mut cooldown = lightning_q.single_mut()?;
+    let current_duration = cooldown.0.duration().as_secs_f32();
+    let new_duration = (current_duration * 0.9).max(0.5); // Reduce by 10%, min 0.5s
+    cooldown
+        .0
+        .set_duration(std::time::Duration::from_secs_f32(new_duration));
+    info!("Lightning cooldown upgraded to: {}s", new_duration);
+
+    Ok(())
 }
 
 #[derive(Component)]

@@ -49,13 +49,14 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn upgrade_orb(
-    _trigger: Trigger<UpgradeSpellEvent>,
+    _trigger: On<UpgradeSpellEvent>,
     mut orb_q: Query<&mut ProjectileCount, With<Orb>>,
-) {
-    for mut count in &mut orb_q {
-        count.0 *= 2.0;
-        info!("Orb projectile count upgraded to: {}", count.0);
-    }
+) -> Result {
+    let mut count = orb_q.single_mut()?;
+    count.0 *= 2.0;
+    info!("Orb projectile count upgraded to: {}", count.0);
+
+    Ok(())
 }
 
 fn spawn_orb_projectile(

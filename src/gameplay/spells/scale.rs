@@ -42,13 +42,14 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn upgrade_scale(
-    _trigger: Trigger<UpgradeSpellEvent>,
+    _trigger: On<UpgradeSpellEvent>,
     mut scale_q: Query<&mut Knockback, With<Scale>>,
-) {
-    for mut knockback in &mut scale_q {
-        knockback.0 += 100.0;
-        info!("Scale knockback upgraded to: {}", knockback.0);
-    }
+) -> Result {
+    let mut knockback = scale_q.single_mut()?;
+    knockback.0 += 100.0;
+    info!("Scale knockback upgraded to: {}", knockback.0);
+
+    Ok(())
 }
 
 fn spawn_scale_projectile(

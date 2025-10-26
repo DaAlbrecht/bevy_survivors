@@ -39,13 +39,14 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn upgrade_fireball(
-    _trigger: Trigger<UpgradeSpellEvent>,
+    _trigger: On<UpgradeSpellEvent>,
     mut fireball_q: Query<&mut Damage, With<Fireball>>,
-) {
-    for mut damage in &mut fireball_q {
-        damage.0 += 5.0;
-        info!("Fireball damage upgraded to: {}", damage.0);
-    }
+) -> Result {
+    let mut damage = fireball_q.single_mut()?;
+    damage.0 += 5.0;
+    info!("Fireball damage upgraded to: {}", damage.0);
+
+    Ok(())
 }
 
 fn spawn_fireball_projectile(

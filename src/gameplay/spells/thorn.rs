@@ -63,13 +63,14 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 fn upgrade_thorn(
-    _trigger: Trigger<UpgradeSpellEvent>,
+    _trigger: On<UpgradeSpellEvent>,
     mut thorn_q: Query<&mut ProjectileCount, With<Thorn>>,
-) {
-    for mut count in &mut thorn_q {
-        count.0 += 1.0;
-        info!("Thorn projectile count upgraded to: {}", count.0);
-    }
+) -> Result {
+    let mut count = thorn_q.single_mut()?;
+    count.0 += 1.0;
+    info!("Thorn projectile count upgraded to: {}", count.0);
+
+    Ok(())
 }
 
 fn spawn_thorn_projectile(
