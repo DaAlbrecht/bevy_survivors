@@ -89,7 +89,7 @@ fn spawn_shooter(
         Enemy,
         Shooter,
         Sprite {
-            image: asset_server.load("enemies/Shooter.png"),
+            image: asset_server.load("enemies/shooter.png"),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),

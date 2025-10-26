@@ -32,10 +32,12 @@ mod sprinter;
 mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
-    // app.add_plugins(walker::plugin);
-    // app.add_plugins(shooter::plugin);
-    // app.add_plugins(sprinter::plugin);
-    app.add_plugins(jumper::plugin);
+    app.add_plugins((
+        jumper::plugin,
+        walker::plugin,
+        shooter::plugin,
+        sprinter::plugin,
+    ));
 
     app.add_systems(
         Update,

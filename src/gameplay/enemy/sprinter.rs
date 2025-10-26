@@ -90,7 +90,7 @@ fn spawn_sprinter(
         Enemy,
         Sprinter,
         Sprite {
-            image: asset_server.load("enemies/Sprinter.png"),
+            image: asset_server.load("enemies/sprinter.png"),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
