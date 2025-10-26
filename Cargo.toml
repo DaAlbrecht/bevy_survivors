@@ -82,13 +82,6 @@ default-features = false
 features = ["dev"]
 
 
-[workspace.metadata.bevy_lint]
-pedantic = "warn"
-nursery = "warn"
-restriction = "warn"
-style = "warn"
-suspicious = "warn"
-
 [lints.clippy]
 too_many_arguments = "allow"
 type_complexity = "allow"
