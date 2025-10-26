@@ -32,22 +32,18 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Reflect)]
 pub(crate) struct Lightning;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct LightningAttackEvent;
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct LightningVisualTimer(pub Timer);
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct LightningHitEvent {
     pub enemy: Entity,
 }
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct Jumps(pub u32);
 
 fn spawn_lightning_bolt(
@@ -109,9 +105,9 @@ fn spawn_lightning_bolt(
             Sprite {
                 image: asset_server.load("Lightning.png"),
                 custom_size: Some(Vec2::new(length, 13.0)),
-                anchor: Anchor::Center,
                 ..default()
             },
+            Anchor::CENTER,
             Transform {
                 translation: anchor_point.extend(1.0),
                 rotation: Quat::from_rotation_z(angle),

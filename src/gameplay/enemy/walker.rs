@@ -1,7 +1,7 @@
 use std::{f32::consts::PI, time::Duration};
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
-use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
+use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
@@ -47,7 +47,7 @@ fn spawn_walker(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_query: Query<&Transform, With<Player>>,
-    mut rng: GlobalEntropy<WyRand>,
+    mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) -> Result {
     let player_pos = player_query.single()?;
 

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
+use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::gameplay::{PickUpSpell, spells::SpellType};
@@ -15,7 +15,7 @@ const NUMBER_OF_ITEM_CHOICES: usize = 3;
 fn spawn_level_up_screen(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut rng: GlobalEntropy<WyRand>,
+    mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
     let border_image = asset_server.load("kenny/panel-border-011.png");
 
@@ -31,7 +31,7 @@ fn spawn_level_up_screen(
                 ..default()
             },
             BackgroundColor(Color::linear_rgba(0.012, 0.011, 0.011, 1.)),
-            StateScoped(Screen::LevelUp),
+            DespawnOnExit(Screen::LevelUp),
         ))
         .with_children(|parent| {
             parent

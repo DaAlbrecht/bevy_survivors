@@ -13,7 +13,7 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_title_screen(mut commands: Commands) {
     commands.spawn((
         widgets::ui_root("Title Screen"),
-        StateScoped(Screen::Title),
+        DespawnOnExit(Screen::Title),
         #[cfg(not(target_family = "wasm"))]
         children![
             widgets::button("Play", enter_loading_or_gameplay_screen),

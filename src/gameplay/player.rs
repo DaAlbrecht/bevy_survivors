@@ -1,6 +1,6 @@
 use bevy_enhanced_input::prelude::*;
 
-use bevy::{color::palettes::css, prelude::*};
+use bevy::{color::palettes::css, prelude::*, sprite_render::MeshMaterial2d};
 use bevy_enhanced_input::action::Action;
 use bevy_enhanced_input::actions;
 
@@ -118,7 +118,7 @@ fn player_hit(
     info!("attacking player, player_health: {}", health.0);
     let per = health.0 / 100.;
 
-    let handle = healthbar_material_q.single()?.clone_weak();
+    let handle = healthbar_material_q.single()?.clone();
     let material = health_bar_materials.get_mut(&handle).unwrap();
     material.percent = per;
 

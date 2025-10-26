@@ -1,7 +1,8 @@
 use bevy::{
     color::palettes::css::{BLUE, GREY},
     prelude::*,
-    render::render_resource::{AsBindGroup, ShaderRef},
+    render::render_resource::AsBindGroup,
+    shader::ShaderRef,
     ui::Val::{Percent, Px},
 };
 
@@ -28,16 +29,13 @@ pub(crate) fn plugin(app: &mut App) {
         .spawn((Observer::new(level_up), Name::new("level_up Observer")));
 }
 
-#[derive(Component)]
-#[derive(Reflect)]
+#[derive(Component, Reflect)]
 pub(crate) struct XpGem;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct GainXpEvent;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct LevelUpEvent;
 
 const BASE_LEVEL_XP: f32 = 100.;
@@ -136,7 +134,7 @@ fn spawn_xp_bar(mut commands: Commands, mut ui_materials: ResMut<Assets<XpBarMat
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            StateScoped(Screen::Gameplay),
+            DespawnOnExit(Screen::Gameplay),
         ))
         .with_children(|parent| {
             parent.spawn((

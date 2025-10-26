@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { version = "0.17", default-features = false, features = [
     "animation",
     "bevy_asset",
     "bevy_color",
@@ -22,6 +22,8 @@ bevy = { version = "0.16", default-features = false, features = [
     "bevy_state",
     "bevy_text",
     "bevy_ui",
+    "bevy_ui_render",
+    "bevy_sprite_render",
     "bevy_ui_picking_backend",
     "bevy_window",
     "bevy_winit",
@@ -34,6 +36,7 @@ bevy = { version = "0.16", default-features = false, features = [
     "sysinfo_plugin",
     "tonemapping_luts",
     "webgl2",
+    "reflect_auto_register",
     "x11",
 ] }
 
@@ -47,15 +50,15 @@ tracing = { version = "0.1", features = [
     "release_max_level_warn",
 ] }
 
-bevy_rand = { version = "0.11", features = ["wyrand"] }
+bevy_rand = { version = "0.12", features = ["wyrand"] }
 rand_core = "0.9"
 rand = "0.9"
 
-leafwing-input-manager = "0.17.0"
-bevy-inspector-egui = "0.33.1"
-bevy_enhanced_input = "0.18.1"
-bevy_seedling = "0.5"
-bevy_ecs_tilemap = "0.16.0"
+leafwing-input-manager = "0.18.0"
+bevy-inspector-egui = "0.35"
+bevy_enhanced_input = "0.19"
+bevy_seedling = { git = "https://github.com/CorvusPrudens/bevy_seedling.git", branch = "master" }
+bevy_ecs_tilemap = "0.17.0"
 
 [features]
 
@@ -68,16 +71,12 @@ dev = [
 ]
 dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 
-[target.wasm32-unknown-unknown.dependencies]
-getrandom = { version = "0.3.2", features = ["wasm_js"] }
-
 [package.metadata.bevy_cli.release]
 # Disable debug functionality in release builds.
 default-features = false
 
 [package.metadata.bevy_cli.web]
 default-features = false
-rustflags = ["--cfg", "getrandom_backend=\"wasm_js\""]
 
 [package.metadata.bevy_cli.web.dev]
 features = ["dev"]

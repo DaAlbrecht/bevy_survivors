@@ -10,7 +10,7 @@ use crate::gameplay::{
 
 use super::Cooldown;
 
-use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
+use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 #[derive(Component)]
 #[require(
@@ -25,12 +25,10 @@ use bevy_rand::{global::GlobalEntropy, prelude::WyRand};
 #[derive(Reflect)]
 pub(crate) struct Scale;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct ScaleAttackEvent;
 
-#[derive(Event)]
-#[derive(Reflect)]
+#[derive(Event, Reflect)]
 pub(crate) struct ScaleHitEvent {
     pub enemy: Entity,
     pub projectile: Entity,
@@ -47,7 +45,7 @@ fn spawn_scale_projectile(
     scale: Query<Entity, With<Scale>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut rng: GlobalEntropy<WyRand>,
+    mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) -> Result {
     let player_pos = player_pos_q.single()?;
     let scale = scale.single()?;

@@ -2,7 +2,6 @@ use bevy::{
     dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin},
     input::common_conditions::{input_just_pressed, input_toggle_active},
     prelude::*,
-    ui::UiDebugOptions,
 };
 use bevy_inspector_egui::{
     bevy_egui::EguiPlugin,
