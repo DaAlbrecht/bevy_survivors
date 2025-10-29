@@ -1,5 +1,7 @@
+#[cfg(not(target_family = "wasm"))]
+use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
+
 use bevy::{
-    dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig},
     input::common_conditions::{input_just_pressed, input_toggle_active},
     prelude::*,
 };
@@ -38,6 +40,7 @@ pub(super) fn plugin(app: &mut App) {
         StateInspectorPlugin::<Screen>::new().run_if(input_toggle_active(true, TOGGLE_INSEPCTOR)),
     ));
 
+    #[cfg(not(target_family = "wasm"))]
     app.add_plugins(FpsOverlayPlugin {
         config: FpsOverlayConfig {
             text_config: TextFont {

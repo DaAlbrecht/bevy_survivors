@@ -60,6 +60,9 @@ bevy_enhanced_input = "0.19"
 bevy_seedling = { git = "https://github.com/CorvusPrudens/bevy_seedling.git", branch = "master" }
 bevy_ecs_tilemap = "0.17.0"
 
+# Latest version that works with bevy_seedling
+wasm-bindgen = { version = "=0.2.101", optional = true }
+
 [features]
 
 default = ["dev_native"]
