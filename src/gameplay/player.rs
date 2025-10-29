@@ -6,7 +6,6 @@ use bevy_enhanced_input::actions;
 
 use super::healthbar::HealthBarMaterial;
 use crate::{
-    AppSystems,
     gameplay::{Health, Speed},
     screens::Screen,
 };
