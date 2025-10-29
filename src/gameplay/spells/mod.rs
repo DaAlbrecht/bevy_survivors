@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use crate::{
     ENEMY_SIZE, SPELL_SIZE,
     gameplay::{
-        PickUpSpell,
-        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump, Speed},
+        PickUpSpell, Speed,
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
             dot::Bleed,
@@ -36,10 +36,15 @@ pub(crate) fn plugin(app: &mut App) {
     ));
 
     app.add_systems(
-        Update,
-        (attack, handle_timers, projectile_hit_detection).run_if(in_state(Screen::Gameplay)),
+        FixedUpdate,
+        (
+            attack,
+            handle_timers,
+            projectile_hit_detection,
+            move_projectile,
+        )
+            .run_if(in_state(Screen::Gameplay)),
     );
-    app.add_systems(FixedUpdate, move_projectile);
 
     app.add_observer(add_spell_to_inventory);
 

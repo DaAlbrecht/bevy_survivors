@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
-    enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent, Speed},
+    Speed,
+    enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
     player::{Direction, Player},
     spells::{
         CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,

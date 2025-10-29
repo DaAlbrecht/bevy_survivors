@@ -6,7 +6,8 @@ use bevy::{
     ui::Val::{Percent, Px},
 };
 
-use super::enemy::{EnemyDeathEvent, Speed};
+use super::Speed;
+use super::enemy::EnemyDeathEvent;
 use super::player::{Level, Player, XP, XpCollectionRange};
 use crate::{PLAYER_SIZE, XP_GAIN_GEM, screens::Screen};
 

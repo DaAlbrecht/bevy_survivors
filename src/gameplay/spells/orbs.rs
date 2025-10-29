@@ -4,7 +4,8 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 
 use crate::gameplay::{
-    enemy::{EnemyDamageEvent, EnemyKnockbackEvent, Speed},
+    Speed,
+    enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
     player::{Direction, Player},
     spells::{
         CastSpell, Cooldown, Damage, Knockback, Orbiting, PlayerProjectile, ProjectileCount, Range,
@@ -42,7 +43,7 @@ pub(crate) struct OrbHitEvent {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(Update, (update_orb_direction, orb_lifetime));
+    app.add_systems(FixedUpdate, (update_orb_direction, orb_lifetime));
     app.add_observer(spawn_orb_projectile);
     app.add_observer(orb_hit);
     app.add_observer(upgrade_orb);
