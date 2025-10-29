@@ -37,7 +37,7 @@ bevy = { version = "0.17", default-features = false, features = [
     "tonemapping_luts",
     "webgl2",
     "reflect_auto_register",
-    "x11",
+    "wayland",
 ] }
 
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
