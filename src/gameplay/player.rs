@@ -77,7 +77,7 @@ pub(crate) fn spawn_player(
         .spawn((
             Player,
             Name::new("Player"),
-            Sprite::from_image(asset_server.load("Player.png")),
+            Sprite::from_image(asset_server.load("player.png")),
             Transform::from_xyz(50., 0., 0.),
             actions!(Player[
                 (

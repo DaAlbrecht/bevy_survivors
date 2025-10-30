@@ -70,7 +70,7 @@ fn spawn_scale_projectile(
     commands.spawn((
         Name::new("scale projectile"),
         Sprite {
-            image: asset_server.load("Bullet.png"),
+            image: asset_server.load("scale.png"),
             ..default()
         },
         CastSpell(scale),

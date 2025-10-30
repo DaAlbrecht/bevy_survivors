@@ -84,7 +84,7 @@ fn spawn_fireball_projectile(
         commands.spawn((
             Name::new("fireball projectile"),
             Sprite {
-                image: asset_server.load("Fireball.png"),
+                image: asset_server.load("fireball.png"),
                 ..default()
             },
             CastSpell(fireball),

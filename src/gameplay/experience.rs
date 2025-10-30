@@ -51,7 +51,7 @@ fn spawn_xp_gem(
     commands.spawn((
         Name::new("XpGem"),
         Sprite {
-            image: asset_server.load("XP_GEM.png"),
+            image: asset_server.load("xp_gem.png"),
             ..default()
         },
         Transform::from_xyz(enemy_pos.x, enemy_pos.y, 0.),

@@ -51,11 +51,11 @@ fn spawn_level_up_screen(
                         let spell_index = rng.random_range(0..SpellType::ALL.len());
 
                         let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
-                            SpellType::Scale => asset_server.load("Bullet.png"),
-                            SpellType::Fireball => asset_server.load("Fireball_icon.png"),
-                            SpellType::Lightning => asset_server.load("Lightning_icon.png"),
-                            SpellType::Orb => asset_server.load("Orb_icon.png"),
-                            SpellType::Thorn => asset_server.load("Thorn_base.png"),
+                            SpellType::Scale => asset_server.load("scale.png"),
+                            SpellType::Fireball => asset_server.load("fireball_icon.png"),
+                            SpellType::Lightning => asset_server.load("lightning_icon.png"),
+                            SpellType::Orb => asset_server.load("orb_icon.png"),
+                            SpellType::Thorn => asset_server.load("thorn_base.png"),
                         };
                         parent
                             .spawn((

@@ -87,7 +87,7 @@ fn spawn_orb_projectile(
                 Range(radius.0),
                 Name::new("orb projectile"),
                 Sprite {
-                    image: asset_server.load("Orb.png"),
+                    image: asset_server.load("orb.png"),
                     ..default()
                 },
                 OrbProjectile,

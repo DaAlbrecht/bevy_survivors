@@ -104,7 +104,7 @@ fn spawn_thorn_projectile(
         commands.spawn((
             Name::new("ThornTip"),
             Sprite {
-                image: asset_server.load("Thorn_tip.png"),
+                image: asset_server.load("thorn_tip.png"),
                 ..default()
             },
             CastSpell(thorn),
@@ -158,7 +158,7 @@ fn thorn_range_keeper(
                 .spawn((
                     Name::new("ThornBase"),
                     Sprite {
-                        image: asset_server.load("Thorn_base.png"),
+                        image: asset_server.load("thorn_base.png"),
                         ..default()
                     },
                     CastSpell(thorn),
