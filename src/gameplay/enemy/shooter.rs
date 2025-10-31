@@ -1,33 +1,30 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
 
-use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy::prelude::*;
 
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
-use crate::{
-    AppSystems,
-    gameplay::{
-        Health, Speed,
-        enemy::{
-            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
-            ProjectileOf, ProjectileSpeed, Ranged, SPAWN_RADIUS,
-        },
-        player::{Direction, Player, PlayerHitEvent},
-        spells::{Cooldown, Damage, Knockback, Range},
+use crate::gameplay::{
+    Health, Speed,
+    enemy::{
+        AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
+        ProjectileOf, ProjectileSpeed, Ranged, SPAWN_RADIUS,
     },
-    screens::Screen,
+    player::{Direction, Player, PlayerHitEvent},
+    spells::{Cooldown, Damage, Knockback, Range},
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        spawn_shooter
-            .run_if(on_timer(Duration::from_millis(2000)))
-            .run_if(in_state(Screen::Gameplay))
-            .in_set(AppSystems::Update),
-    );
+    // app.add_systems(
+    //     Update,
+    //     spawn_shooter
+    //         .run_if(on_timer(Duration::from_millis(2000)))
+    //         .run_if(in_state(Screen::Gameplay))
+    //         .in_set(AppSystems::Update),
+    // );
 
+    app.add_observer(spawn_shooter);
     app.add_observer(shooter_attack);
     app.add_observer(shooter_projectile_hit);
 }
@@ -64,7 +61,11 @@ pub(crate) struct ShooterProjectileHitEvent {
     pub source: Entity,
 }
 
+#[derive(Event)]
+pub(crate) struct ShooterSpawnEvent;
+
 fn spawn_shooter(
+    _trigger: On<ShooterSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_query: Query<&Transform, With<Player>>,
@@ -74,9 +75,9 @@ fn spawn_shooter(
     let player_pos = player_query.single()?;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = (SPAWN_RADIUS + random_radius) * f32::sin(random_angle);
-    let offset_y = (SPAWN_RADIUS + random_radius) * f32::cos(random_angle);
+    // let random_radius: f32 = rng.random_range(0.0..10.);
+    let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
+    let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
     let enemy_pos_x = player_pos.translation.x + offset_x;
     let enemy_pos_y = player_pos.translation.y + offset_y;

@@ -1,15 +1,18 @@
 use bevy_enhanced_input::action::Action;
 
-use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
+use bevy::{
+    ecs::relationship::RelationshipSourceCollection, platform::collections::HashMap, prelude::*,
+};
 
 use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
         Health, Speed,
         enemy::{
-            jumper::JumperAttackEvent,
-            shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
-            sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
+            jumper::{JumperAttackEvent, JumperSpawnEvent},
+            shooter::{ShooterAttackEvent, ShooterProjectileHitEvent, ShooterSpawnEvent},
+            sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent, SprinterSpawnEvent},
+            walker::WalkerSpawnEvent,
         },
         player::{Direction, Move, PlayerHitEvent},
         spells::{
@@ -38,8 +41,14 @@ pub(crate) fn plugin(app: &mut App) {
     ));
 
     app.add_systems(
+        OnEnter(Screen::Gameplay),
+        (stage_spawner, patch_stage.after(stage_spawner)),
+    );
+
+    app.add_systems(
         FixedUpdate,
         (
+            stage_timer_handle,
             enemy_colliding_detection,
             enemy_stop_colliding_detection,
             enemy_push_detection,
@@ -57,10 +66,12 @@ pub(crate) fn plugin(app: &mut App) {
     )
     .add_observer(enemy_pushing)
     .add_observer(enemy_take_dmg)
-    .add_observer(enemy_get_pushed_from_hit);
+    .add_observer(enemy_get_pushed_from_hit)
+    .add_observer(account_enemies);
 }
 
-const SPAWN_RADIUS: f32 = 200.0;
+const SPAWN_RADIUS: f32 = 1000.0;
+const SPAWN_RADIUS_BUFFER: f32 = 200.0;
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
 const ENEMY_DMG_STAT: f32 = 5.;
@@ -113,11 +124,13 @@ pub(crate) struct ProjectileOf(pub Entity);
 #[derive(Reflect)]
 pub(crate) struct EnemyProjectiles(Vec<Entity>);
 
-#[derive(Component)]
+#[derive(Component, PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub(crate) enum EnemyType {
+    Walker,
     Shooter,
     Sprinter,
     Jumper,
+    None,
 }
 
 #[derive(Component)]
@@ -152,6 +165,212 @@ pub(crate) struct HazardousTerrain;
 
 #[derive(Component)]
 pub(crate) struct Size(pub f32);
+
+#[derive(Component)]
+pub(crate) struct EnemyPool(pub HashMap<EnemyType, f32>);
+
+#[derive(Component)]
+pub(crate) struct EnemyScreenCount(pub f32);
+
+#[derive(Component, PartialEq, Debug)]
+pub(crate) enum StageType {
+    Early,
+    Mid,
+    Late,
+}
+
+#[derive(Component)]
+pub(crate) struct Active;
+
+#[derive(Component)]
+pub(crate) struct Stage;
+
+#[derive(Component)]
+pub(crate) struct SpawnTimer(pub Timer);
+
+#[derive(Component)]
+pub(crate) struct StageDuration(pub Timer);
+
+#[derive(Event)]
+pub(crate) struct EnemySpawnEvent;
+
+fn stage_spawner(mut commands: Commands) {
+    commands.spawn((Name::new("EarlyStage"), Stage, StageType::Early));
+    commands.spawn((Name::new("MidStage"), Stage, StageType::Mid));
+    commands.spawn((Name::new("LateStage"), Stage, StageType::Late));
+}
+
+fn patch_stage(mut stage_q: Query<(Entity, &StageType), With<Stage>>, mut commands: Commands) {
+    for (stage, stage_type) in &mut stage_q {
+        match stage_type {
+            StageType::Early => {
+                commands.entity(stage).insert(EnemyPool(HashMap::from([
+                    (EnemyType::Walker, 0.8),
+                    (EnemyType::Jumper, 0.2),
+                ])));
+                commands.entity(stage).insert(EnemyScreenCount(10.0));
+                commands
+                    .entity(stage)
+                    .insert(SpawnTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+                commands
+                    .entity(stage)
+                    .insert(StageDuration(Timer::from_seconds(
+                        60.0 * 0.5,
+                        TimerMode::Once,
+                    )));
+                commands.entity(stage).insert(Active);
+            }
+            StageType::Mid => {
+                commands
+                    .entity(stage)
+                    .insert(EnemyPool(HashMap::from([(EnemyType::Sprinter, 1.0)])));
+                commands.entity(stage).insert(EnemyScreenCount(20.0));
+                commands
+                    .entity(stage)
+                    .insert(SpawnTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+                commands
+                    .entity(stage)
+                    .insert(StageDuration(Timer::from_seconds(
+                        60.0 * 0.5,
+                        TimerMode::Once,
+                    )));
+            }
+            StageType::Late => {
+                commands
+                    .entity(stage)
+                    .insert(EnemyPool(HashMap::from([(EnemyType::Shooter, 1.0)])));
+                commands.entity(stage).insert(EnemyScreenCount(30.0));
+                commands
+                    .entity(stage)
+                    .insert(SpawnTimer(Timer::from_seconds(1.0, TimerMode::Once)));
+                commands
+                    .entity(stage)
+                    .insert(StageDuration(Timer::from_seconds(
+                        60.0 * 0.5,
+                        TimerMode::Once,
+                    )));
+            }
+        }
+    }
+}
+
+fn account_enemies(
+    _trigger: On<EnemySpawnEvent>,
+    mut stage_q: Query<(&EnemyPool, &EnemyScreenCount), With<Active>>,
+    player_q: Query<&Transform, With<Player>>,
+    enemy_q: Query<(&Transform, &EnemyType), With<Enemy>>,
+    mut commands: Commands,
+) -> Result {
+    let (enemy_pool, screen_count) = stage_q.single_mut()?;
+    let player_pos = player_q.single()?.translation.truncate();
+    let mut live_enemies: HashMap<EnemyType, f32> = HashMap::new();
+    let mut absolut_enemy_count = 0.0;
+
+    //Populate live enemies map
+    for (enemy_type, _) in &enemy_pool.0 {
+        live_enemies.entry(*enemy_type).or_insert(0.0);
+    }
+
+    //Spawn first enemies
+    if enemy_q.is_empty() {
+        let (mut signature_enemy, mut count) = (EnemyType::None, 0.0);
+        for (enemy_type, enemy_count) in &enemy_pool.0 {
+            if count < *enemy_count {
+                (signature_enemy, count) = (*enemy_type, *enemy_count);
+            }
+        }
+
+        match signature_enemy {
+            EnemyType::Walker => commands.trigger(WalkerSpawnEvent),
+            EnemyType::Shooter => commands.trigger(ShooterSpawnEvent),
+            EnemyType::Sprinter => commands.trigger(SprinterSpawnEvent),
+            EnemyType::Jumper => commands.trigger(JumperSpawnEvent),
+            EnemyType::None => (),
+        }
+        return Ok(());
+    }
+
+    // Count enemies
+    for (transform, enemy_type) in &enemy_q {
+        let enemy_pos = transform.translation.truncate();
+        if enemy_pos.distance(player_pos) <= (SPAWN_RADIUS + SPAWN_RADIUS_BUFFER) {
+            absolut_enemy_count += 1.0;
+            if let Some(count) = live_enemies.get_mut(enemy_type) {
+                *count += 1.0
+            }
+        }
+    }
+
+    //Make values relative to absolut enemy count
+    for (_, count) in &mut live_enemies {
+        *count /= absolut_enemy_count;
+    }
+
+    //Spawn if there are not enough enemies alive
+    if absolut_enemy_count < screen_count.0 {
+        let (mut demanded_type, mut count_diff) = (&EnemyType::None, 0.0);
+
+        //Get enemy type with biggest diff the pool
+        for (enemy_type, count) in &live_enemies {
+            if let Some(pool_count) = enemy_pool.0.get(enemy_type) {
+                let diff = pool_count - count;
+                if diff >= count_diff {
+                    (demanded_type, count_diff) = (enemy_type, diff)
+                }
+            }
+        }
+
+        match demanded_type {
+            EnemyType::Walker => commands.trigger(WalkerSpawnEvent),
+            EnemyType::Shooter => commands.trigger(ShooterSpawnEvent),
+            EnemyType::Sprinter => commands.trigger(SprinterSpawnEvent),
+            EnemyType::Jumper => commands.trigger(JumperSpawnEvent),
+            EnemyType::None => (),
+        }
+    }
+
+    Ok(())
+}
+
+fn stage_timer_handle(
+    mut commands: Commands,
+    mut active_stage_q: Query<
+        (Entity, &StageType, &mut SpawnTimer, &mut StageDuration),
+        With<Active>,
+    >,
+    stage_q: Query<(Entity, &StageType), With<Stage>>,
+    time: Res<Time>,
+) {
+    for (current_stage, current_stage_type, mut spawn_timer, mut stage_timer) in &mut active_stage_q
+    {
+        spawn_timer.0.tick(time.delta());
+        stage_timer.0.tick(time.delta());
+
+        if spawn_timer.0.is_finished() {
+            commands.trigger(EnemySpawnEvent);
+            spawn_timer.0.reset();
+        }
+
+        if stage_timer.0.is_finished() {
+            //Dont like this yet
+            let next_stage_type = match current_stage_type {
+                StageType::Early => StageType::Mid,
+                StageType::Mid => StageType::Late,
+                StageType::Late => StageType::Early,
+            };
+            for (stage, stage_type) in &stage_q {
+                if *stage_type == next_stage_type {
+                    //Later we can despawn for now we need it so we can return from late to early
+                    commands.entity(current_stage).remove::<Active>();
+                    commands.entity(stage).insert(Active);
+                    info!("Stagechange, new Stage: {:?}", stage_type);
+                }
+            }
+
+            stage_timer.0.reset();
+        }
+    }
+}
 
 fn enemy_colliding_detection(
     mut enemy_query: Query<
@@ -452,6 +671,7 @@ fn enemy_timer_handle(
                 }
                 EnemyType::Sprinter => commands.trigger(SprinterAttackEvent(enemy)),
                 EnemyType::Jumper => commands.trigger(JumperAttackEvent(enemy)),
+                _ => (),
             }
 
             cooldown_timer.0.reset();

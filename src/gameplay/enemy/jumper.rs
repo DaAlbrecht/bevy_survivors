@@ -1,11 +1,11 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
 
-use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    AppSystems, ENEMY_SIZE,
+    ENEMY_SIZE,
     gameplay::{
         Health, Speed,
         enemy::{
@@ -19,19 +19,19 @@ use crate::{
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        spawn_jumper
-            .run_if(on_timer(Duration::from_millis(5000)))
-            .run_if(in_state(Screen::Gameplay))
-            .in_set(AppSystems::Update),
-    );
+    // app.add_systems(
+    //     Update,
+    //     spawn_jumper
+    //         .run_if(on_timer(Duration::from_millis(5000)))
+    //         .run_if(in_state(Screen::Gameplay))
+    //         .in_set(AppSystems::Update),
+    // );
 
     app.add_systems(
         FixedUpdate,
         (move_jumping_jumper).run_if(in_state(Screen::Gameplay)),
     );
-
+    app.add_observer(spawn_jumper);
     app.add_observer(jumper_attack);
     app.add_observer(spawn_jumper_aoe);
 }
@@ -78,10 +78,14 @@ pub(crate) struct JumperVisual;
 #[derive(Component)]
 pub(crate) struct JumperAttackIndicator;
 
+#[derive(Event)]
+pub(crate) struct JumperSpawnEvent;
+
 const JUMPER_BUFFER: f32 = 10.0;
 const CURVATURE_COEFFICIENT: f32 = 6.0 / 5.0;
 
 fn spawn_jumper(
+    _trigger: On<JumperSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_query: Query<&Transform, With<Player>>,
@@ -91,9 +95,9 @@ fn spawn_jumper(
     let player_pos = player_query.single()?;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = (SPAWN_RADIUS + random_radius) * f32::sin(random_angle);
-    let offset_y = (SPAWN_RADIUS + random_radius) * f32::cos(random_angle);
+    // let random_radius: f32 = rng.random_range(0.0..10.);
+    let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
+    let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
     let enemy_pos_x = player_pos.translation.x + offset_x;
     let enemy_pos_y = player_pos.translation.y + offset_y;
