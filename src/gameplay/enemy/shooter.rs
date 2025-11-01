@@ -19,24 +19,25 @@ use crate::{
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    // app.add_systems(
-    //     Update,
-    //     spawn_shooter
-    //         .run_if(on_timer(Duration::from_millis(2000)))
-    //         .run_if(in_state(Screen::Gameplay))
-    //         .in_set(AppSystems::Update),
-    // );
-
-    app.add_observer(spawn_shooter);
-    app.add_observer(shooter_attack);
-    app.add_observer(shooter_projectile_hit);
+    app.insert_resource(ShooterStats {
+        health: 10.0,
+        damage: 1.0,
+        ability_damage: 5.0,
+        projectile_speed: 125.0,
+        range: 200.0,
+        cooldown: 2.0,
+    });
+    app.add_observer(spawn_shooter)
+        .add_observer(shooter_attack)
+        .add_observer(shooter_projectile_hit)
+        .add_observer(patch_shooter);
 }
 
 #[derive(Component)]
 #[require(
     EnemyType::Shooter,
     Ranged,
-    Health(10.),
+    // Health(10.),
     Speed(100.),
     Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
@@ -47,13 +48,23 @@ pub(crate) fn plugin(app: &mut App) {
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     //Shoot cd
-    Cooldown(Timer::from_seconds(2.0,TimerMode::Once)),
-    Damage(1.0),
-    AbilityDamage(5.0),
-    Range(200.0),
-    ProjectileSpeed(125.),
+    // Cooldown(Timer::from_seconds(2.0,TimerMode::Once)),
+    // Damage(1.0),
+    // AbilityDamage(5.0),
+    // Range(200.0),
+    // ProjectileSpeed(125.),
 )]
 pub(crate) struct Shooter;
+
+#[derive(Resource)]
+pub(crate) struct ShooterStats {
+    health: f32,
+    damage: f32,
+    ability_damage: f32,
+    projectile_speed: f32,
+    range: f32,
+    cooldown: f32,
+}
 
 #[derive(Event)]
 pub(crate) struct ShooterAttackEvent(pub Entity);
@@ -67,6 +78,9 @@ pub(crate) struct ShooterProjectileHitEvent {
 #[derive(Event)]
 pub(crate) struct ShooterSpawnEvent;
 
+#[derive(Event)]
+pub(crate) struct ShooterPatchEvent(pub f32);
+
 fn spawn_shooter(
     _trigger: On<ShooterSpawnEvent>,
     mut commands: Commands,
@@ -74,8 +88,10 @@ fn spawn_shooter(
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     shooter_q: Query<&Shooter>,
+    shooter_stats: Res<ShooterStats>,
 ) -> Result {
     let player_pos = player_query.single()?;
+    let stats = shooter_stats;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
     // let random_radius: f32 = rng.random_range(0.0..10.);
@@ -97,9 +113,26 @@ fn spawn_shooter(
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        Health(stats.health),
+        Damage(stats.damage),
+        AbilityDamage(stats.ability_damage),
+        ProjectileSpeed(stats.projectile_speed),
+        Range(stats.range),
+        Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Once)),
     ));
 
     Ok(())
+}
+
+fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>) {
+    let power_level = trigger.0;
+
+    stats.health *= power_level;
+    stats.damage *= power_level;
+    stats.ability_damage *= power_level;
+    stats.projectile_speed += 50.0 * power_level;
+    stats.range += 50.0 * power_level;
+    stats.cooldown -= 0.1 * power_level;
 }
 
 fn shooter_attack(

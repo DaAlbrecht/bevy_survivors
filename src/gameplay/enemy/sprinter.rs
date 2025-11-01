@@ -19,28 +19,30 @@ use crate::{
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    // app.add_systems(
-    //     Update,
-    //     spawn_sprinter
-    //         .run_if(on_timer(Duration::from_millis(5000)))
-    //         .run_if(in_state(Screen::Gameplay))
-    //         .in_set(AppSystems::Update),
-    // );
+    app.insert_resource(SprinterStats {
+        health: 10.0,
+        damage: 1.0,
+        ability_damage: 5.0,
+        ability_speed: 500.0,
+        range: 500.0,
+        cooldown: 3.0,
+    });
 
     app.add_systems(
         FixedUpdate,
         (move_charging_sprinter).run_if(in_state(Screen::Gameplay)),
     );
-    app.add_observer(spawn_sprinter);
-    app.add_observer(sprinter_attack);
-    app.add_observer(sprinter_abulity_hit);
+    app.add_observer(spawn_sprinter)
+        .add_observer(sprinter_attack)
+        .add_observer(sprinter_abulity_hit)
+        .add_observer(patch_sprinter);
 }
 
+//"Static Component that do not change from waves"
 #[derive(Component)]
 #[require(
     EnemyType::Sprinter,
     Meele,
-    Health(10.),
     Speed(50.),
     Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
@@ -51,14 +53,24 @@ pub(crate) fn plugin(app: &mut App) {
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     //Ability cd
-    Cooldown(Timer::from_seconds(3.0,TimerMode::Once)),
-    Damage(1.0),
-    AbilityDamage(5.0),
-    AbilitySpeed(500.0),
+    // Cooldown(Timer::from_seconds(3.0,TimerMode::Once)),
+    // Damage(1.0),
+    // AbilityDamage(5.0),
+    // AbilitySpeed(500.0),
+    // Range(500.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
-    Range(500.0),
 )]
 pub(crate) struct Sprinter;
+
+#[derive(Resource)]
+pub(crate) struct SprinterStats {
+    health: f32,
+    damage: f32,
+    ability_damage: f32,
+    ability_speed: f32,
+    range: f32,
+    cooldown: f32,
+}
 
 #[derive(Event)]
 pub(crate) struct SprinterAttackEvent(pub Entity);
@@ -69,6 +81,9 @@ pub(crate) struct SprinterAbilityHitEvent(pub Entity);
 #[derive(Event)]
 pub(crate) struct SprinterSpawnEvent;
 
+#[derive(Event)]
+pub(crate) struct SprinterPatchEvent(pub f32);
+
 fn spawn_sprinter(
     _trigger: On<SprinterSpawnEvent>,
     mut commands: Commands,
@@ -76,8 +91,10 @@ fn spawn_sprinter(
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
+    sprinter_stats: Res<SprinterStats>,
 ) -> Result {
     let player_pos = player_query.single()?;
+    let stats = sprinter_stats;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
     // let random_radius: f32 = rng.random_range(0.0..10.);
@@ -99,9 +116,26 @@ fn spawn_sprinter(
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        Health(stats.health),
+        Damage(stats.damage),
+        AbilityDamage(stats.ability_damage),
+        AbilitySpeed(stats.ability_speed),
+        Range(stats.range),
+        Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Once)),
     ));
 
     Ok(())
+}
+
+fn patch_sprinter(trigger: On<SprinterPatchEvent>, mut stats: ResMut<SprinterStats>) {
+    let power_level = trigger.0;
+
+    stats.health *= power_level;
+    stats.damage *= power_level;
+    stats.ability_damage *= power_level;
+    stats.ability_speed += 50.0 * power_level;
+    stats.range += 50.0 * power_level;
+    stats.cooldown -= 0.1 * power_level;
 }
 
 fn sprinter_attack(

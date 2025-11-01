@@ -6,8 +6,11 @@ use crate::{
     SPAWN_RADIUS, SPAWN_RADIUS_BUFFER,
     gameplay::{
         enemy::{
-            Enemy, EnemyType, jumper::JumperSpawnEvent, shooter::ShooterSpawnEvent,
-            sprinter::SprinterSpawnEvent, walker::WalkerSpawnEvent,
+            Enemy, EnemyType,
+            jumper::{JumperPatchEvent, JumperSpawnEvent},
+            shooter::{ShooterPatchEvent, ShooterSpawnEvent},
+            sprinter::{SprinterPatchEvent, SprinterSpawnEvent},
+            walker::{WalkerPatchEvent, WalkerSpawnEvent},
         },
         player::Player,
     },
@@ -22,7 +25,9 @@ pub(crate) fn plugin(app: &mut App) {
         (wave_timer_handle).run_if(in_state(Screen::Gameplay)),
     );
 
-    app.add_observer(patch_wave).add_observer(account_enemies);
+    app.add_observer(patch_wave)
+        .add_observer(account_enemies)
+        .add_observer(enemy_patch_dispenser);
 }
 
 #[derive(Component)]
@@ -30,9 +35,6 @@ pub(crate) struct EnemyPool(pub HashMap<EnemyType, f32>);
 
 #[derive(Component)]
 pub(crate) struct EnemyScreenCount(pub f32);
-
-#[derive(Component)]
-pub(crate) struct Active;
 
 #[derive(Component)]
 pub(crate) struct Wave;
@@ -43,11 +45,17 @@ pub(crate) struct SpawnTimer(pub Timer);
 #[derive(Component)]
 pub(crate) struct WaveDuration(pub Timer);
 
+#[derive(Component)]
+pub(crate) struct PowerLevel(pub f32);
+
 #[derive(Event)]
 pub(crate) struct EnemySpawnEvent;
 
 #[derive(Event)]
 pub(crate) struct WavePatchEvent;
+
+#[derive(Event)]
+pub(crate) struct EnemyPatchEvent;
 
 #[derive(Resource)]
 pub(crate) struct WaveStats {
@@ -55,6 +63,7 @@ pub(crate) struct WaveStats {
     pub enemy_screen_count: f32,
     pub spawn_frequency: f32,
     pub duration: f32,
+    pub power_level: f32,
 }
 
 #[derive(Resource)]
@@ -71,6 +80,7 @@ fn make_wave_plan() -> WavePlan {
                 enemy_screen_count: 10.0,
                 spawn_frequency: 1.0,
                 duration: 60.0 * 0.5,
+                power_level: 1.0, //Does not change Basestats
             },
             WaveStats {
                 enemy_pool: HashMap::from([
@@ -81,6 +91,7 @@ fn make_wave_plan() -> WavePlan {
                 enemy_screen_count: 20.0,
                 spawn_frequency: 1.5,
                 duration: 60.0 * 0.5,
+                power_level: 2.0,
             },
             WaveStats {
                 enemy_pool: HashMap::from([
@@ -91,6 +102,7 @@ fn make_wave_plan() -> WavePlan {
                 enemy_screen_count: 30.0,
                 spawn_frequency: 2.0,
                 duration: 60.0 * 0.5,
+                power_level: 2.0,
             },
         ]),
     }
@@ -131,7 +143,7 @@ fn patch_wave(
             stats.duration,
             TimerMode::Once,
         )))
-        .insert(Active);
+        .insert(PowerLevel(stats.power_level));
 
     info!("Wave patched");
     Ok(())
@@ -139,7 +151,7 @@ fn patch_wave(
 
 fn account_enemies(
     _trigger: On<EnemySpawnEvent>,
-    mut wave_q: Query<(&EnemyPool, &EnemyScreenCount), With<Active>>,
+    mut wave_q: Query<(&EnemyPool, &EnemyScreenCount), With<Wave>>,
     player_q: Query<&Transform, With<Player>>,
     enemy_q: Query<(&Transform, &EnemyType), With<Enemy>>,
     mut commands: Commands,
@@ -218,10 +230,10 @@ fn account_enemies(
 
 fn wave_timer_handle(
     mut commands: Commands,
-    mut active_wave_q: Query<(&mut SpawnTimer, &mut WaveDuration), With<Active>>,
+    mut wave_q: Query<(&mut SpawnTimer, &mut WaveDuration), With<Wave>>,
     time: Res<Time>,
 ) {
-    for (mut spawn_timer, mut wave_timer) in &mut active_wave_q {
+    for (mut spawn_timer, mut wave_timer) in &mut wave_q {
         spawn_timer.0.tick(time.delta());
         wave_timer.0.tick(time.delta());
 
@@ -232,7 +244,28 @@ fn wave_timer_handle(
 
         if wave_timer.0.is_finished() {
             commands.trigger(WavePatchEvent);
+            commands.trigger(EnemyPatchEvent);
             wave_timer.0.reset();
         }
     }
+}
+
+fn enemy_patch_dispenser(
+    _trigger: On<EnemyPatchEvent>,
+    mut commands: Commands,
+    wave_q: Query<(&EnemyPool, &PowerLevel), With<Wave>>,
+) -> Result {
+    let (enemy_pool, power_level) = wave_q.single()?;
+
+    for enemy_type in enemy_pool.0.keys() {
+        match enemy_type {
+            EnemyType::Walker => commands.trigger(WalkerPatchEvent(power_level.0)),
+            EnemyType::Shooter => commands.trigger(ShooterPatchEvent(power_level.0)),
+            EnemyType::Sprinter => commands.trigger(SprinterPatchEvent(power_level.0)),
+            EnemyType::Jumper => commands.trigger(JumperPatchEvent(power_level.0)),
+            EnemyType::None => (),
+        }
+    }
+
+    Ok(())
 }

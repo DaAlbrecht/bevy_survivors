@@ -61,7 +61,6 @@ pub(crate) fn plugin(app: &mut App) {
 }
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
-const ENEMY_DMG_STAT: f32 = 5.;
 const RANGE_BUFFER: f32 = 50.0;
 
 #[derive(Component, Default, Reflect)]
@@ -242,13 +241,11 @@ fn enemy_pushing(
 fn attack(
     time: Res<Time>,
     mut commands: Commands,
-    mut enemy_dmg_timer_q: Query<&mut DamageCooldown, (With<Enemy>, With<Colliding>)>,
+    mut enemy_dmg_timer_q: Query<(&mut DamageCooldown, &Damage), (With<Enemy>, With<Colliding>)>,
 ) {
-    for mut timer in &mut enemy_dmg_timer_q {
+    for (mut timer, damage) in &mut enemy_dmg_timer_q {
         if timer.0.tick(time.delta()).just_finished() {
-            commands.trigger(PlayerHitEvent {
-                dmg: ENEMY_DMG_STAT,
-            });
+            commands.trigger(PlayerHitEvent { dmg: damage.0 });
         }
     }
 }

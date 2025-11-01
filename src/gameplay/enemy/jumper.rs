@@ -19,28 +19,31 @@ use crate::{
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    // app.add_systems(
-    //     Update,
-    //     spawn_jumper
-    //         .run_if(on_timer(Duration::from_millis(5000)))
-    //         .run_if(in_state(Screen::Gameplay))
-    //         .in_set(AppSystems::Update),
-    // );
+    app.insert_resource(JumperStats {
+        health: 10.0,
+        damage: 1.0,
+        ability_damage: 5.0,
+        ability_speed: 200.0,
+        range: 400.0,
+        cooldown: 4.0,
+        size: 60.0,
+    });
 
     app.add_systems(
         FixedUpdate,
         (move_jumping_jumper).run_if(in_state(Screen::Gameplay)),
     );
-    app.add_observer(spawn_jumper);
-    app.add_observer(jumper_attack);
-    app.add_observer(spawn_jumper_aoe);
+    app.add_observer(spawn_jumper)
+        .add_observer(jumper_attack)
+        .add_observer(spawn_jumper_aoe)
+        .add_observer(patch_shooter);
 }
 
 #[derive(Component)]
 #[require(
     EnemyType::Jumper,
     Meele,
-    Health(10.),
+    // Health(10.),
     Speed(30.),
     Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
@@ -51,17 +54,28 @@ pub(crate) fn plugin(app: &mut App) {
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     //Ability cd
-    Cooldown(Timer::from_seconds(4.0,TimerMode::Once)),
-    Damage(1.0),
-    AbilityDamage(5.0),
-    AbilitySpeed(200.0),
+    // Cooldown(Timer::from_seconds(4.0,TimerMode::Once)),
+    // Damage(1.0),
+    // AbilityDamage(5.0),
+    // AbilitySpeed(200.0),
     SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),
     SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
-    Size(60.0),
+    // Size(60.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
-    Range(400.0),
+    // Range(400.0),
 )]
 pub(crate) struct Jumper;
+
+#[derive(Resource)]
+pub(crate) struct JumperStats {
+    health: f32,
+    damage: f32,
+    ability_damage: f32,
+    ability_speed: f32,
+    range: f32,
+    cooldown: f32,
+    size: f32,
+}
 
 #[derive(Event)]
 pub(crate) struct JumperAttackEvent(pub Entity);
@@ -81,6 +95,9 @@ pub(crate) struct JumperAttackIndicator;
 #[derive(Event)]
 pub(crate) struct JumperSpawnEvent;
 
+#[derive(Event)]
+pub(crate) struct JumperPatchEvent(pub f32);
+
 const JUMPER_BUFFER: f32 = 10.0;
 const CURVATURE_COEFFICIENT: f32 = 6.0 / 5.0;
 
@@ -91,8 +108,10 @@ fn spawn_jumper(
     player_query: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     jumper_q: Query<&Jumper>,
+    jumper_stats: Res<JumperStats>,
 ) -> Result {
     let player_pos = player_query.single()?;
+    let stats = jumper_stats;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
     // let random_radius: f32 = rng.random_range(0.0..10.);
@@ -116,6 +135,13 @@ fn spawn_jumper(
             },
             Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
             Visibility::Visible,
+            Health(stats.health),
+            Damage(stats.damage),
+            AbilityDamage(stats.ability_damage),
+            AbilitySpeed(stats.ability_speed),
+            Range(stats.range),
+            Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Once)),
+            Size(stats.size),
         ))
         .id();
 
@@ -149,6 +175,18 @@ fn spawn_jumper(
     commands.entity(jumper).add_child(jumper_visual);
 
     Ok(())
+}
+
+fn patch_shooter(trigger: On<JumperPatchEvent>, mut stats: ResMut<JumperStats>) {
+    let power_level = trigger.0;
+
+    stats.health *= power_level;
+    stats.damage *= power_level;
+    stats.ability_damage *= power_level;
+    stats.ability_speed += 50.0 * power_level;
+    stats.range += 50.0 * power_level;
+    stats.cooldown -= 0.1 * power_level;
+    stats.size += 10.0 * power_level;
 }
 
 fn jumper_attack(
