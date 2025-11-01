@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use crate::{
@@ -13,17 +15,14 @@ use crate::{
 };
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(
-        OnEnter(Screen::Gameplay),
-        (wave_spawner, patch_wave.after(wave_spawner)),
-    );
+    app.add_systems(OnEnter(Screen::Gameplay), wave_spawner);
 
     app.add_systems(
         FixedUpdate,
         (wave_timer_handle).run_if(in_state(Screen::Gameplay)),
     );
 
-    app.add_observer(account_enemies);
+    app.add_observer(patch_wave).add_observer(account_enemies);
 }
 
 #[derive(Component)]
@@ -31,13 +30,6 @@ pub(crate) struct EnemyPool(pub HashMap<EnemyType, f32>);
 
 #[derive(Component)]
 pub(crate) struct EnemyScreenCount(pub f32);
-
-#[derive(Component, PartialEq, Debug)]
-pub(crate) enum WaveType {
-    Early,
-    Mid,
-    Late,
-}
 
 #[derive(Component)]
 pub(crate) struct Active;
@@ -54,64 +46,95 @@ pub(crate) struct WaveDuration(pub Timer);
 #[derive(Event)]
 pub(crate) struct EnemySpawnEvent;
 
-fn wave_spawner(mut commands: Commands) {
-    commands.spawn((Name::new("Earlywave"), Wave, WaveType::Early));
-    commands.spawn((Name::new("Midwave"), Wave, WaveType::Mid));
-    commands.spawn((Name::new("Latewave"), Wave, WaveType::Late));
+#[derive(Event)]
+pub(crate) struct WavePatchEvent;
+
+#[derive(Resource)]
+pub(crate) struct WaveStats {
+    pub enemy_pool: HashMap<EnemyType, f32>,
+    pub enemy_screen_count: f32,
+    pub spawn_frequency: f32,
+    pub duration: f32,
 }
 
-fn patch_wave(mut wave_q: Query<(Entity, &WaveType), With<Wave>>, mut commands: Commands) {
-    for (wave, wave_type) in &mut wave_q {
-        match wave_type {
-            WaveType::Early => {
-                commands.entity(wave).insert(EnemyPool(HashMap::from([
-                    (EnemyType::Walker, 0.8),
+#[derive(Resource)]
+pub(crate) struct WavePlan {
+    pub waves: VecDeque<WaveStats>,
+}
+
+//Later read json or someting
+fn make_wave_plan() -> WavePlan {
+    WavePlan {
+        waves: VecDeque::from([
+            WaveStats {
+                enemy_pool: HashMap::from([(EnemyType::Walker, 0.8), (EnemyType::Jumper, 0.2)]),
+                enemy_screen_count: 10.0,
+                spawn_frequency: 1.0,
+                duration: 60.0 * 0.5,
+            },
+            WaveStats {
+                enemy_pool: HashMap::from([
+                    (EnemyType::Walker, 0.6),
                     (EnemyType::Jumper, 0.2),
-                ])));
-                commands.entity(wave).insert(EnemyScreenCount(10.0));
-                commands
-                    .entity(wave)
-                    .insert(SpawnTimer(Timer::from_seconds(1.0, TimerMode::Once)));
-                commands
-                    .entity(wave)
-                    .insert(WaveDuration(Timer::from_seconds(
-                        60.0 * 0.5,
-                        TimerMode::Once,
-                    )));
-                commands.entity(wave).insert(Active);
-            }
-            WaveType::Mid => {
-                commands
-                    .entity(wave)
-                    .insert(EnemyPool(HashMap::from([(EnemyType::Sprinter, 1.0)])));
-                commands.entity(wave).insert(EnemyScreenCount(20.0));
-                commands
-                    .entity(wave)
-                    .insert(SpawnTimer(Timer::from_seconds(1.0, TimerMode::Once)));
-                commands
-                    .entity(wave)
-                    .insert(WaveDuration(Timer::from_seconds(
-                        60.0 * 0.5,
-                        TimerMode::Once,
-                    )));
-            }
-            WaveType::Late => {
-                commands
-                    .entity(wave)
-                    .insert(EnemyPool(HashMap::from([(EnemyType::Shooter, 1.0)])));
-                commands.entity(wave).insert(EnemyScreenCount(30.0));
-                commands
-                    .entity(wave)
-                    .insert(SpawnTimer(Timer::from_seconds(1.0, TimerMode::Once)));
-                commands
-                    .entity(wave)
-                    .insert(WaveDuration(Timer::from_seconds(
-                        60.0 * 0.5,
-                        TimerMode::Once,
-                    )));
-            }
-        }
+                    (EnemyType::Sprinter, 0.2),
+                ]),
+                enemy_screen_count: 20.0,
+                spawn_frequency: 1.5,
+                duration: 60.0 * 0.5,
+            },
+            WaveStats {
+                enemy_pool: HashMap::from([
+                    (EnemyType::Walker, 0.6),
+                    (EnemyType::Sprinter, 0.2),
+                    (EnemyType::Shooter, 0.2),
+                ]),
+                enemy_screen_count: 30.0,
+                spawn_frequency: 2.0,
+                duration: 60.0 * 0.5,
+            },
+        ]),
     }
+}
+
+fn wave_spawner(mut commands: Commands) {
+    info!("Wave spawned");
+    commands.insert_resource(make_wave_plan());
+    commands.spawn((Name::new("Wave"), Wave));
+    commands.trigger(WavePatchEvent);
+}
+
+fn patch_wave(
+    _trigger: On<WavePatchEvent>,
+    mut commands: Commands,
+    wave_q: Query<Entity, With<Wave>>,
+    mut wave_plan: ResMut<WavePlan>,
+) -> Result {
+    let wave = wave_q.single()?;
+
+    let stats = match wave_plan.waves.pop_front() {
+        Some(stats) => stats,
+        None => {
+            info!("No wave left");
+            return Ok(());
+        }
+    };
+
+    commands
+        .entity(wave)
+        .insert(EnemyPool(stats.enemy_pool))
+        .insert(EnemyScreenCount(stats.enemy_screen_count))
+        .insert(SpawnTimer(Timer::from_seconds(
+            1.0 / stats.spawn_frequency,
+            TimerMode::Once,
+        )))
+        .insert(WaveDuration(Timer::from_seconds(
+            stats.duration,
+            TimerMode::Once,
+        )))
+        .insert(Active);
+
+    info!("Wave patched");
+    Ok(())
 }
 
 fn account_enemies(
@@ -121,6 +144,7 @@ fn account_enemies(
     enemy_q: Query<(&Transform, &EnemyType), With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
+    info!("Enemies spawning");
     let (enemy_pool, screen_count) = wave_q.single_mut()?;
     let player_pos = player_q.single()?.translation.truncate();
     let mut live_enemies: HashMap<EnemyType, f32> = HashMap::new();
@@ -194,11 +218,10 @@ fn account_enemies(
 
 fn wave_timer_handle(
     mut commands: Commands,
-    mut active_wave_q: Query<(Entity, &WaveType, &mut SpawnTimer, &mut WaveDuration), With<Active>>,
-    wave_q: Query<(Entity, &WaveType), With<Wave>>,
+    mut active_wave_q: Query<(&mut SpawnTimer, &mut WaveDuration), With<Active>>,
     time: Res<Time>,
 ) {
-    for (current_wave, current_wave_type, mut spawn_timer, mut wave_timer) in &mut active_wave_q {
+    for (mut spawn_timer, mut wave_timer) in &mut active_wave_q {
         spawn_timer.0.tick(time.delta());
         wave_timer.0.tick(time.delta());
 
@@ -208,21 +231,7 @@ fn wave_timer_handle(
         }
 
         if wave_timer.0.is_finished() {
-            //Dont like this yet
-            let next_wave_type = match current_wave_type {
-                WaveType::Early => WaveType::Mid,
-                WaveType::Mid => WaveType::Late,
-                WaveType::Late => WaveType::Early,
-            };
-            for (wave, wave_type) in &wave_q {
-                if *wave_type == next_wave_type {
-                    //Later we can despawn for now we need it so we can return from late to early
-                    commands.entity(current_wave).remove::<Active>();
-                    commands.entity(wave).insert(Active);
-                    info!("Wavechange, new Wave: {:?}", wave_type);
-                }
-            }
-
+            commands.trigger(WavePatchEvent);
             wave_timer.0.reset();
         }
     }
