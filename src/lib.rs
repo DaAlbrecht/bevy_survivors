@@ -50,6 +50,9 @@ const PLAYER_SIZE: f32 = 30.0;
 const SPELL_SIZE: f32 = 16.0;
 const XP_GAIN_GEM: f32 = 10.;
 
+const SPAWN_RADIUS: f32 = 1000.0;
+const SPAWN_RADIUS_BUFFER: f32 = 200.0;
+
 /// How quickly should the camera snap to the desired location.
 const CAMERA_DECAY_RATE: f32 = 2.;
 

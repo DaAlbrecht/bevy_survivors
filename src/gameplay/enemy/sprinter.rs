@@ -5,11 +5,12 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
+    SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         enemy::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType,
-            KnockbackDirection, Meele, RANGE_BUFFER, SPAWN_RADIUS,
+            KnockbackDirection, Meele, RANGE_BUFFER,
         },
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Knockback, Range},
@@ -80,7 +81,7 @@ fn spawn_sprinter(
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
     // let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
+    let offset_x = f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
     let enemy_pos_x = player_pos.translation.x + offset_x;

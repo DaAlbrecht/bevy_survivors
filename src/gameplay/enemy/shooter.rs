@@ -5,14 +5,17 @@ use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
-use crate::gameplay::{
-    Health, Speed,
-    enemy::{
-        AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
-        ProjectileOf, ProjectileSpeed, Ranged, SPAWN_RADIUS,
+use crate::{
+    SPAWN_RADIUS,
+    gameplay::{
+        Health, Speed,
+        enemy::{
+            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
+            ProjectileOf, ProjectileSpeed, Ranged,
+        },
+        player::{Direction, Player, PlayerHitEvent},
+        spells::{Cooldown, Damage, Knockback, Range},
     },
-    player::{Direction, Player, PlayerHitEvent},
-    spells::{Cooldown, Damage, Knockback, Range},
 };
 
 pub(crate) fn plugin(app: &mut App) {

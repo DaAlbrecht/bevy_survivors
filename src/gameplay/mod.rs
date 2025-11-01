@@ -8,6 +8,7 @@ pub mod healthbar;
 pub mod level;
 pub mod player;
 pub mod spells;
+pub mod waves;
 
 #[derive(Component, Reflect)]
 pub(crate) struct Health(pub f32);
@@ -28,5 +29,6 @@ pub(crate) fn plugin(app: &mut App) {
         healthbar::plugin,
         spells::plugin,
         level::plugin,
+        waves::plugin,
     ));
 }

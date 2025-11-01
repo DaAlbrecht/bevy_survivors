@@ -5,12 +5,12 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE,
+    ENEMY_SIZE, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         enemy::{
             AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
-            KnockbackDirection, Meele, Owner, SPAWN_RADIUS, Size,
+            KnockbackDirection, Meele, Owner, Size,
         },
         player::{Direction, Player},
         spells::{Cooldown, Damage, Knockback, Range, SpellDuration, SpellTick},
@@ -59,7 +59,7 @@ pub(crate) fn plugin(app: &mut App) {
     SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
     Size(60.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
-    Range(500.0),
+    Range(400.0),
 )]
 pub(crate) struct Jumper;
 
