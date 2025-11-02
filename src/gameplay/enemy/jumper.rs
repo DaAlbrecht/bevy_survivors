@@ -27,6 +27,7 @@ pub(crate) fn plugin(app: &mut App) {
         range: 400.0,
         cooldown: 4.0,
         size: 60.0,
+        sprite: "enemies/jumper.png".to_string(),
     });
 
     app.add_systems(
@@ -43,7 +44,6 @@ pub(crate) fn plugin(app: &mut App) {
 #[require(
     EnemyType::Jumper,
     Meele,
-    // Health(10.),
     Speed(30.),
     Knockback(0.0),
     KnockbackDirection(Direction(Vec3 {
@@ -53,16 +53,10 @@ pub(crate) fn plugin(app: &mut App) {
     })),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-    //Ability cd
-    // Cooldown(Timer::from_seconds(4.0,TimerMode::Once)),
-    // Damage(1.0),
-    // AbilityDamage(5.0),
-    // AbilitySpeed(200.0),
     SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),
     SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
-    // Size(60.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
-    // Range(400.0),
+
 )]
 pub(crate) struct Jumper;
 
@@ -75,6 +69,7 @@ pub(crate) struct JumperStats {
     range: f32,
     cooldown: f32,
     size: f32,
+    sprite: String,
 }
 
 #[derive(Event)]
@@ -96,7 +91,7 @@ pub(crate) struct JumperAttackIndicator;
 pub(crate) struct JumperSpawnEvent;
 
 #[derive(Event)]
-pub(crate) struct JumperPatchEvent(pub f32);
+pub(crate) struct JumperPatchEvent(pub f32, pub String);
 
 const JUMPER_BUFFER: f32 = 10.0;
 const CURVATURE_COEFFICIENT: f32 = 6.0 / 5.0;
@@ -130,7 +125,7 @@ fn spawn_jumper(
             Enemy,
             Jumper,
             Sprite {
-                image: asset_server.load("enemies/jumper.png"),
+                image: asset_server.load(stats.sprite.clone()),
                 ..default()
             },
             Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
@@ -178,7 +173,7 @@ fn spawn_jumper(
 }
 
 fn patch_shooter(trigger: On<JumperPatchEvent>, mut stats: ResMut<JumperStats>) {
-    let power_level = trigger.0;
+    let (power_level, sprite) = (trigger.0, &trigger.1);
 
     stats.health *= power_level;
     stats.damage *= power_level;
@@ -187,6 +182,7 @@ fn patch_shooter(trigger: On<JumperPatchEvent>, mut stats: ResMut<JumperStats>) 
     stats.range += 50.0 * power_level;
     stats.cooldown -= 0.1 * power_level;
     stats.size += 10.0 * power_level;
+    stats.sprite = sprite.clone();
 }
 
 fn jumper_attack(

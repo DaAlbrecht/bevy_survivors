@@ -19,6 +19,7 @@ pub(crate) fn plugin(app: &mut App) {
         health: 10.0,
         damage: 2.0,
         speed: 50.0,
+        sprite: "enemies/walker.png".to_string(),
     });
     app.add_observer(spawn_walker).add_observer(patch_walker);
 }
@@ -43,13 +44,14 @@ pub(crate) struct WalkerStats {
     health: f32,
     damage: f32,
     speed: f32,
+    sprite: String,
 }
 
 #[derive(Event)]
 pub(crate) struct WalkerSpawnEvent;
 
 #[derive(Event)]
-pub(crate) struct WalkerPatchEvent(pub f32);
+pub(crate) struct WalkerPatchEvent(pub f32, pub String);
 
 fn spawn_walker(
     _trigger: On<WalkerSpawnEvent>,
@@ -71,10 +73,10 @@ fn spawn_walker(
     let enemy_pos_y = player_pos.translation.y + offset_y;
 
     commands.spawn((
-        Name::new("Default Enemy"),
+        Name::new("Walker"),
         Walker,
         Sprite {
-            image: asset_server.load("enemies/walker.png"),
+            image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
         Damage(stats.damage),
@@ -88,8 +90,9 @@ fn spawn_walker(
 }
 
 fn patch_walker(trigger: On<WalkerPatchEvent>, mut stats: ResMut<WalkerStats>) {
-    let power_level = trigger.0;
+    let (power_level, sprite) = (trigger.0, &trigger.1);
     stats.damage *= power_level;
     stats.health *= power_level;
     stats.speed += 10.0 * power_level;
+    stats.sprite = sprite.clone();
 }

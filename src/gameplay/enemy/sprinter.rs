@@ -26,6 +26,7 @@ pub(crate) fn plugin(app: &mut App) {
         ability_speed: 500.0,
         range: 500.0,
         cooldown: 3.0,
+        sprite: "enemies/sprinter.png".to_string(),
     });
 
     app.add_systems(
@@ -52,12 +53,6 @@ pub(crate) fn plugin(app: &mut App) {
     })),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-    //Ability cd
-    // Cooldown(Timer::from_seconds(3.0,TimerMode::Once)),
-    // Damage(1.0),
-    // AbilityDamage(5.0),
-    // AbilitySpeed(500.0),
-    // Range(500.0),
     Direction(Vec3{x:0.,y:0.,z:0.}),
 )]
 pub(crate) struct Sprinter;
@@ -70,6 +65,7 @@ pub(crate) struct SprinterStats {
     ability_speed: f32,
     range: f32,
     cooldown: f32,
+    sprite: String,
 }
 
 #[derive(Event)]
@@ -82,7 +78,7 @@ pub(crate) struct SprinterAbilityHitEvent(pub Entity);
 pub(crate) struct SprinterSpawnEvent;
 
 #[derive(Event)]
-pub(crate) struct SprinterPatchEvent(pub f32);
+pub(crate) struct SprinterPatchEvent(pub f32, pub String);
 
 fn spawn_sprinter(
     _trigger: On<SprinterSpawnEvent>,
@@ -112,7 +108,7 @@ fn spawn_sprinter(
         Enemy,
         Sprinter,
         Sprite {
-            image: asset_server.load("enemies/sprinter.png"),
+            image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
@@ -128,7 +124,7 @@ fn spawn_sprinter(
 }
 
 fn patch_sprinter(trigger: On<SprinterPatchEvent>, mut stats: ResMut<SprinterStats>) {
-    let power_level = trigger.0;
+    let (power_level, sprite) = (trigger.0, &trigger.1);
 
     stats.health *= power_level;
     stats.damage *= power_level;
@@ -136,6 +132,7 @@ fn patch_sprinter(trigger: On<SprinterPatchEvent>, mut stats: ResMut<SprinterSta
     stats.ability_speed += 50.0 * power_level;
     stats.range += 50.0 * power_level;
     stats.cooldown -= 0.1 * power_level;
+    stats.sprite = sprite.clone();
 }
 
 fn sprinter_attack(

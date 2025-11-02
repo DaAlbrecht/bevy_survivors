@@ -26,6 +26,7 @@ pub(crate) fn plugin(app: &mut App) {
         projectile_speed: 125.0,
         range: 200.0,
         cooldown: 2.0,
+        sprite: "enemies/shooter.png".to_string(),
     });
     app.add_observer(spawn_shooter)
         .add_observer(shooter_attack)
@@ -47,12 +48,6 @@ pub(crate) fn plugin(app: &mut App) {
     })),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-    //Shoot cd
-    // Cooldown(Timer::from_seconds(2.0,TimerMode::Once)),
-    // Damage(1.0),
-    // AbilityDamage(5.0),
-    // Range(200.0),
-    // ProjectileSpeed(125.),
 )]
 pub(crate) struct Shooter;
 
@@ -64,6 +59,7 @@ pub(crate) struct ShooterStats {
     projectile_speed: f32,
     range: f32,
     cooldown: f32,
+    sprite: String,
 }
 
 #[derive(Event)]
@@ -79,7 +75,7 @@ pub(crate) struct ShooterProjectileHitEvent {
 pub(crate) struct ShooterSpawnEvent;
 
 #[derive(Event)]
-pub(crate) struct ShooterPatchEvent(pub f32);
+pub(crate) struct ShooterPatchEvent(pub f32, pub String);
 
 fn spawn_shooter(
     _trigger: On<ShooterSpawnEvent>,
@@ -109,7 +105,7 @@ fn spawn_shooter(
         Enemy,
         Shooter,
         Sprite {
-            image: asset_server.load("enemies/shooter.png"),
+            image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
@@ -125,7 +121,7 @@ fn spawn_shooter(
 }
 
 fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>) {
-    let power_level = trigger.0;
+    let (power_level, sprite) = (trigger.0, &trigger.1);
 
     stats.health *= power_level;
     stats.damage *= power_level;
@@ -133,6 +129,7 @@ fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>
     stats.projectile_speed += 50.0 * power_level;
     stats.range += 50.0 * power_level;
     stats.cooldown -= 0.1 * power_level;
+    stats.sprite = sprite.clone();
 }
 
 fn shooter_attack(

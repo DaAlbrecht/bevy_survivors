@@ -34,6 +34,9 @@ pub(crate) fn plugin(app: &mut App) {
 pub(crate) struct EnemyPool(pub HashMap<EnemyType, f32>);
 
 #[derive(Component)]
+pub(crate) struct SpritePool(pub HashMap<EnemyType, String>);
+
+#[derive(Component)]
 pub(crate) struct EnemyScreenCount(pub f32);
 
 #[derive(Component)]
@@ -64,6 +67,7 @@ pub(crate) struct WaveStats {
     pub spawn_frequency: f32,
     pub duration: f32,
     pub power_level: f32,
+    pub sprite_pool: HashMap<EnemyType, String>,
 }
 
 #[derive(Resource)]
@@ -81,6 +85,10 @@ fn make_wave_plan() -> WavePlan {
                 spawn_frequency: 1.0,
                 duration: 60.0 * 0.5,
                 power_level: 1.0, //Does not change Basestats
+                sprite_pool: HashMap::from([
+                    (EnemyType::Walker, "enemies/walker.png".to_string()),
+                    (EnemyType::Jumper, "enemies/jumper.png".to_string()),
+                ]),
             },
             WaveStats {
                 enemy_pool: HashMap::from([
@@ -92,6 +100,11 @@ fn make_wave_plan() -> WavePlan {
                 spawn_frequency: 1.5,
                 duration: 60.0 * 0.5,
                 power_level: 2.0,
+                sprite_pool: HashMap::from([
+                    (EnemyType::Walker, "enemies/walker_purple.png".to_string()),
+                    (EnemyType::Jumper, "enemies/jumper_yellow.png".to_string()),
+                    (EnemyType::Sprinter, "enemies/sprinter.png".to_string()),
+                ]),
             },
             WaveStats {
                 enemy_pool: HashMap::from([
@@ -103,6 +116,14 @@ fn make_wave_plan() -> WavePlan {
                 spawn_frequency: 2.0,
                 duration: 60.0 * 0.5,
                 power_level: 2.0,
+                sprite_pool: HashMap::from([
+                    (EnemyType::Walker, "enemies/walker_yellow.png".to_string()),
+                    (
+                        EnemyType::Sprinter,
+                        "enemies/sprinter_purple.png".to_string(),
+                    ),
+                    (EnemyType::Shooter, "enemies/shooter.png".to_string()),
+                ]),
             },
         ]),
     }
@@ -143,7 +164,8 @@ fn patch_wave(
             stats.duration,
             TimerMode::Once,
         )))
-        .insert(PowerLevel(stats.power_level));
+        .insert(PowerLevel(stats.power_level))
+        .insert(SpritePool(stats.sprite_pool));
 
     info!("Wave patched");
     Ok(())
@@ -253,16 +275,27 @@ fn wave_timer_handle(
 fn enemy_patch_dispenser(
     _trigger: On<EnemyPatchEvent>,
     mut commands: Commands,
-    wave_q: Query<(&EnemyPool, &PowerLevel), With<Wave>>,
+    wave_q: Query<(&EnemyPool, &PowerLevel, &SpritePool), With<Wave>>,
 ) -> Result {
-    let (enemy_pool, power_level) = wave_q.single()?;
+    let (enemy_pool, power_level, sprite_pool) = wave_q.single()?;
 
     for enemy_type in enemy_pool.0.keys() {
+        let Some(sprite) = sprite_pool.0.get(enemy_type) else {
+            continue;
+        };
         match enemy_type {
-            EnemyType::Walker => commands.trigger(WalkerPatchEvent(power_level.0)),
-            EnemyType::Shooter => commands.trigger(ShooterPatchEvent(power_level.0)),
-            EnemyType::Sprinter => commands.trigger(SprinterPatchEvent(power_level.0)),
-            EnemyType::Jumper => commands.trigger(JumperPatchEvent(power_level.0)),
+            EnemyType::Walker => {
+                commands.trigger(WalkerPatchEvent(power_level.0, sprite.to_string()))
+            }
+            EnemyType::Shooter => {
+                commands.trigger(ShooterPatchEvent(power_level.0, sprite.to_string()))
+            }
+            EnemyType::Sprinter => {
+                commands.trigger(SprinterPatchEvent(power_level.0, sprite.to_string()))
+            }
+            EnemyType::Jumper => {
+                commands.trigger(JumperPatchEvent(power_level.0, sprite.to_string()))
+            }
             EnemyType::None => (),
         }
     }
