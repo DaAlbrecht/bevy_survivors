@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    ENEMY_SIZE, SPELL_SIZE,
+    ENEMY_SIZE, PausableSystems, PhysicsAppSystems, SPELL_SIZE,
     gameplay::{
-        PickUpSpell, Speed,
+        PickUpSpell,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
-        player::{AddToInventory, Direction, Inventory, Player},
+        player::{AddToInventory, Inventory, Player},
         spells::{
             dot::Bleed,
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
@@ -38,12 +38,13 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
         (
-            attack,
-            handle_timers,
-            projectile_hit_detection,
-            move_projectile,
-        )
-            .run_if(in_state(Screen::Gameplay)),
+            (handle_timers),
+            (attack, projectile_hit_detection)
+                .chain()
+                .run_if(in_state(Screen::Gameplay))
+                .in_set(PhysicsAppSystems::PhysicsResolution)
+                .in_set(PausableSystems),
+        ),
     );
 
     app.add_observer(add_spell_to_inventory);
@@ -201,28 +202,6 @@ fn attack(
         }
     }
 
-    Ok(())
-}
-
-fn move_projectile(
-    spells: Query<(Entity, &Speed), With<Spell>>,
-    projectiles: Query<&SpellProjectiles>,
-    mut projectile_q: Query<(&mut Transform, &Direction), (With<PlayerProjectile>, Without<Halt>)>,
-    time: Res<Time>,
-) -> Result {
-    // Loop over all types of spells
-    for (spell, speed) in &spells {
-        // Iterate over each projectile for this given spell type
-
-        for projectile in projectiles.iter_descendants(spell) {
-            let Ok((mut bullet_pos, bullet_direction)) = projectile_q.get_mut(projectile) else {
-                continue;
-            };
-
-            let movement = bullet_direction.0 * speed.0 * time.delta_secs();
-            bullet_pos.translation += movement;
-        }
-    }
     Ok(())
 }
 

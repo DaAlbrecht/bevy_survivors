@@ -3,21 +3,26 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::gameplay::{
-    Speed,
-    enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
-    player::{Direction, Player},
-    spells::{
-        CastSpell, Cooldown, Damage, Knockback, Orbiting, PlayerProjectile, ProjectileCount, Range,
-        Spell, SpellDuration, SpellType, UpgradeSpellEvent,
+use crate::{
+    PausableSystems, PrePhysicsAppSystems,
+    gameplay::{
+        Speed,
+        enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
+        movement::MovementController,
+        player::{Direction, Player},
+        spells::{
+            CastSpell, Cooldown, Damage, Knockback, Orbiting, PlayerProjectile, ProjectileCount,
+            Range, Spell, SpellDuration, SpellType, UpgradeSpellEvent,
+        },
     },
+    screens::Screen,
 };
 
 #[derive(Component)]
 #[require(
     Spell,
     SpellType::Orb,
-    Cooldown(Timer::from_seconds(4., TimerMode::Once)),
+    Cooldown(Timer::from_seconds(10., TimerMode::Once)),
     Orbiting,
     // SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
     Range(75.),
@@ -43,7 +48,15 @@ pub(crate) struct OrbHitEvent {
 }
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_systems(FixedUpdate, (update_orb_direction, orb_lifetime));
+    app.add_systems(
+        RunFixedMainLoop,
+        record_orb_movement
+            .in_set(PrePhysicsAppSystems::AccumulateInput)
+            .in_set(PausableSystems)
+            .run_if(in_state(Screen::Gameplay)),
+    );
+
+    app.add_systems(FixedUpdate, orb_lifetime);
     app.add_observer(spawn_orb_projectile);
     app.add_observer(orb_hit);
     app.add_observer(upgrade_orb);
@@ -90,6 +103,12 @@ fn spawn_orb_projectile(
                     image: asset_server.load("orb.png"),
                     ..default()
                 },
+                MovementController {
+                    intent: Vec3::ZERO,
+                    speed: 400.0,
+                    physical_translation: orb_pos.extend(0.0),
+                    previous_physical_translation: orb_pos.extend(0.0),
+                },
                 OrbProjectile,
                 CastSpell(orb),
                 Transform::from_xyz(orb_pos.x, orb_pos.y, 0.),
@@ -106,27 +125,30 @@ fn spawn_orb_projectile(
 }
 
 //Keeps direction orthogonal to radius -> circel
-fn update_orb_direction(
-    mut orb_q: Query<(&mut Transform, &mut Direction, &Range), With<OrbProjectile>>,
+fn record_orb_movement(
+    mut orb_q: Query<(&mut MovementController, &mut Direction, &Range), With<OrbProjectile>>,
 ) {
     for (mut orb_pos, mut direction, orbit_radius) in &mut orb_q {
-        let mut pos_vec = orb_pos.translation.truncate();
-
+        let mut pos_vec = orb_pos.physical_translation.truncate();
         //Clamp the orb onto the circle radius.
         let radius = orbit_radius.0.max(0.001); // avoid divide-by-zero
-
         let length = pos_vec.length();
+
         if length == 0.0 {
             pos_vec = Vec2 { x: radius, y: 0.0 };
         } else {
-            //scale factor for radius
             let k = radius / length;
             pos_vec *= k;
         }
 
-        orb_pos.translation = pos_vec.extend(0.0);
+        orb_pos.physical_translation = pos_vec.extend(0.0);
+        // keep previous in sync to avoid interpolation/velocity artifacts
+        orb_pos.previous_physical_translation = orb_pos.physical_translation;
 
+        // Keeps direction orthogonal to radius -> circle
+        // tangent = (-y, x)
         direction.0 = Vec3::new(-pos_vec.y, pos_vec.x, 0.0).normalize();
+        orb_pos.intent = direction.0;
 
         // info!("Transfrom: {:?}", orb_pos);
     }
@@ -160,6 +182,7 @@ fn orb_lifetime(
 ) {
     for (orb, duration) in &mut orb_q {
         if duration.0.is_finished() {
+            info!("Despawning orb projectile: {:?}", orb);
             commands.entity(orb).despawn();
         }
     }

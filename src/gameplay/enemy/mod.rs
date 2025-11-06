@@ -1,9 +1,7 @@
-use bevy_enhanced_input::action::Action;
-
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
-    PLAYER_SIZE, SPELL_SIZE,
+    PLAYER_SIZE, PausableSystems, SPELL_SIZE,
     gameplay::{
         Health, Speed,
         enemy::{
@@ -11,7 +9,8 @@ use crate::{
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
             sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
         },
-        player::{Direction, Move, PlayerHitEvent},
+        movement::MovementController,
+        player::{Direction, PlayerHitEvent},
         spells::{
             CastSpell, Cooldown, Damage, Despawn, Halt, Range, Root, Spell, SpellDuration,
             SpellTick,
@@ -26,11 +25,13 @@ use super::spells::{Knockback, PlayerProjectile};
 
 pub(crate) mod jumper;
 pub(crate) mod shooter;
+pub(crate) mod simple_animation;
 pub(crate) mod sprinter;
 pub(crate) mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
+        simple_animation::plugin,
         jumper::plugin,
         walker::plugin,
         shooter::plugin,
@@ -52,7 +53,8 @@ pub(crate) fn plugin(app: &mut App) {
             enemy_range_keeper,
             terrain_manager,
         )
-            .run_if(in_state(Screen::Gameplay)),
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
     )
     .add_observer(enemy_pushing)
     .add_observer(enemy_take_dmg)
@@ -61,6 +63,7 @@ pub(crate) fn plugin(app: &mut App) {
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
 const RANGE_BUFFER: f32 = 50.0;
+const PUSH_FORCE: f32 = 200.0;
 
 #[derive(Component, Default, Reflect)]
 pub(crate) struct DamageCooldown(pub Timer);
@@ -222,15 +225,16 @@ fn enemy_push_detection(
 
 fn enemy_pushing(
     trigger: On<PlayerPushingEvent>,
-    move_action: Single<&Action<Move>>,
+    player_query: Query<&MovementController>,
     mut enemy_query: Query<(&mut Transform, Entity), (With<Enemy>, Without<Player>)>,
     time: Res<Time>,
 ) {
     let push_entity = trigger.event().0;
+    let player_intent = player_query.single().unwrap().intent;
 
     for (mut enemy_pos, enemy_entity) in &mut enemy_query {
         if enemy_entity == push_entity {
-            enemy_pos.translation += move_action.extend(0.0) * time.delta_secs();
+            enemy_pos.translation += player_intent * PUSH_FORCE * time.delta_secs();
         }
     }
 }

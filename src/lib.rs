@@ -1,27 +1,18 @@
 use bevy::prelude::*;
-use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_seedling::prelude::*;
-use gameplay::player::Player;
-use screens::Screen;
 
+mod asset_tracking;
 mod audio;
 #[cfg(feature = "dev")]
 mod dev_tools;
+mod fixed_update_inspection;
 mod gameplay;
+mod menus;
 mod screens;
-mod widgets;
+mod theme;
 
 pub fn plugin(app: &mut App) {
-    app.configure_sets(
-        Update,
-        (AppSystems::RecordInput, AppSystems::Update).chain(),
-    );
-
-    app.add_systems(Startup, spawn_camera);
-
-    app.add_systems(Update, update_camera.run_if(in_state(Screen::Gameplay)));
-
     app.add_plugins((
         DefaultPlugins.set(WindowPlugin {
             primary_window: Window {
@@ -32,17 +23,70 @@ pub fn plugin(app: &mut App) {
             .into(),
             ..default()
         }),
-        EnhancedInputPlugin,
         EntropyPlugin::<WyRand>::default(),
         SeedlingPlugin::default(),
     ));
 
-    app.add_plugins((gameplay::plugin, audio::plugin));
+    app.add_plugins((
+        fixed_update_inspection::plugin,
+        asset_tracking::plugin,
+        audio::plugin,
+        #[cfg(feature = "dev")]
+        dev_tools::plugin,
+        menus::plugin,
+        theme::plugin,
+        screens::plugin,
+        gameplay::plugin,
+    ));
 
-    #[cfg(feature = "dev")]
-    app.add_plugins(dev_tools::plugin);
+    app.configure_sets(
+        Update,
+        (
+            PostPhysicsAppSystems::TickTimers,
+            PostPhysicsAppSystems::ChangeUi,
+            PostPhysicsAppSystems::PlaySound,
+            PostPhysicsAppSystems::PlayAnimations,
+            PostPhysicsAppSystems::Update,
+        )
+            .chain(),
+    );
 
-    app.add_plugins(screens::plugin);
+    app.configure_sets(
+        RunFixedMainLoop,
+        (
+            (PrePhysicsAppSystems::AccumulateInput,)
+                .chain()
+                .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
+            (
+                PostPhysicsAppSystems::InterpolateTransforms,
+                PostPhysicsAppSystems::UpdateCamera,
+                PostPhysicsAppSystems::UpdateAnimations,
+            )
+                .chain()
+                .in_set(RunFixedMainLoopSystems::AfterFixedMainLoop),
+        )
+            .chain(),
+    );
+
+    app.configure_sets(
+        FixedUpdate,
+        (
+            PhysicsAppSystems::AdvancePhysics,
+            PhysicsAppSystems::PhysicsResolution,
+        )
+            .chain(),
+    );
+
+    // Set up the `Pause` state.
+    app.init_state::<Pause>();
+    app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
+    app.configure_sets(FixedUpdate, PausableSystems.run_if(in_state(Pause(false))));
+    app.configure_sets(
+        RunFixedMainLoop,
+        PausableSystems.run_if(in_state(Pause(false))),
+    );
+
+    app.add_systems(Startup, spawn_camera);
 }
 
 const ENEMY_SIZE: f32 = 30.0;
@@ -57,40 +101,53 @@ const SPAWN_RADIUS_BUFFER: f32 = 200.0;
 const CAMERA_DECAY_RATE: f32 = 2.;
 
 /// High-level groupings of systems for the app in the `Update` schedule.
+/// When adding a new variant, make sure to order it in the `configure_sets`
+/// call above.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum AppSystems {
+enum PrePhysicsAppSystems {
+    AccumulateInput,
+}
+
+/// High-level groupings of systems for the app in the `Update` schedule.
+/// When adding a new variant, make sure to order it in the `configure_sets`
+/// call above.
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+enum PhysicsAppSystems {
+    AdvancePhysics,
+    PhysicsResolution,
+}
+
+/// High-level groupings of systems for the app in the `Update` schedule.
+/// When adding a new variant, make sure to order it in the `configure_sets`
+/// call above.
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+enum PostPhysicsAppSystems {
+    /// Tick timers.
+    TickTimers,
     /// Record player input.
-    RecordInput,
-    /// Do everything else
+    ChangeUi,
+    /// Play sound
+    PlaySound,
+    /// Interpolate
+    InterpolateTransforms,
+    /// Camera follow
+    UpdateCamera,
+    /// UpdateAnimations
+    UpdateAnimations,
+    /// Play animations.
+    PlayAnimations,
+    /// Do everything else (consider splitting this into further variants).
     Update,
 }
 
+/// Whether or not the game is paused.
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+struct Pause(pub bool);
+
+/// A system set for systems that shouldn't run while the game is paused.
+#[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
+struct PausableSystems;
+
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn((
-        Name::new("Camera"),
-        Camera2d,
-        // Render all UI to this camera.
-        // Not strictly necessary since we only use one camera,
-        // but if we don't use this component, our UI will disappear as soon
-        // as we add another camera. This includes indirect ways of adding cameras like using
-        // [ui node outlines](https://bevyengine.org/news/bevy-0-14/#ui-node-outline-gizmos)
-        // for debugging. So it's good to have this here for future-proofing.
-        IsDefaultUiCamera,
-    ));
-}
-
-/// Update the camera position by tracking the player.
-fn update_camera(
-    mut camera: Single<&mut Transform, (With<Camera2d>, Without<Player>)>,
-    player: Single<&Transform, (With<Player>, Without<Camera2d>)>,
-    time: Res<Time>,
-) {
-    let Vec3 { x, y, .. } = player.translation;
-    let direction = Vec3::new(x, y, camera.translation.z);
-
-    // Applies a smooth effect to camera movement using stable interpolation
-    // between the camera position and the player position on the x and y axes.
-    camera
-        .translation
-        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
+    commands.spawn((Name::new("Camera"), Camera2d));
 }
