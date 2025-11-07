@@ -10,10 +10,10 @@ use crate::{
         Health, Speed,
         enemy::{
             AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
-            KnockbackDirection, Meele, Owner, Size,
+            Meele, Owner, Size,
         },
         player::{Direction, Player},
-        spells::{Cooldown, Damage, Knockback, Range, SpellDuration, SpellTick},
+        spells::{Cooldown, Damage, Range, SpellDuration, SpellTick},
     },
     screens::Screen,
 };
@@ -45,12 +45,6 @@ pub(crate) fn plugin(app: &mut App) {
     EnemyType::Jumper,
     Meele,
     Speed(30.),
-    Knockback(0.0),
-    KnockbackDirection(Direction(Vec3 {
-        x: 0.,
-        y: 0.,
-        z: 0.,
-    })),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),

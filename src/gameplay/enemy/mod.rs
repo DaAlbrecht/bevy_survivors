@@ -43,7 +43,6 @@ pub(crate) fn plugin(app: &mut App) {
             enemy_colliding_detection,
             enemy_stop_colliding_detection,
             enemy_push_detection,
-            move_enemy_from_knockback,
             attack,
             enemy_despawner,
             enemy_timer_handle,
@@ -92,7 +91,7 @@ pub(crate) struct Colliding;
 
 //type shenanigans
 #[derive(Component)]
-pub(crate) struct KnockbackDirection(pub Direction);
+pub(crate) struct KnockbackDirection(pub Vec2);
 
 #[derive(Component)]
 pub(crate) struct ProjectileSpeed(pub f32);
@@ -268,10 +267,11 @@ fn enemy_take_dmg(
 
 fn enemy_get_pushed_from_hit(
     trigger: On<EnemyKnockbackEvent>,
-    mut enemy_q: Query<(&mut Knockback, &mut KnockbackDirection, Option<&Charge>), With<Enemy>>,
+    mut enemy_q: Query<Option<&Charge>, With<Enemy>>,
     knockback: Query<&Knockback, (With<Spell>, Without<Enemy>)>,
     projectile_direction: Query<&Direction, With<PlayerProjectile>>,
     spells: Query<&CastSpell>,
+    mut commands: Commands,
 ) -> Result {
     let enemy_entity = trigger.entity_hit;
     let projectile_entity = trigger.spell_entity;
@@ -282,45 +282,27 @@ fn enemy_get_pushed_from_hit(
         .next()
         .expect("there should always only be one ancestor spell for each projectile");
 
+    //Knockback "power"
     let knockback = knockback.get(spell)?.0;
 
-    let direction = projectile_direction.get(projectile_entity)?.0;
+    //Direction to push enemy
+    let direction = projectile_direction.get(projectile_entity)?.0.truncate();
 
-    if let Ok((mut enemy_knockback, mut enemy_knockback_direction, charge)) =
-        enemy_q.get_mut(enemy_entity)
-    {
+    if let Ok(charge) = enemy_q.get_mut(enemy_entity) {
         //Charging enemies cant be knockedback
         if charge.is_some() {
             return Ok(());
         }
 
-        enemy_knockback.0 = knockback;
-        //type shenanigans continue
-        enemy_knockback_direction.0.0 = direction;
+        if !enemy_entity.is_empty() {
+            commands.entity(enemy_entity).insert(Knockback(knockback));
+            commands
+                .entity(enemy_entity)
+                .insert(KnockbackDirection(direction));
+        }
     }
 
     Ok(())
-}
-
-fn move_enemy_from_knockback(
-    mut enemy_q: Query<(&mut Knockback, &mut Transform, &KnockbackDirection), With<Enemy>>,
-    time: Res<Time>,
-) {
-    for (mut enemy_knockback, mut enemy_transform, enemy_direction) in &mut enemy_q {
-        if enemy_knockback.0 > 0.0 {
-            //Very sorry for the type shenanigans at this point tbh
-            enemy_transform.translation +=
-                enemy_knockback.0 * enemy_direction.0.0 * time.delta_secs();
-
-            //reduce knockback speed each frame (friction)
-            enemy_knockback.0 *= 0.95;
-
-            //Stop if slow
-            if enemy_knockback.0 <= 1.0 {
-                enemy_knockback.0 = 0.0;
-            }
-        }
-    }
 }
 
 fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut commands: Commands) {
@@ -333,9 +315,10 @@ fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut com
 fn enemy_movement(
     enemy_q: Query<
         (
+            Entity,
             &mut Transform,
             &Speed,
-            &Knockback,
+            Option<&mut Knockback>,
             Option<&Root>,
             Option<&Halt>,
             Option<&Charge>,
@@ -344,25 +327,46 @@ fn enemy_movement(
         With<Enemy>,
     >,
     player_q: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    knockback_q: Query<&KnockbackDirection, With<Enemy>>,
     time: Res<Time>,
+    mut commands: Commands,
 ) -> Result {
     let player_pos = player_q.single()?.translation.truncate();
 
     let enemy_positions = enemy_q
         .iter()
-        .map(|t| t.0.translation.truncate())
+        .map(|t| t.1.translation.truncate())
         .collect::<Vec<Vec2>>();
 
-    for (mut transform, speed, knockback, root, halt, charge, jump) in enemy_q {
+    for (enemy, mut transform, speed, knockback, root, halt, charge, jump) in enemy_q {
         let enemy_pos = transform.translation.truncate();
-        if knockback.0 > 1.0
-            || root.is_some()
-            || halt.is_some()
-            || charge.is_some()
-            || jump.is_some()
-        {
-            //skip movement if enemy gets knockedback or is rooted
+        if root.is_some() || halt.is_some() || charge.is_some() || jump.is_some() {
+            //skip movement if enemy is cc'd or unstoppable
             continue;
+        }
+
+        //Move enemy from knockback if they are knocked back
+        if let Some(mut knockback) = knockback {
+            let Ok(knockback_direction) = knockback_q.get(enemy) else {
+                continue;
+            };
+
+            if knockback.0 > 0.0 {
+                transform.translation +=
+                    (knockback.0 * knockback_direction.0 * time.delta_secs()).extend(0.0);
+
+                //reduce knockback speed each frame (friction)
+                knockback.0 *= 0.9;
+
+                //Stop if slow
+                if knockback.0 <= 15.0 {
+                    // knockback.0 = 0.0;
+                    commands.entity(enemy).remove::<Knockback>();
+                    commands.entity(enemy).remove::<KnockbackDirection>();
+                }
+                //Knockedback enemy does not move, skip to next
+                continue;
+            }
         }
 
         let direction = (player_pos - enemy_pos).normalize();

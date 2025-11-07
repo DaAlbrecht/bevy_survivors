@@ -10,11 +10,11 @@ use crate::{
     gameplay::{
         Health, Speed,
         enemy::{
-            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, KnockbackDirection,
-            ProjectileOf, ProjectileSpeed, Ranged,
+            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf,
+            ProjectileSpeed, Ranged,
         },
         player::{Direction, Player, PlayerHitEvent},
-        spells::{Cooldown, Damage, Knockback, Range},
+        spells::{Cooldown, Damage, Range},
     },
 };
 
@@ -38,14 +38,7 @@ pub(crate) fn plugin(app: &mut App) {
 #[require(
     EnemyType::Shooter,
     Ranged,
-    // Health(10.),
     Speed(100.),
-    Knockback(0.0),
-    KnockbackDirection(Direction(Vec3 {
-        x: 0.,
-        y: 0.,
-        z: 0.,
-    })),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
 )]

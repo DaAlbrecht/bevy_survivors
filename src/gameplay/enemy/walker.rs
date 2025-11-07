@@ -8,9 +8,9 @@ use crate::{
     SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
-        enemy::{DamageCooldown, Enemy, EnemyType, KnockbackDirection, Meele},
-        player::{Direction, Player},
-        spells::{Damage, Knockback},
+        enemy::{DamageCooldown, Enemy, EnemyType, Meele},
+        player::Player,
+        spells::Damage,
     },
 };
 
@@ -25,17 +25,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 #[derive(Component)]
-#[require(
-    EnemyType::Walker,
-    Meele,
-    Enemy,
-    KnockbackDirection(Direction(Vec3 {
-        x: 0.,
-        y: 0.,
-        z: 0.,
-    })),
-    Knockback(0.0),
-)]
+#[require(EnemyType::Walker, Meele, Enemy)]
 #[derive(Reflect)]
 pub(crate) struct Walker;
 

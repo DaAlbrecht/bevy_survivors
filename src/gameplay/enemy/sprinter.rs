@@ -9,11 +9,11 @@ use crate::{
     gameplay::{
         Health, Speed,
         enemy::{
-            AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType,
-            KnockbackDirection, Meele, RANGE_BUFFER,
+            AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType, Meele,
+            RANGE_BUFFER,
         },
         player::{Direction, Player, PlayerHitEvent},
-        spells::{Cooldown, Damage, Halt, Knockback, Range},
+        spells::{Cooldown, Damage, Halt, Range},
     },
     screens::Screen,
 };
@@ -45,12 +45,6 @@ pub(crate) fn plugin(app: &mut App) {
     EnemyType::Sprinter,
     Meele,
     Speed(50.),
-    Knockback(0.0),
-    KnockbackDirection(Direction(Vec3 {
-        x: 0.,
-        y: 0.,
-        z: 0.,
-    })),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     Direction(Vec3{x:0.,y:0.,z:0.}),
