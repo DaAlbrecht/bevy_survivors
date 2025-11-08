@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    ENEMY_SIZE, PausableSystems, PhysicsAppSystems, SPELL_SIZE,
+    ENEMY_SIZE, PausableSystems, PhysicsAppSystems, PrePhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         PickUpSpell,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
+        movement::MovementController,
         player::{AddToInventory, Inventory, Player},
         spells::{
             dot::Bleed,

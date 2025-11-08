@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::gameplay::movement::MovementController;
 use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     Speed,
@@ -86,6 +87,13 @@ fn spawn_fireball_projectile(
             Sprite {
                 image: asset_server.load("fireball.png"),
                 ..default()
+            },
+            MovementController {
+                intent: direction.extend(0.),
+                speed: 400.0,
+                physical_translation: player_pos.translation,
+                previous_physical_translation: player_pos.translation,
+                persistent: true,
             },
             CastSpell(fireball),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),

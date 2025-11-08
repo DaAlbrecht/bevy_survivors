@@ -108,6 +108,7 @@ fn spawn_orb_projectile(
                     speed: 400.0,
                     physical_translation: orb_pos.extend(0.0),
                     previous_physical_translation: orb_pos.extend(0.0),
+                    persistent: false,
                 },
                 OrbProjectile,
                 CastSpell(orb),

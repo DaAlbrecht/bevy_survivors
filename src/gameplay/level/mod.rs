@@ -46,7 +46,7 @@ pub fn spawn_level(
     ));
 
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Orb,
+        spell_type: crate::gameplay::spells::SpellType::Fireball,
     });
 }
 

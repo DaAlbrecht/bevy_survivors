@@ -39,6 +39,9 @@ pub(crate) struct MovementController {
 
     /// 1 world unit = 1 pixel when using the default 2D camera and no physics engine.
     pub speed: f32,
+
+    /// If true, the movement intent will persist across frames until changed.
+    pub persistent: bool,
 }
 
 impl Default for MovementController {
@@ -49,6 +52,7 @@ impl Default for MovementController {
             previous_physical_translation: Vec3::ZERO,
             // 400 pixels per second is a nice default, but we can still vary this per character.
             speed: 400.0,
+            persistent: true,
         }
     }
 }
@@ -82,6 +86,9 @@ fn interpolate_rendered_transform(
 
 fn clear_intent(mut controller_query: Query<&mut MovementController>) {
     for mut controller in &mut controller_query {
+        if controller.persistent {
+            continue;
+        }
         controller.intent = Vec3::ZERO;
     }
 }

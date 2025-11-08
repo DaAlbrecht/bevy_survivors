@@ -9,7 +9,6 @@ use bevy_seedling::sample::AudioSample;
 use crate::{
     PausableSystems, PrePhysicsAppSystems,
     asset_tracking::LoadResource,
-    fixed_update_inspection::did_fixed_update_happen,
     gameplay::{
         Health, healthbar::HealthBarMaterial, movement::MovementController, player::hit::player_hit,
     },
@@ -62,10 +61,7 @@ pub fn player(
             },
         ),
         Transform::from_xyz(50., 0., 0.),
-        MovementController {
-            speed,
-            ..default()
-        },
+        MovementController { speed, ..default() },
         player_animation,
         children![(
             Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),
