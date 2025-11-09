@@ -1,11 +1,13 @@
 use bevy::prelude::*;
 
-use crate::gameplay::movement::MovementController;
+use crate::gameplay::movement::{
+    MovementController, PhysicalTranslation, PreviousPhysicalTranslation,
+};
 use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
-    player::{Direction, Player},
+    player::Player,
     spells::{
         CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
     },
@@ -17,7 +19,7 @@ use crate::gameplay::{
     SpellType::Fireball,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     Speed(600.),
-    Knockback(1500.),
+    Knockback(100.),
     Damage(5.),
     ExplosionRadius(100.),
     Name::new("Fireball")
@@ -89,15 +91,23 @@ fn spawn_fireball_projectile(
                 ..default()
             },
             MovementController {
-                intent: direction.extend(0.),
-                speed: 400.0,
-                physical_translation: player_pos.translation,
-                previous_physical_translation: player_pos.translation,
-                persistent: true,
+                velocity: direction.extend(0.),
+                speed: 400.,
+                mass: 80.0,
+                ..default()
             },
             CastSpell(fireball),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
-            Direction(direction.extend(0.)),
+            PhysicalTranslation(Vec3::new(
+                player_pos.translation.x,
+                player_pos.translation.y,
+                0.,
+            )),
+            PreviousPhysicalTranslation(Vec3::new(
+                player_pos.translation.x,
+                player_pos.translation.y,
+                0.,
+            )),
             PlayerProjectile,
         ));
     }

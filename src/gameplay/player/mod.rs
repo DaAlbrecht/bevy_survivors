@@ -7,10 +7,12 @@ use bevy::{
 use bevy_seedling::sample::AudioSample;
 
 use crate::{
-    PausableSystems, PrePhysicsAppSystems,
     asset_tracking::LoadResource,
     gameplay::{
-        Health, healthbar::HealthBarMaterial, movement::MovementController, player::hit::player_hit,
+        Health,
+        healthbar::HealthBarMaterial,
+        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
+        player::{hit::player_hit, movement::AccumulatedInput},
     },
 };
 
@@ -27,13 +29,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(player_hit);
 
     app.register_type::<XP>().register_type::<Level>();
-
-    app.add_systems(
-        RunFixedMainLoop,
-        record_player_directional_input
-            .in_set(PausableSystems)
-            .in_set(PrePhysicsAppSystems::AccumulateInput),
-    );
 }
 
 /// The player character.
@@ -60,8 +55,11 @@ pub fn player(
                 index: player_animation.get_atlas_index(),
             },
         ),
-        Transform::from_xyz(50., 0., 0.),
+        Transform::from_xyz(0., 0., 0.),
+        PhysicalTranslation(Vec3::new(0., 0., 0.)),
+        PreviousPhysicalTranslation(Vec3::new(0., 0., 0.)),
         MovementController { speed, ..default() },
+        AccumulatedInput::default(),
         player_animation,
         children![(
             Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),
@@ -111,35 +109,6 @@ pub(crate) struct Inventory(Vec<Entity>);
 #[relationship(relationship_target = Inventory)]
 #[derive(Reflect)]
 pub(crate) struct AddToInventory(pub Entity);
-
-fn record_player_directional_input(
-    input: Res<ButtonInput<KeyCode>>,
-    mut controller_query: Query<&mut MovementController, With<Player>>,
-) {
-    // Collect directional input.
-    let mut intent = Vec3::ZERO;
-    if input.pressed(KeyCode::KeyW) || input.pressed(KeyCode::ArrowUp) {
-        intent.y += 1.0;
-    }
-    if input.pressed(KeyCode::KeyS) || input.pressed(KeyCode::ArrowDown) {
-        intent.y -= 1.0;
-    }
-    if input.pressed(KeyCode::KeyA) || input.pressed(KeyCode::ArrowLeft) {
-        intent.x -= 1.0;
-    }
-    if input.pressed(KeyCode::KeyD) || input.pressed(KeyCode::ArrowRight) {
-        intent.x += 1.0;
-    }
-
-    // Normalize intent so that diagonal movement is the same speed as horizontal / vertical.
-    // This should be omitted if the input comes from an analog stick instead.
-    let intent = intent.normalize_or_zero();
-
-    // Apply movement intent to controllers.
-    for mut controller in &mut controller_query {
-        controller.intent = intent;
-    }
-}
 
 #[derive(Resource, Asset, Clone, Reflect)]
 #[reflect(Resource)]

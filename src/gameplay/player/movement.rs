@@ -15,20 +15,68 @@
 
 use bevy::prelude::*;
 
-use crate::{CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems, gameplay::player::Player};
+use crate::{
+    CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems, PrePhysicsAppSystems,
+    fixed_update_inspection::did_fixed_update_happen,
+    gameplay::{movement::MovementController, player::Player},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         RunFixedMainLoop,
-        (translate_camera)
-            .in_set(PostPhysicsAppSystems::UpdateCamera)
+        (
+            record_player_directional_input.in_set(PrePhysicsAppSystems::AccumulateInput),
+            clear_input
+                .in_set(PostPhysicsAppSystems::FixedTimestepDidRun)
+                .run_if(did_fixed_update_happen),
+            translate_camera.in_set(PostPhysicsAppSystems::UpdateCamera),
+        )
             .in_set(PausableSystems),
     );
 }
 
+/// A vector representing the player's input, accumulated over all frames that ran
+/// since the last time the physics simulation was advanced.
+#[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
+pub struct AccumulatedInput {
+    // The player's movement input (WASD).
+    pub movement: Vec3,
+    // Other input that could make sense would be e.g.
+    // boost: bool
+}
+
+// Clear the input after it was processed in the fixed timestep.
+fn clear_input(mut input: Single<&mut AccumulatedInput>) {
+    **input = AccumulatedInput::default();
+}
+
+fn record_player_directional_input(
+    key_input: Res<ButtonInput<KeyCode>>,
+    player: Single<(&mut AccumulatedInput, &mut MovementController)>,
+) {
+    let (mut input, mut controller) = player.into_inner();
+    //
+    // Collect directional input.
+    input.movement = Vec3::ZERO;
+    if key_input.pressed(KeyCode::KeyW) || key_input.pressed(KeyCode::ArrowUp) {
+        input.y += 1.0;
+    }
+    if key_input.pressed(KeyCode::KeyS) || key_input.pressed(KeyCode::ArrowDown) {
+        input.y -= 1.0;
+    }
+    if key_input.pressed(KeyCode::KeyA) || key_input.pressed(KeyCode::ArrowLeft) {
+        input.x -= 1.0;
+    }
+    if key_input.pressed(KeyCode::KeyD) || key_input.pressed(KeyCode::ArrowRight) {
+        input.x += 1.0;
+    }
+
+    controller.velocity = input.clamp_length_max(1.0);
+}
+
 // Sync the camera's position with the player's interpolated position
 fn translate_camera(
-    fixed_time: Res<Time<Fixed>>,
+    time: Res<Time>,
     mut camera: Single<&mut Transform, With<Camera>>,
     player: Single<&Transform, (With<Player>, Without<Camera>)>,
 ) {
@@ -39,5 +87,5 @@ fn translate_camera(
     // between the camera position and the player position on the x and y axes.
     camera
         .translation
-        .smooth_nudge(&direction, CAMERA_DECAY_RATE, fixed_time.delta_secs());
+        .smooth_nudge(&direction, CAMERA_DECAY_RATE, time.delta_secs());
 }

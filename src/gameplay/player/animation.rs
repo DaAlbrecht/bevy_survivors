@@ -47,19 +47,21 @@ fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation
 
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
-    mut player: Single<(&MovementController, &mut Sprite, &mut PlayerAnimation), With<Player>>,
+    player: Single<(&MovementController, &mut Sprite, &mut PlayerAnimation), With<Player>>,
 ) {
-    let dx = player.0.intent.x;
+    let (movement, mut sprite, mut animation) = player.into_inner();
+
+    let dx = movement.velocity.x;
     if dx != 0.0 {
-        player.1.flip_x = dx < 0.0;
+        sprite.flip_x = dx < 0.0;
     }
 
-    let animation_state = if player.0.intent == Vec3::ZERO {
+    let animation_state = if movement.velocity == Vec3::ZERO {
         PlayerAnimationState::Idling
     } else {
         PlayerAnimationState::Walking
     };
-    player.2.update_state(animation_state);
+    animation.update_state(animation_state);
 }
 
 /// Update the texture atlas to reflect changes in the animation.

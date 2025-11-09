@@ -10,10 +10,10 @@ use crate::{
     gameplay::{
         Health, Speed,
         enemy::{
-            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf,
-            ProjectileSpeed, Ranged,
+            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
         },
-        player::{Direction, Player, PlayerHitEvent},
+        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
+        player::{Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Range},
     },
 };
@@ -102,10 +102,15 @@ fn spawn_shooter(
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        MovementController {
+            speed: 100.0,
+            ..default()
+        },
         Health(stats.health),
         Damage(stats.damage),
         AbilityDamage(stats.ability_damage),
-        ProjectileSpeed(stats.projectile_speed),
         Range(stats.range),
         Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Once)),
     ));
@@ -127,35 +132,41 @@ fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>
 
 fn shooter_attack(
     trigger: On<ShooterAttackEvent>,
-    shooter_q: Query<&Transform, With<Shooter>>,
-    player_q: Query<&Transform, With<Player>>,
+    shooter_q: Query<&PhysicalTranslation, With<Shooter>>,
+    player_q: Query<&PhysicalTranslation, With<Player>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let shooter = trigger.0;
-    let player_pos = player_q.single()?.translation.truncate();
+    let player_pos = player_q.single()?.truncate();
 
     let Ok(transform) = shooter_q.get(shooter) else {
         return Ok(());
     };
 
-    let shooter_pos = transform.translation.truncate();
+    let shooter_pos = transform.truncate();
     let direction = (player_pos - shooter_pos).normalize();
     let angle = direction.y.atan2(direction.x);
 
     commands.spawn((
+        EnemyProjectile,
         Sprite {
             image: asset_server.load("enemies/shooter_bullet.png"),
             ..default()
         },
         Transform {
-            translation: transform.translation,
+            translation: transform.0,
             rotation: Quat::from_rotation_z(angle),
             ..default()
         },
-        EnemyProjectile,
+        PhysicalTranslation(transform.0),
+        PreviousPhysicalTranslation(transform.0),
+        MovementController {
+            velocity: direction.extend(0.0),
+            speed: 125.0,
+            ..default()
+        },
         ProjectileOf(shooter),
-        Direction(direction.extend(0.0)),
     ));
 
     Ok(())

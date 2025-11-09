@@ -58,6 +58,7 @@ pub fn plugin(app: &mut App) {
                 .chain()
                 .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
             (
+                PostPhysicsAppSystems::FixedTimestepDidRun,
                 PostPhysicsAppSystems::InterpolateTransforms,
                 PostPhysicsAppSystems::UpdateCamera,
                 PostPhysicsAppSystems::UpdateAnimations,
@@ -71,6 +72,7 @@ pub fn plugin(app: &mut App) {
     app.configure_sets(
         FixedUpdate,
         (
+            PhysicsAppSystems::PhysicsAdjustments,
             PhysicsAppSystems::AdvancePhysics,
             PhysicsAppSystems::PhysicsResolution,
         )
@@ -113,6 +115,7 @@ enum PrePhysicsAppSystems {
 /// call above.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 enum PhysicsAppSystems {
+    PhysicsAdjustments,
     AdvancePhysics,
     PhysicsResolution,
 }
@@ -128,6 +131,8 @@ enum PostPhysicsAppSystems {
     ChangeUi,
     /// Play sound
     PlaySound,
+    /// FixedTimestepDidRun
+    FixedTimestepDidRun,
     /// Interpolate
     InterpolateTransforms,
     /// Camera follow

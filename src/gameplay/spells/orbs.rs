@@ -1,18 +1,16 @@
 use core::f32;
-use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
 use crate::{
-    PausableSystems, PrePhysicsAppSystems,
+    PausableSystems, PhysicsAppSystems,
     gameplay::{
-        Speed,
         enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
-        movement::MovementController,
-        player::{Direction, Player},
+        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
+        player::Player,
         spells::{
-            CastSpell, Cooldown, Damage, Knockback, Orbiting, PlayerProjectile, ProjectileCount,
-            Range, Spell, SpellDuration, SpellType, UpgradeSpellEvent,
+            CastSpell, Cooldown, Damage, PlayerProjectile, ProjectileCount, Range, Spell,
+            SpellDuration, SpellType, UpgradeSpellEvent,
         },
     },
     screens::Screen,
@@ -22,13 +20,10 @@ use crate::{
 #[require(
     Spell,
     SpellType::Orb,
-    Cooldown(Timer::from_seconds(10., TimerMode::Once)),
-    Orbiting,
+    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     // SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
     Range(75.),
-    Speed(100.),
     Damage(1.),
-    Knockback(750.),
     ProjectileCount(3.),
     Name::new("Orb Spell")
 )]
@@ -47,16 +42,21 @@ pub(crate) struct OrbHitEvent {
     pub projectile: Entity,
 }
 
+#[derive(Component, Reflect)]
+struct OrbPhase(pub f32);
+
+// orbital angular speed (radians/sec). Tweak for orbit period.
+const ORB_ANGULAR_SPEED: f32 = std::f32::consts::TAU * 0.25; // one orbit per 4s
+
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
-        RunFixedMainLoop,
-        record_orb_movement
-            .in_set(PrePhysicsAppSystems::AccumulateInput)
+        FixedUpdate,
+        (record_orb_movement, orb_lifetime)
+            .in_set(PhysicsAppSystems::PhysicsAdjustments)
             .in_set(PausableSystems)
             .run_if(in_state(Screen::Gameplay)),
     );
 
-    app.add_systems(FixedUpdate, orb_lifetime);
     app.add_observer(spawn_orb_projectile);
     app.add_observer(orb_hit);
     app.add_observer(upgrade_orb);
@@ -75,51 +75,47 @@ fn upgrade_orb(
 
 fn spawn_orb_projectile(
     _trigger: On<OrbAttackEvent>,
-    player_q: Query<Entity, With<Player>>,
+    player: Query<&PhysicalTranslation, With<Player>>,
     orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let player = player_q.single()?;
+    let player_pos = player.single()?;
     let (orb, radius, projectile_count) = orb_q.single()?;
 
-    let mut pos_x: f32;
-    let mut pos_y: f32;
-
     for n in 1..=projectile_count.0 as usize {
-        let angle = (2.0 * PI) * (n as f32 / projectile_count.0);
-        pos_x = f32::cos(angle);
-        pos_y = f32::sin(angle);
+        // Compute starting phase for each orb (even spacing)
+        let phase = (std::f32::consts::TAU) * (n as f32 / projectile_count.0);
+        let offset = Vec2::from_angle(phase) * radius.0;
+        let world_pos = player_pos.0 + offset.extend(0.0);
 
-        let orb_pos = Vec2::new(pos_x, pos_y) * radius.0;
-        // V1(x,y) and V2(-y,x) are allways orthogonal and v2 looks counterclockwise
-        let direction = Vec3::new(-orb_pos.y, orb_pos.x, 0.0).normalize();
+        // tangent direction (orthogonal to radius)
+        let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
+        let tangential_speed = ORB_ANGULAR_SPEED * radius.0;
 
-        let orb = commands
-            .spawn((
-                Range(radius.0),
-                Name::new("orb projectile"),
-                Sprite {
-                    image: asset_server.load("orb.png"),
-                    ..default()
-                },
-                MovementController {
-                    intent: Vec3::ZERO,
-                    speed: 400.0,
-                    physical_translation: orb_pos.extend(0.0),
-                    previous_physical_translation: orb_pos.extend(0.0),
-                    persistent: false,
-                },
-                OrbProjectile,
-                CastSpell(orb),
-                Transform::from_xyz(orb_pos.x, orb_pos.y, 0.),
-                Direction(direction),
-                PlayerProjectile,
-                SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
-            ))
-            .id();
-
-        commands.entity(player).add_child(orb);
+        commands.spawn((
+            Name::new("orb projectile"),
+            Sprite {
+                image: asset_server.load("orb.png"),
+                ..default()
+            },
+            OrbProjectile,
+            CastSpell(orb),
+            Transform::from_xyz(world_pos.x, world_pos.y, 0.0),
+            PreviousPhysicalTranslation(world_pos),
+            PhysicalTranslation(world_pos),
+            MovementController {
+                velocity: direction,
+                // set tangential speed so advance_physics will move the orb immediately
+                speed: tangential_speed,
+                mass: 20.0,
+                ..default()
+            },
+            OrbPhase(phase),
+            Range(radius.0),
+            PlayerProjectile,
+            SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
+        ));
     }
 
     Ok(())
@@ -127,32 +123,42 @@ fn spawn_orb_projectile(
 
 //Keeps direction orthogonal to radius -> circel
 fn record_orb_movement(
-    mut orb_q: Query<(&mut MovementController, &mut Direction, &Range), With<OrbProjectile>>,
-) {
-    for (mut orb_pos, mut direction, orbit_radius) in &mut orb_q {
-        let mut pos_vec = orb_pos.physical_translation.truncate();
-        //Clamp the orb onto the circle radius.
-        let radius = orbit_radius.0.max(0.001); // avoid divide-by-zero
-        let length = pos_vec.length();
+    player_q: Query<&PhysicalTranslation, (With<Player>, Without<OrbProjectile>)>,
+    mut orb_q: Query<
+        (
+            &PhysicalTranslation,
+            &mut MovementController,
+            &mut OrbPhase,
+            &Range,
+        ),
+        (With<OrbProjectile>, Without<Player>),
+    >,
+    time: Res<Time<Fixed>>,
+) -> Result {
+    let dt = time.delta_secs();
+    let player_pos = player_q.single()?;
 
-        if length == 0.0 {
-            pos_vec = Vec2 { x: radius, y: 0.0 };
-        } else {
-            let k = radius / length;
-            pos_vec *= k;
+    for (orb_pos, mut controller, mut phase, orbit_radius) in &mut orb_q {
+        // Advance orbital phase
+        phase.0 += ORB_ANGULAR_SPEED * dt;
+        if phase.0 > std::f32::consts::TAU {
+            phase.0 -= std::f32::consts::TAU;
         }
 
-        orb_pos.physical_translation = pos_vec.extend(0.0);
-        // keep previous in sync to avoid interpolation/velocity artifacts
-        orb_pos.previous_physical_translation = orb_pos.physical_translation;
+        // Compute the target orbit position relative to player
+        let offset = Vec2::from_angle(phase.0) * orbit_radius.0;
+        let target_pos = player_pos.0 + offset.extend(0.0);
 
-        // Keeps direction orthogonal to radius -> circle
-        // tangent = (-y, x)
-        direction.0 = Vec3::new(-pos_vec.y, pos_vec.x, 0.0).normalize();
-        orb_pos.intent = direction.0;
+        // Compute velocity needed to reach target_pos this frame
+        let delta = target_pos - orb_pos.0;
+        let velocity = if dt > 0.0 { delta / dt } else { Vec3::ZERO };
 
-        // info!("Transfrom: {:?}", orb_pos);
+        // Apply velocity to MovementController
+        controller.velocity = velocity.normalize_or_zero();
+        controller.speed = velocity.length();
     }
+
+    Ok(())
 }
 
 fn orb_hit(
@@ -160,6 +166,7 @@ fn orb_hit(
     mut commands: Commands,
     orb_dmg: Query<&Damage, With<Orb>>,
 ) -> Result {
+    info!("Orb hit enemy: {:?}", trigger.enemy);
     let enemy = trigger.enemy;
     let spell_entity = trigger.projectile;
     let dmg = orb_dmg.single()?.0;

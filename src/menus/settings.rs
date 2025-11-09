@@ -96,7 +96,7 @@ fn raise_global_volume(_: On<Pointer<Click>>, mut master: Single<&mut VolumeNode
 struct GlobalVolumeLabel;
 
 fn update_global_volume_label(
-    mut master: Single<&mut VolumeNode, With<MainBus>>,
+    master: Single<&mut VolumeNode, With<MainBus>>,
     mut label: Single<&mut Text, With<GlobalVolumeLabel>>,
 ) {
     let percent = 100.0 * master.volume.linear();

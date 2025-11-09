@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    ENEMY_SIZE, PausableSystems, PhysicsAppSystems, PrePhysicsAppSystems, SPELL_SIZE,
+    ENEMY_SIZE, PausableSystems, PhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         PickUpSpell,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
-        movement::MovementController,
+        movement::PhysicalTranslation,
         player::{AddToInventory, Inventory, Player},
         spells::{
             dot::Bleed,
@@ -40,12 +40,11 @@ pub(crate) fn plugin(app: &mut App) {
         FixedUpdate,
         (
             (handle_timers),
-            (attack, projectile_hit_detection)
-                .chain()
-                .run_if(in_state(Screen::Gameplay))
-                .in_set(PhysicsAppSystems::PhysicsResolution)
-                .in_set(PausableSystems),
-        ),
+            attack.in_set(PhysicsAppSystems::PhysicsAdjustments),
+            projectile_hit_detection.in_set(PhysicsAppSystems::PhysicsResolution),
+        )
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
     );
 
     app.add_observer(add_spell_to_inventory);
@@ -117,9 +116,6 @@ pub(crate) struct CastSpell(pub Entity);
 #[relationship_target(relationship = CastSpell, linked_spawn)]
 #[derive(Reflect)]
 pub(crate) struct SpellProjectiles(Vec<Entity>);
-
-#[derive(Component, Default, Reflect)]
-pub(crate) struct Orbiting;
 
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Segmented;
@@ -207,48 +203,43 @@ fn attack(
 }
 
 fn projectile_hit_detection(
-    spells: Query<(Entity, &SpellType, Option<&Orbiting>), With<Spell>>,
-    player_transform: Query<&Transform, With<Player>>,
-    tail_transform: Query<&GlobalTransform, With<Tail>>,
+    spells: Query<(Entity, &SpellType), With<Spell>>,
+    tail_phys: Query<&PhysicalTranslation, With<Tail>>,
     projectiles: Query<&SpellProjectiles>,
-    enemy_q: Query<(&Transform, Entity, Option<&Jump>), (With<Enemy>, Without<PlayerProjectile>)>,
-    projectile_transform: Query<&Transform, With<PlayerProjectile>>,
+    enemy_q: Query<
+        (&PhysicalTranslation, Entity, Option<&Jump>),
+        (With<Enemy>, Without<PlayerProjectile>),
+    >,
+    projectile_phys: Query<&PhysicalTranslation, With<PlayerProjectile>>,
     mut commands: Commands,
 ) -> Result {
     // Get all spells
-    for (spell, spell_type, orbiting) in &spells {
+    for (spell, spell_type) in &spells {
         // Get each fired projectile for this spell
         for projectile in projectiles.iter_descendants(spell) {
-            // Get the position of this particular projectile
-            let mut projectile_pos = projectile_transform.get(projectile)?.translation;
+            // Start with physics position
+            let mut projectile_pos = projectile_phys.get(projectile)?.0;
 
-            // If projectile is orbiting the player get gloabl pos
-            if orbiting.is_some() {
-                let player_pos = player_transform.single()?;
-                projectile_pos += player_pos.translation;
+            // If projectile is a tail, use its physics world pos
+            if let Ok(tail_pos) = tail_phys.get(projectile) {
+                projectile_pos = tail_pos.0;
             }
 
-            //Get Globaltransform if projectile is a tail
-            if tail_transform.get(projectile).is_ok() {
-                projectile_pos = tail_transform.get(projectile)?.translation();
-            }
-
-            // Loop over all the positions of the enemies and check if one matches the position of
-            // the projectile.
-            for (enemy_pos, enemy_entity, jump) in enemy_q {
-                //Jumping enemies can not be hit
+            // Loop over all enemies and check collisions
+            for (enemy_phys, enemy_entity, jump) in &enemy_q {
                 if jump.is_some() {
-                    continue;
+                    continue; // jumping enemies can't be hit
                 }
 
-                if (projectile_pos.distance(enemy_pos.translation) - (SPELL_SIZE / 2.0))
-                    <= ENEMY_SIZE / 2.0
-                {
+                let enemy_pos = enemy_phys.0;
+                let distance = projectile_pos.truncate().distance(enemy_pos.truncate());
+                if (distance - (SPELL_SIZE / 2.0)) <= ENEMY_SIZE / 2.0 {
                     trigger_hit_event(&mut commands, spell_type, projectile, enemy_entity);
                 }
             }
         }
     }
+
     Ok(())
 }
 
