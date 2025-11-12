@@ -124,7 +124,7 @@ impl PlayerAnimation {
     /// The duration of each idle frame.
     const IDLE_INTERVAL: Duration = Duration::from_millis(500);
     /// The number of walking frames.
-    const WALKING_FRAMES: usize = 4;
+    const WALKING_FRAMES: usize = 5;
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(160);
 

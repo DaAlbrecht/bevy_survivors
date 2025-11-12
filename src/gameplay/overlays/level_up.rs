@@ -118,5 +118,5 @@ fn upgrade(
     // Transition back to the gameplay
     next_menu.set(Overlay::None);
 
-    next_pause.set(Pause(true));
+    next_pause.set(Pause(false));
 }
