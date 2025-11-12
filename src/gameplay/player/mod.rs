@@ -45,7 +45,7 @@ pub fn player(
 ) -> impl Bundle {
     // A texture atlas is a way to split a single image into a grid of related images.
     // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 2, Some(UVec2::splat(1)), None);
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 48, y: 33 }, 10, 1, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new();
 
@@ -53,7 +53,7 @@ pub fn player(
         Name::new("Player"),
         Player,
         Sprite::from_atlas_image(
-            player_assets.ducky.clone(),
+            player_assets.player_sprite.clone(),
             TextureAtlas {
                 layout: texture_atlas_layout,
                 index: player_animation.get_atlas_index(),
@@ -127,7 +127,7 @@ pub(crate) struct AddToInventory(pub Entity);
 #[reflect(Resource)]
 pub struct PlayerAssets {
     #[dependency]
-    ducky: Handle<Image>,
+    player_sprite: Handle<Image>,
     #[dependency]
     pub steps: Vec<Handle<AudioSample>>,
 }
@@ -136,10 +136,13 @@ impl FromWorld for PlayerAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
         Self {
-            ducky: assets.load_with_settings("player.png", |settings: &mut ImageLoaderSettings| {
-                // Use `nearest` image sampling to preserve pixel art style.
-                settings.sampler = ImageSampler::nearest();
-            }),
+            player_sprite: assets.load_with_settings(
+                "player_wizard_.png",
+                |settings: &mut ImageLoaderSettings| {
+                    // Use `nearest` image sampling to preserve pixel art style.
+                    settings.sampler = ImageSampler::nearest();
+                },
+            ),
             steps: vec![
                 assets.load("audio/sound_effects/step1.ogg"),
                 assets.load("audio/sound_effects/step2.ogg"),
