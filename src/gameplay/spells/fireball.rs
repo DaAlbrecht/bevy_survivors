@@ -1,8 +1,11 @@
 use bevy::prelude::*;
+use bevy_seedling::sample::SamplePlayer;
 
+use crate::audio::SfxPool;
 use crate::gameplay::movement::{
     MovementController, PhysicalTranslation, PreviousPhysicalTranslation,
 };
+use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
 use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     Speed,
@@ -59,6 +62,7 @@ fn spawn_fireball_projectile(
     fireball: Query<Entity, With<Fireball>>,
     enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let player_pos = player_q.single()?;
@@ -79,16 +83,30 @@ fn spawn_fireball_projectile(
         }
     }
 
+    let texture = asset_server.load("fx/fireball.png");
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(16), 4, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layout.add(layout);
+    let animation_indices = AnimationIndices { first: 0, last: 3 };
+
     if let Some(enemy_pos) = closest_enemy {
         let direction = (enemy_pos.translation - player_pos.translation)
             .truncate()
             .normalize();
 
+        let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.extend(0.).normalize());
+
         commands.spawn((
             Name::new("fireball projectile"),
-            Sprite {
-                image: asset_server.load("fireball.png"),
-                ..default()
+            Sprite::from_atlas_image(
+                texture,
+                TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
+                },
+            ),
+            animation_indices,
+            AnimationTimer {
+                timer: Timer::from_seconds(0.1, TimerMode::Repeating),
             },
             MovementController {
                 velocity: direction.extend(0.),
@@ -97,7 +115,8 @@ fn spawn_fireball_projectile(
                 ..default()
             },
             CastSpell(fireball),
-            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
+            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.)
+                .with_rotation(towards_quaternion),
             PhysicalTranslation(Vec3::new(
                 player_pos.translation.x,
                 player_pos.translation.y,
@@ -110,6 +129,10 @@ fn spawn_fireball_projectile(
             )),
             PlayerProjectile,
         ));
+        commands.spawn((
+            SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_whoosh.wav")),
+            SfxPool,
+        ));
     }
 
     Ok(())
@@ -119,6 +142,8 @@ fn fireball_hit(
     trigger: On<FireballHitEvent>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     explosion_radius: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
 ) -> Result {
     let enemy_entity = trigger.enemy;
@@ -126,6 +151,35 @@ fn fireball_hit(
     let (explosion_radius, dmg) = explosion_radius.single()?;
 
     let dmg = dmg.0;
+
+    //Spawn impact effect
+    let texture = asset_server.load("fx/fireball_hit.png");
+    let layout = TextureAtlasLayout::from_grid(UVec2::new(25, 30), 8, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layout.add(layout);
+    let animation_indices = AnimationIndices { first: 0, last: 7 };
+
+    commands.spawn((
+        Name::new("Fireball Impact Effect"),
+        Sprite::from_atlas_image(
+            texture,
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: animation_indices.first,
+            },
+        ),
+        animation_indices,
+        AnimationTimer::once_from_fps(24),
+        Transform::from_xyz(
+            enemy_q.get(enemy_entity)?.0.translation.x,
+            enemy_q.get(enemy_entity)?.0.translation.y,
+            0.1,
+        )
+        .with_scale(Vec3::splat(2.0)),
+    ));
+    commands.spawn((
+        SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_impact.wav")),
+        SfxPool,
+    ));
 
     //Deal damage
     commands.trigger(EnemyDamageEvent {

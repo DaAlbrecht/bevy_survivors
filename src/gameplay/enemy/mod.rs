@@ -23,13 +23,11 @@ use super::player::Player;
 
 pub(crate) mod jumper;
 pub(crate) mod shooter;
-pub(crate) mod simple_animation;
 pub(crate) mod sprinter;
 pub(crate) mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
-        simple_animation::plugin,
         jumper::plugin,
         walker::plugin,
         shooter::plugin,

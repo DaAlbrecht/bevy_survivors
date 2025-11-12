@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{post_process::bloom::Bloom, prelude::*, render::view::Hdr};
 use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_seedling::prelude::*;
@@ -15,15 +15,17 @@ mod theme;
 
 pub fn plugin(app: &mut App) {
     app.add_plugins((
-        DefaultPlugins.set(WindowPlugin {
-            primary_window: Window {
-                title: "bevy survivor".to_string(),
-                fit_canvas_to_parent: true,
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Window {
+                    title: "bevy survivor".to_string(),
+                    fit_canvas_to_parent: true,
+                    ..default()
+                }
+                .into(),
                 ..default()
-            }
-            .into(),
-            ..default()
-        }),
+            })
+            .set(ImagePlugin::default_nearest()),
         EnhancedInputPlugin,
         EntropyPlugin::<WyRand>::default(),
         SeedlingPlugin::default(),
@@ -159,6 +161,7 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
         Camera2d,
+        Hdr,
         Projection::from(OrthographicProjection {
             scaling_mode: bevy::camera::ScalingMode::FixedVertical {
                 viewport_height: (1000.0),

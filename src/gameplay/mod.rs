@@ -10,6 +10,7 @@ pub(crate) mod healthbar;
 pub(crate) mod level;
 pub(crate) mod overlays;
 pub(crate) mod player;
+pub(crate) mod simple_animation;
 pub(crate) mod spells;
 pub(crate) mod waves;
 
@@ -35,5 +36,6 @@ pub(crate) fn plugin(app: &mut App) {
         player::plugin,
         spells::plugin,
         waves::plugin,
+        simple_animation::plugin,
     ));
 }

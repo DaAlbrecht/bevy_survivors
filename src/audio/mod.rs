@@ -27,7 +27,7 @@ pub(crate) const DEFAULT_MAIN_VOLUME: Volume = Volume::Linear(0.5);
 fn initialize_audio(mut master: Single<&mut VolumeNode, With<MainBus>>, mut commands: Commands) {
     master.volume = DEFAULT_MAIN_VOLUME;
     // mute volume while we do not have any real sounds
-    const DEFAULT_POOL_VOLUME: Volume = Volume::Linear(1.6);
+    const DEFAULT_POOL_VOLUME: Volume = Volume::Linear(1.0);
 
     // For each new pool, we can provide non-default initial values for the volume.
     commands.spawn((
@@ -44,7 +44,7 @@ fn initialize_audio(mut master: Single<&mut VolumeNode, With<MainBus>>, mut comm
         SamplerPool(SpatialPool),
         sample_effects![(SpatialBasicNode::default(), SpatialScale(Vec3::splat(2.0)))],
         VolumeNode {
-            volume: DEFAULT_POOL_VOLUME,
+            volume: Volume::Linear(2.0),
             ..Default::default()
         },
     ));
