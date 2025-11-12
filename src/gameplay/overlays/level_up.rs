@@ -6,15 +6,14 @@ use rand::Rng;
 
 use crate::{
     Pause,
-    gameplay::{PickUpSpell, spells::SpellType},
-    menus::Menu,
+    gameplay::{PickUpSpell, overlays::Overlay, spells::SpellType},
     theme::widget,
 };
 
 const NUMBER_OF_ITEM_CHOICES: usize = 3;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Menu::LevelUp), spawn_level_up_menu);
+    app.add_systems(OnEnter(Overlay::LevelUp), spawn_level_up_menu);
 }
 
 fn spawn_level_up_menu(
@@ -27,7 +26,10 @@ fn spawn_level_up_menu(
     let border_image = asset_server.load("kenny/panel-border-011.png");
 
     commands
-        .spawn((widget::ui_root("LevelUpRoot"), DespawnOnExit(Menu::LevelUp)))
+        .spawn((
+            widget::ui_root("LevelUpRoot"),
+            DespawnOnExit(Overlay::LevelUp),
+        ))
         .with_children(|parent| {
             parent
                 .spawn((
@@ -98,7 +100,7 @@ fn item_choice_widget(border_image: Handle<Image>, spell_image: Handle<Image>) -
 fn upgrade(
     trigger: On<Pointer<Click>>,
     mut commands: Commands,
-    mut next_menu: ResMut<NextState<Menu>>,
+    mut next_menu: ResMut<NextState<Overlay>>,
     mut next_pause: ResMut<NextState<Pause>>,
     spell_types: Query<&SpellType>,
 ) {
@@ -114,7 +116,7 @@ fn upgrade(
     commands.trigger(pickup_event);
 
     // Transition back to the gameplay
-    next_menu.set(Menu::None);
+    next_menu.set(Overlay::None);
 
     next_pause.set(Pause(true));
 }

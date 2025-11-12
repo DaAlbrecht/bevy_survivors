@@ -8,6 +8,7 @@ pub(crate) mod enemy;
 pub(crate) mod experience;
 pub(crate) mod healthbar;
 pub(crate) mod level;
+pub(crate) mod overlays;
 pub(crate) mod player;
 pub(crate) mod spells;
 pub(crate) mod waves;
@@ -25,13 +26,14 @@ pub(crate) struct PickUpSpell {
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
-        movement::plugin,
         enemy::plugin,
-        player::plugin,
         experience::plugin,
         healthbar::plugin,
-        spells::plugin,
         level::plugin,
+        movement::plugin,
+        overlays::plugin,
+        player::plugin,
+        spells::plugin,
         waves::plugin,
     ));
 }

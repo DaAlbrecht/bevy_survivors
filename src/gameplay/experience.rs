@@ -9,7 +9,7 @@ use bevy::{
 use super::Speed;
 use super::enemy::EnemyDeathEvent;
 use super::player::{Level, Player, XP, XpCollectionRange};
-use crate::{PLAYER_SIZE, XP_GAIN_GEM, menus::Menu, screens::Screen};
+use crate::{PLAYER_SIZE, XP_GAIN_GEM, gameplay::overlays::Overlay, screens::Screen};
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
@@ -114,12 +114,12 @@ fn gain_xp(
 fn level_up(
     _trigger: On<LevelUpEvent>,
     mut player_q: Query<&mut Level, With<Player>>,
-    mut next_state: ResMut<NextState<Menu>>,
+    mut next_state: ResMut<NextState<Overlay>>,
 ) -> Result {
     let mut level = player_q.single_mut()?;
     level.0 += 1.;
 
-    next_state.set(Menu::LevelUp);
+    next_state.set(Overlay::LevelUp);
     Ok(())
 }
 
