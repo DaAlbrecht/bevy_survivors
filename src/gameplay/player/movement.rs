@@ -14,6 +14,7 @@
 //! consider using a [fixed timestep](https://github.com/bevyengine/bevy/blob/main/examples/movement/physics_in_fixed_timestep.rs).
 
 use bevy::prelude::*;
+use bevy_enhanced_input::{action::Action, prelude::InputAction};
 
 use crate::{
     CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems, PrePhysicsAppSystems,
@@ -35,6 +36,10 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+#[derive(InputAction)]
+#[action_output(Vec2)]
+pub(crate) struct Move;
+
 /// A vector representing the player's input, accumulated over all frames that ran
 /// since the last time the physics simulation was advanced.
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
@@ -51,27 +56,22 @@ fn clear_input(mut input: Single<&mut AccumulatedInput>) {
 }
 
 fn record_player_directional_input(
-    key_input: Res<ButtonInput<KeyCode>>,
+    move_action: Single<&Action<Move>>,
     player: Single<(&mut AccumulatedInput, &mut MovementController)>,
-) {
+) -> Result {
     let (mut input, mut controller) = player.into_inner();
     //
     // Collect directional input.
     input.movement = Vec3::ZERO;
-    if key_input.pressed(KeyCode::KeyW) || key_input.pressed(KeyCode::ArrowUp) {
-        input.y += 1.0;
-    }
-    if key_input.pressed(KeyCode::KeyS) || key_input.pressed(KeyCode::ArrowDown) {
-        input.y -= 1.0;
-    }
-    if key_input.pressed(KeyCode::KeyA) || key_input.pressed(KeyCode::ArrowLeft) {
-        input.x -= 1.0;
-    }
-    if key_input.pressed(KeyCode::KeyD) || key_input.pressed(KeyCode::ArrowRight) {
-        input.x += 1.0;
-    }
 
-    controller.velocity = input.clamp_length_max(1.0);
+    let mut dir = move_action.extend(0.0);
+    dir = dir.normalize_or_zero();
+
+    input.movement += dir;
+
+    controller.velocity = input.movement;
+
+    Ok(())
 }
 
 // Sync the camera's position with the player's interpolated position

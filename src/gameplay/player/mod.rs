@@ -4,6 +4,8 @@ use bevy::{
     prelude::*,
     sprite_render::MeshMaterial2d,
 };
+use bevy_enhanced_input::prelude::*;
+use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
 use crate::{
@@ -12,7 +14,7 @@ use crate::{
         Health,
         healthbar::HealthBarMaterial,
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
-        player::{hit::player_hit, movement::AccumulatedInput},
+        player::{hit::player_hit, movement::AccumulatedInput, movement::Move},
     },
 };
 
@@ -22,6 +24,8 @@ pub(crate) mod movement;
 use animation::PlayerAnimation;
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_input_context::<Player>();
+
     app.add_plugins((animation::plugin, movement::plugin));
 
     app.load_resource::<PlayerAssets>();
@@ -55,6 +59,15 @@ pub fn player(
                 index: player_animation.get_atlas_index(),
             },
         ),
+        actions!(Player[
+            (
+                Action::<Move>::new(),
+                Bindings::spawn((
+                    Cardinal::wasd_keys(),
+                    Axial::left_stick()
+                )),
+            ),
+        ]),
         Transform::from_xyz(0., 0., 0.),
         PhysicalTranslation(Vec3::new(0., 0., 0.)),
         PreviousPhysicalTranslation(Vec3::new(0., 0., 0.)),
