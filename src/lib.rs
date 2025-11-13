@@ -1,4 +1,4 @@
-use bevy::{post_process::bloom::Bloom, prelude::*, render::view::Hdr};
+use bevy::{prelude::*, render::view::Hdr};
 use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_seedling::prelude::*;

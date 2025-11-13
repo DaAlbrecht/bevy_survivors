@@ -10,8 +10,8 @@ use crate::{
         Health, Speed,
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
-        player::{Direction, Player},
-        spells::{Damage, Knockback},
+        player::Player,
+        spells::Damage,
     },
 };
 

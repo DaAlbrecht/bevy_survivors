@@ -16,7 +16,7 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_main_menu(mut commands: Commands) {
     commands.spawn((
         widget::ui_root("Main Menu"),
-        BackgroundColor(SCREEN_BACKGROUND.into()),
+        BackgroundColor(SCREEN_BACKGROUND),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Main),
         #[cfg(not(target_family = "wasm"))]

@@ -10,7 +10,7 @@ use crate::{
             sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
         },
         movement::{MovementController, PhysicalTranslation},
-        player::{Direction, PlayerHitEvent},
+        player::PlayerHitEvent,
         spells::{
             Cooldown, Damage, Despawn, Halt, PlayerProjectile, Range, Root, SpellDuration,
             SpellTick,
