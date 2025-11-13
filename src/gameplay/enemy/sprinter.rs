@@ -9,8 +9,8 @@ use crate::{
     gameplay::{
         Health, Speed,
         enemy::{
-            AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType,
-            Meele, RANGE_BUFFER,
+            AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType, Meele,
+            RANGE_BUFFER,
         },
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Direction, Player, PlayerHitEvent},
