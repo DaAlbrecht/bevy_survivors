@@ -67,7 +67,7 @@ impl Default for MovementController {
             velocity: Vec3::ZERO,
             knockback_velocity: Vec3::ZERO,
             knockback_resistance: 0.0,
-            speed: 400.0,
+            speed: 50.0,
             knockback_damping: 25.0,
         }
     }

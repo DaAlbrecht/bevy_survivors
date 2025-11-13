@@ -65,7 +65,10 @@ fn spawn_fireball_projectile(
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let player_pos = player_q.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let fireball = fireball.single()?;
 
     let mut min_distance = f32::MAX;
@@ -110,22 +113,22 @@ fn spawn_fireball_projectile(
             },
             MovementController {
                 velocity: direction.extend(0.),
-                speed: 400.,
+                speed: 40.,
                 mass: 80.0,
                 ..default()
             },
             CastSpell(fireball),
-            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.)
+            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
                 .with_rotation(towards_quaternion),
             PhysicalTranslation(Vec3::new(
                 player_pos.translation.x,
                 player_pos.translation.y,
-                0.,
+                10.0,
             )),
             PreviousPhysicalTranslation(Vec3::new(
                 player_pos.translation.x,
                 player_pos.translation.y,
-                0.,
+                10.0,
             )),
             PlayerProjectile,
         ));
@@ -172,7 +175,7 @@ fn fireball_hit(
         Transform::from_xyz(
             enemy_q.get(enemy_entity)?.0.translation.x,
             enemy_q.get(enemy_entity)?.0.translation.y,
-            0.1,
+            10.0,
         )
         .with_scale(Vec3::splat(2.0)),
     ));

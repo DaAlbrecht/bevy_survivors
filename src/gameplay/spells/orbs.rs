@@ -75,12 +75,15 @@ fn upgrade_orb(
 
 fn spawn_orb_projectile(
     _trigger: On<OrbAttackEvent>,
-    player: Query<&PhysicalTranslation, With<Player>>,
+    player_q: Query<&PhysicalTranslation, With<Player>>,
     orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let player_pos = player.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let (orb, radius, projectile_count) = orb_q.single()?;
 
     for n in 1..=projectile_count.0 as usize {
@@ -136,7 +139,9 @@ fn record_orb_movement(
     time: Res<Time<Fixed>>,
 ) -> Result {
     let dt = time.delta_secs();
-    let player_pos = player_q.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
 
     for (orb_pos, mut controller, mut phase, orbit_radius) in &mut orb_q {
         // Advance orbital phase

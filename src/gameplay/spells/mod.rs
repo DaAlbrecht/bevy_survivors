@@ -137,9 +137,13 @@ pub(crate) struct UpgradeSpellEvent {
 pub(crate) fn add_spell_to_inventory(
     trigger: On<PickUpSpell>,
     mut commands: Commands,
-    player: Query<Entity, (With<Player>, Without<Spell>)>,
+    player_q: Query<Entity, (With<Player>, Without<Spell>)>,
     owned_spells: Query<(Entity, &SpellType), With<Spell>>,
 ) -> Result {
+    let Ok(player) = player_q.single() else {
+        return Ok(());
+    };
+    //
     // Check if spell is already owned - if so, upgrade it
     for (spell_entity, owned_spell) in &owned_spells {
         if *owned_spell == trigger.spell_type {
@@ -152,7 +156,6 @@ pub(crate) fn add_spell_to_inventory(
         }
     }
 
-    let player = player.single()?;
     //Get Inventory of Player
     let mut e = commands.spawn(AddToInventory(player));
 
@@ -178,12 +181,15 @@ pub(crate) fn add_spell_to_inventory(
 }
 
 fn attack(
-    player: Query<Entity, With<Player>>,
+    player_q: Query<Entity, With<Player>>,
     inventory: Query<&Inventory>,
     mut spells: Query<(&mut Cooldown, &SpellType), With<Spell>>,
     mut commands: Commands,
 ) -> Result {
-    let player = player.single()?;
+    let Ok(player) = player_q.single() else {
+        return Ok(());
+    };
+
     for inventory_slot in inventory.iter_descendants(player) {
         let (mut cooldown, spell_type) = spells.get_mut(inventory_slot)?;
 

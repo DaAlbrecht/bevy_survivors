@@ -66,7 +66,9 @@ fn collect_xp_gem(
     time: Res<Time>,
     mut commands: Commands,
 ) -> Result {
-    let (player_position, collection_range) = player_q.single()?;
+    let Ok((player_position, collection_range)) = player_q.single() else {
+        return Ok(());
+    };
 
     for (mut gem_position, gem_speed, gem_entity) in &mut gem_q {
         if (player_position
@@ -164,7 +166,10 @@ fn update_xp_bar(
     mut materials: ResMut<Assets<XpBarMaterial>>,
     xp_bar_material_q: Query<&MaterialNode<XpBarMaterial>>,
 ) -> Result {
-    let (xp, level) = player_q.single()?;
+    let Ok((xp, level)) = player_q.single() else {
+        return Ok(());
+    };
+
     let xp_needed = BASE_LEVEL_XP * level.0.powf(2.);
 
     let factor = if xp_needed > 0. { xp.0 / xp_needed } else { 0. };

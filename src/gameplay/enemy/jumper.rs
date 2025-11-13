@@ -94,12 +94,15 @@ fn spawn_jumper(
     _trigger: On<JumperSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    player_query: Query<&Transform, With<Player>>,
+    player_q: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     jumper_q: Query<&Jumper>,
     jumper_stats: Res<JumperStats>,
 ) -> Result {
-    let player_pos = player_query.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let stats = jumper_stats;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
@@ -122,7 +125,8 @@ fn spawn_jumper(
                 image: asset_server.load(stats.sprite.clone()),
                 ..default()
             },
-            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+                .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
             Visibility::Visible,
             Health(stats.health),
             Damage(stats.damage),
@@ -190,8 +194,13 @@ fn jumper_attack(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
+    let player_pos = player_pos.translation.truncate();
+
     let jumper = trigger.0;
-    let player_pos = player_q.single()?.translation.truncate();
 
     let Ok((transform, mut direction, mut visibility, children)) = jumper_q.get_mut(jumper) else {
         return Ok(());

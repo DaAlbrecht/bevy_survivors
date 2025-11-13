@@ -182,8 +182,10 @@ fn account_enemies(
     mut commands: Commands,
 ) -> Result {
     info!("Enemies spawning");
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
     let (enemy_pool, screen_count) = wave_q.single_mut()?;
-    let player_pos = player_q.single()?.translation.truncate();
     let mut live_enemies: HashMap<EnemyType, f32> = HashMap::new();
     let mut absolut_enemy_count = 0.0;
 
@@ -214,7 +216,9 @@ fn account_enemies(
     // Count enemies
     for (transform, enemy_type) in &enemy_q {
         let enemy_pos = transform.translation.truncate();
-        if enemy_pos.distance(player_pos) <= (SPAWN_RADIUS + SPAWN_RADIUS_BUFFER) {
+        if enemy_pos.distance(player_pos.translation.truncate())
+            <= (SPAWN_RADIUS + SPAWN_RADIUS_BUFFER)
+        {
             absolut_enemy_count += 1.0;
             if let Some(count) = live_enemies.get_mut(enemy_type) {
                 *count += 1.0
