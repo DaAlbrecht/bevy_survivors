@@ -12,6 +12,7 @@ use crate::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType, Meele,
             RANGE_BUFFER,
         },
+        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Range},
     },
@@ -78,7 +79,7 @@ fn spawn_sprinter(
     _trigger: On<SprinterSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<&PhysicalTranslation, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
     sprinter_stats: Res<SprinterStats>,
@@ -91,8 +92,8 @@ fn spawn_sprinter(
     let offset_x = f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
-    let enemy_pos_x = player_pos.translation.x + offset_x;
-    let enemy_pos_y = player_pos.translation.y + offset_y;
+    let enemy_pos_x = player_pos.x + offset_x;
+    let enemy_pos_y = player_pos.y + offset_y;
 
     let mut sprinter_count = sprinter_q.iter().count();
     sprinter_count += 1;
@@ -106,6 +107,12 @@ fn spawn_sprinter(
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        MovementController {
+            speed: 50.0,
+            ..default()
+        },
         Health(stats.health),
         Damage(stats.damage),
         AbilityDamage(stats.ability_damage),

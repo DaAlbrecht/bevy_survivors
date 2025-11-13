@@ -81,13 +81,13 @@ fn make_wave_plan() -> WavePlan {
         waves: VecDeque::from([
             WaveStats {
                 enemy_pool: HashMap::from([(EnemyType::Walker, 0.8), (EnemyType::Jumper, 0.2)]),
-                enemy_screen_count: 10.0,
+                enemy_screen_count: 30.0,
                 spawn_frequency: 1.0,
                 duration: 60.0 * 0.5,
                 power_level: 1.0, //Does not change Basestats
                 sprite_pool: HashMap::from([
                     (EnemyType::Walker, "enemies/walker.png".to_string()),
-                    (EnemyType::Jumper, "enemies/jumper.png".to_string()),
+                    (EnemyType::Shooter, "enemies/shooter.png".to_string()),
                 ]),
             },
             WaveStats {
@@ -102,8 +102,11 @@ fn make_wave_plan() -> WavePlan {
                 power_level: 2.0,
                 sprite_pool: HashMap::from([
                     (EnemyType::Walker, "enemies/walker_purple.png".to_string()),
-                    (EnemyType::Jumper, "enemies/jumper_yellow.png".to_string()),
-                    (EnemyType::Sprinter, "enemies/sprinter.png".to_string()),
+                    (
+                        EnemyType::Sprinter,
+                        "enemies/sprinter_purple.png".to_string(),
+                    ),
+                    (EnemyType::Shooter, "enemies/shooter.png".to_string()),
                 ]),
             },
             WaveStats {

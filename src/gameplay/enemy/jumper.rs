@@ -37,7 +37,7 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_jumper)
         .add_observer(jumper_attack)
         .add_observer(spawn_jumper_aoe)
-        .add_observer(patch_shooter);
+        .add_observer(patch_jumper);
 }
 
 #[derive(Component)]
@@ -49,7 +49,7 @@ pub(crate) fn plugin(app: &mut App) {
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),
     SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
-    Direction(Vec3{x:0.,y:0.,z:0.}),
+    Direction(Vec3::ZERO),
 
 )]
 pub(crate) struct Jumper;
@@ -115,7 +115,7 @@ fn spawn_jumper(
 
     let jumper = commands
         .spawn((
-            Name::new(format!("Shooter {jumper_count}")),
+            Name::new(format!("Jumper {jumper_count}")),
             Enemy,
             Jumper,
             Sprite {
@@ -129,7 +129,7 @@ fn spawn_jumper(
             AbilityDamage(stats.ability_damage),
             AbilitySpeed(stats.ability_speed),
             Range(stats.range),
-            Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Once)),
+            Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
             Size(stats.size),
         ))
         .id();
@@ -166,7 +166,7 @@ fn spawn_jumper(
     Ok(())
 }
 
-fn patch_shooter(trigger: On<JumperPatchEvent>, mut stats: ResMut<JumperStats>) {
+fn patch_jumper(trigger: On<JumperPatchEvent>, mut stats: ResMut<JumperStats>) {
     let (power_level, sprite) = (trigger.0, &trigger.1);
 
     stats.health *= power_level;

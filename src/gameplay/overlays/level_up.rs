@@ -1,37 +1,34 @@
+//! The level up menu.
+
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
-use crate::gameplay::{PickUpSpell, spells::SpellType};
-
-use super::Screen;
-
-pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::LevelUp), spawn_level_up_screen);
-}
+use crate::{
+    Pause,
+    gameplay::{PickUpSpell, overlays::Overlay, spells::SpellType},
+    theme::widget,
+};
 
 const NUMBER_OF_ITEM_CHOICES: usize = 3;
 
-fn spawn_level_up_screen(
+pub(super) fn plugin(app: &mut App) {
+    app.add_systems(OnEnter(Overlay::LevelUp), spawn_level_up_menu);
+}
+
+fn spawn_level_up_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut next_pause: ResMut<NextState<Pause>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
+    next_pause.set(Pause(true));
     let border_image = asset_server.load("kenny/panel-border-011.png");
 
     commands
         .spawn((
-            Name::new("LevelUpRoot"),
-            Node {
-                position_type: PositionType::Absolute,
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::linear_rgba(0.012, 0.011, 0.011, 1.)),
-            DespawnOnExit(Screen::LevelUp),
+            widget::ui_root("LevelUpRoot"),
+            DespawnOnExit(Overlay::LevelUp),
         ))
         .with_children(|parent| {
             parent
@@ -103,7 +100,8 @@ fn item_choice_widget(border_image: Handle<Image>, spell_image: Handle<Image>) -
 fn upgrade(
     trigger: On<Pointer<Click>>,
     mut commands: Commands,
-    mut next_state: ResMut<NextState<Screen>>,
+    mut next_menu: ResMut<NextState<Overlay>>,
+    mut next_pause: ResMut<NextState<Pause>>,
     spell_types: Query<&SpellType>,
 ) {
     let selected_spell = trigger.entity;
@@ -118,5 +116,7 @@ fn upgrade(
     commands.trigger(pickup_event);
 
     // Transition back to the gameplay
-    next_state.set(Screen::Gameplay);
+    next_menu.set(Overlay::None);
+
+    next_pause.set(Pause(false));
 }

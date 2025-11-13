@@ -2,13 +2,17 @@ use bevy::prelude::*;
 
 use crate::gameplay::spells::SpellType;
 
-pub mod enemy;
-pub mod experience;
-pub mod healthbar;
-pub mod level;
-pub mod player;
-pub mod spells;
-pub mod waves;
+mod movement;
+
+pub(crate) mod enemy;
+pub(crate) mod experience;
+pub(crate) mod healthbar;
+pub(crate) mod level;
+pub(crate) mod overlays;
+pub(crate) mod player;
+pub(crate) mod simple_animation;
+pub(crate) mod spells;
+pub(crate) mod waves;
 
 #[derive(Component, Reflect)]
 pub(crate) struct Health(pub f32);
@@ -24,11 +28,14 @@ pub(crate) struct PickUpSpell {
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
         enemy::plugin,
-        player::plugin,
         experience::plugin,
         healthbar::plugin,
-        spells::plugin,
         level::plugin,
+        movement::plugin,
+        overlays::plugin,
+        player::plugin,
+        spells::plugin,
         waves::plugin,
+        simple_animation::plugin,
     ));
 }

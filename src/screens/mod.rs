@@ -1,22 +1,29 @@
-use bevy::prelude::*;
+//! The game's main screen states and transitions between them.
 
 mod gameplay;
-mod level_up;
+mod loading;
+mod splash;
 mod title;
 
-/// The game's main screen states.
-#[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default, Reflect)]
-pub(crate) enum Screen {
-    #[default]
-    Title,
-    Gameplay,
-    LevelUp,
-}
+use bevy::prelude::*;
 
-pub(crate) fn plugin(app: &mut App) {
+pub(super) fn plugin(app: &mut App) {
     app.init_state::<Screen>();
 
-    app.add_plugins((gameplay::plugin, title::plugin, level_up::plugin));
+    app.add_plugins((
+        gameplay::plugin,
+        loading::plugin,
+        splash::plugin,
+        title::plugin,
+    ));
+}
 
-    app.register_type::<Screen>();
+/// The game's main screen states.
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default, Reflect)]
+pub enum Screen {
+    #[default]
+    Splash,
+    Title,
+    Loading,
+    Gameplay,
 }

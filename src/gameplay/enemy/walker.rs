@@ -9,6 +9,7 @@ use crate::{
     gameplay::{
         Health, Speed,
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
+        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::Player,
         spells::Damage,
     },
@@ -18,7 +19,7 @@ pub(crate) fn plugin(app: &mut App) {
     app.insert_resource(WalkerStats {
         health: 10.0,
         damage: 2.0,
-        speed: 50.0,
+        speed: 100.0,
         sprite: "enemies/walker.png".to_string(),
     });
     app.add_observer(spawn_walker).add_observer(patch_walker);
@@ -47,7 +48,7 @@ fn spawn_walker(
     _trigger: On<WalkerSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<&PhysicalTranslation, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     walker_stats: Res<WalkerStats>,
 ) -> Result {
@@ -59,8 +60,8 @@ fn spawn_walker(
     let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
-    let enemy_pos_x = player_pos.translation.x + offset_x;
-    let enemy_pos_y = player_pos.translation.y + offset_y;
+    let enemy_pos_x = player_pos.x + offset_x;
+    let enemy_pos_y = player_pos.y + offset_y;
 
     commands.spawn((
         Name::new("Walker"),
@@ -73,6 +74,12 @@ fn spawn_walker(
         Health(stats.health),
         Speed(stats.speed),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
+        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        MovementController {
+            speed: stats.speed,
+            ..default()
+        },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     ));
 
