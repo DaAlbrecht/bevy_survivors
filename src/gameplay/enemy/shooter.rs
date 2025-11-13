@@ -23,7 +23,7 @@ pub(crate) fn plugin(app: &mut App) {
         health: 10.0,
         damage: 1.0,
         ability_damage: 5.0,
-        projectile_speed: 125.0,
+        projectile_speed: 25.0,
         range: 200.0,
         cooldown: 2.0,
         sprite: "enemies/shooter.png".to_string(),
@@ -112,7 +112,7 @@ fn spawn_shooter(
         Damage(stats.damage),
         AbilityDamage(stats.ability_damage),
         Range(stats.range),
-        Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Once)),
+        Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
     ));
 
     Ok(())
@@ -138,15 +138,13 @@ fn shooter_attack(
     asset_server: Res<AssetServer>,
 ) -> Result {
     let shooter = trigger.0;
-    let player_pos = player_q.single()?.truncate();
+    let player_pos = player_q.single()?;
 
-    let Ok(transform) = shooter_q.get(shooter) else {
+    let Ok(shooter_pos) = shooter_q.get(shooter) else {
         return Ok(());
     };
 
-    let shooter_pos = transform.truncate();
-    let direction = (player_pos - shooter_pos).normalize();
-    let angle = direction.y.atan2(direction.x);
+    let direction = (player_pos.0 - shooter_pos.0).normalize();
 
     commands.spawn((
         EnemyProjectile,
@@ -154,15 +152,11 @@ fn shooter_attack(
             image: asset_server.load("enemies/shooter_bullet.png"),
             ..default()
         },
-        Transform {
-            translation: transform.0,
-            rotation: Quat::from_rotation_z(angle),
-            ..default()
-        },
-        PhysicalTranslation(transform.0),
-        PreviousPhysicalTranslation(transform.0),
+        Transform::from_translation(shooter_pos.0).looking_at(player_pos.0, Dir3::Y),
+        PhysicalTranslation(shooter_pos.0),
+        PreviousPhysicalTranslation(shooter_pos.0),
         MovementController {
-            velocity: direction.extend(0.0),
+            velocity: direction,
             speed: 125.0,
             ..default()
         },

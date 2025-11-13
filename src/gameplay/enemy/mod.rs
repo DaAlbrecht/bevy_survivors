@@ -58,6 +58,7 @@ pub(crate) fn plugin(app: &mut App) {
     .add_observer(enemy_take_dmg)
     .add_observer(enemy_get_pushed_from_hit);
 }
+
 const SEPARATION_RADIUS: f32 = 40.;
 const SEPARATION_FORCE: f32 = 10.;
 const RANGE_BUFFER: f32 = 50.0;
@@ -170,22 +171,22 @@ fn enemy_movement(
     for (mut controller, physics_translation, root, halt, charge, jump) in enemy_q {
         if root.is_some() || halt.is_some() || charge.is_some() || jump.is_some() {
             //skip movement if enemy gets knockedback or is rooted
-            continue;
-        }
-
-        let enemy_pos = physics_translation.truncate();
-
-        let to_player = player_pos - enemy_pos;
-        if to_player.length_squared() <= 0.0001 {
             controller.velocity = Vec3::ZERO;
-            continue;
+        } else {
+            let enemy_pos = physics_translation.truncate();
+
+            let to_player = player_pos - enemy_pos;
+            if to_player.length_squared() <= 0.0001 {
+                controller.velocity = Vec3::ZERO;
+                continue;
+            }
+            let direction = to_player.normalize();
+
+            let separation_force = separation_force_calc(&enemy_positions, enemy_pos, player_pos);
+
+            let movement = (direction + separation_force).normalize();
+            controller.velocity = movement.extend(0.0);
         }
-        let direction = to_player.normalize();
-
-        let separation_force = separation_force_calc(&enemy_positions, enemy_pos, player_pos);
-
-        let movement = (direction + separation_force).normalize();
-        controller.velocity = movement.extend(0.0);
     }
 
     Ok(())
@@ -428,11 +429,11 @@ fn enemy_timer_handle(
     time: Res<Time>,
     mut commands: Commands,
 ) -> Result {
-    for (enemy, mut cooldown_timer, enemy_tye, transform, halt, range) in &mut cooldown_q {
+    for (enemy, mut cooldown_timer, enemy_type, transform, halt, range) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
 
         if cooldown_timer.0.is_finished() {
-            match enemy_tye {
+            match enemy_type {
                 EnemyType::Shooter => {
                     if halt.is_some() {
                         commands.trigger(ShooterAttackEvent(enemy));
@@ -450,6 +451,7 @@ fn enemy_timer_handle(
                 //We calculate only in the case so we dont cluter the update loop with unneeded calculations
                 EnemyType::Jumper => {
                     let distance = player_q.single()?.truncate().distance(transform.truncate());
+                    info!(distance);
                     if let Some(range) = range
                         && range.0 >= distance
                     {
