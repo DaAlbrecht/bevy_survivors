@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{
-    LdtkEntity, LdtkProjectHandle, LdtkWorldBundle, LevelSelection, app::LdtkEntityAppExt,
+    LdtkProjectHandle, LdtkWorldBundle, LevelSelection,
     assets::LdtkProject,
 };
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
