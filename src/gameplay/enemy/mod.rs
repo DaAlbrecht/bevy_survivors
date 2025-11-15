@@ -45,7 +45,6 @@ pub(crate) fn plugin(app: &mut App) {
                 enemy_push_detection,
                 projectile_hit_detection,
                 attack,
-                enemy_despawner,
                 enemy_range_keeper,
                 terrain_manager,
             )
@@ -53,10 +52,18 @@ pub(crate) fn plugin(app: &mut App) {
         )
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
-    )
-    .add_observer(enemy_pushing)
-    .add_observer(enemy_take_dmg)
-    .add_observer(enemy_get_pushed_from_hit);
+    );
+
+    app.add_systems(
+        FixedLast,
+        ((enemy_despawner).in_set(PhysicsAppSystems::PhysicsAdjustments))
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
+    );
+
+    app.add_observer(enemy_pushing)
+        .add_observer(enemy_take_dmg)
+        .add_observer(enemy_get_pushed_from_hit);
 }
 
 const SEPARATION_RADIUS: f32 = 40.;
