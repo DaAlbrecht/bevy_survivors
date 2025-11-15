@@ -11,6 +11,7 @@ use crate::{
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::Player,
+        simple_animation::{AnimationIndices, AnimationTimer},
         spells::Damage,
     },
 };
@@ -50,6 +51,7 @@ fn spawn_walker(
     asset_server: Res<AssetServer>,
     player_q: Query<&PhysicalTranslation, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     walker_stats: Res<WalkerStats>,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
@@ -66,12 +68,24 @@ fn spawn_walker(
     let enemy_pos_x = player_pos.x + offset_x;
     let enemy_pos_y = player_pos.y + offset_y;
 
+    let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(31), 1, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layout.add(layout);
+    let animation_indices = AnimationIndices { first: 0, last: 0 };
+
     commands.spawn((
         Name::new("Walker"),
         Walker,
-        Sprite {
-            image: asset_server.load(stats.sprite.clone()),
-            ..default()
+        Sprite::from_atlas_image(
+            texture,
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: animation_indices.first,
+            },
+        ),
+        animation_indices,
+        AnimationTimer {
+            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
         },
         Damage(stats.damage),
         Health(stats.health),
@@ -85,6 +99,18 @@ fn spawn_walker(
             ..default()
         },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
+        children![(
+            Sprite {
+                image: asset_server.load("shadow.png"),
+
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                x: 2.,
+                y: 1.,
+                z: 1.
+            })
+        )],
     ));
 
     Ok(())

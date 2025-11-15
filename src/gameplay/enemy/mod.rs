@@ -1,7 +1,7 @@
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
-    PLAYER_SIZE, PausableSystems, PhysicsAppSystems, SPELL_SIZE,
+    PLAYER_SIZE, PausableSystems, PhysicsAppSystems, PostPhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         Health,
         enemy::{
@@ -33,6 +33,15 @@ pub(crate) fn plugin(app: &mut App) {
         shooter::plugin,
         sprinter::plugin,
     ));
+
+    app.add_systems(
+        Update,
+        ((update_animation_movement,)
+            .chain()
+            .in_set(PostPhysicsAppSystems::PlayAnimations),)
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
+    );
 
     app.add_systems(
         FixedUpdate,
@@ -193,6 +202,18 @@ fn enemy_movement(
     }
 
     Ok(())
+}
+///
+/// Update the sprite direction and animation state (idling/walking).
+fn update_animation_movement(
+    mut enemies_q: Query<(&MovementController, &mut Sprite), With<Enemy>>,
+) {
+    for (movement, mut sprite) in enemies_q.iter_mut() {
+        let dx = movement.velocity.x;
+        if dx != 0.0 {
+            sprite.flip_x = dx < 0.0;
+        }
+    }
 }
 
 //Calc is short for calculator btw
