@@ -70,7 +70,10 @@ fn spawn_lightning_bolt(
     lightning_q: Query<(&Jumps, &Range), With<Lightning>>,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let (player_pos, player_entity) = player_q.single()?;
+    let Ok((player_pos, player_entity)) = player_q.single() else {
+        return Ok(());
+    };
+
     let (lightning_jumps, lightning_range) = lightning_q.single()?;
 
     let mut current_source_pos = player_pos;

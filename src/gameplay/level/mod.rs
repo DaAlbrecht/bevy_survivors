@@ -1,53 +1,33 @@
 use bevy::prelude::*;
+use bevy_ecs_ldtk::{
+    LdtkEntity, LdtkProjectHandle, LdtkWorldBundle, LevelSelection, app::LdtkEntityAppExt,
+    assets::LdtkProject,
+};
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
 
-use crate::{
-    asset_tracking::LoadResource,
-    audio::MusicPool,
-    gameplay::{
-        healthbar::HealthBarMaterial,
-        player::{PlayerAssets, player},
-    },
-    screens::Screen,
-};
+use crate::{asset_tracking::LoadResource, audio::MusicPool, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<LevelAssets>();
+    app.insert_resource(LevelSelection::index(0));
 }
 
-/// A system that spawns the main level.
-pub fn spawn_level(
-    mut commands: Commands,
-    level_assets: Res<LevelAssets>,
-    player_assets: Res<PlayerAssets>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
-    mut mesh: ResMut<Assets<Mesh>>,
-) {
+pub fn spawn_level(mut commands: Commands, level_assets: Res<LevelAssets>) {
     commands.spawn((
         Name::new("Level"),
-        Transform::default(),
-        Visibility::default(),
         DespawnOnExit(Screen::Gameplay),
-        children![
-            player(
-                400.0,
-                &player_assets,
-                &mut texture_atlas_layouts,
-                &mut health_bar_materials,
-                &mut mesh,
-            ),
-            (
-                Name::new("Gameplay Music"),
-                SamplePlayer::new(level_assets.music.clone()).looping(),
-                MusicPool
-            )
-        ],
+        LdtkWorldBundle {
+            ldtk_handle: LdtkProjectHandle {
+                handle: level_assets.level.clone(),
+            },
+            ..Default::default()
+        },
+        children![(
+            Name::new("Gameplay Music"),
+            SamplePlayer::new(level_assets.music.clone()).looping(),
+            MusicPool
+        )],
     ));
-
-    commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Fireball,
-    });
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -58,8 +38,8 @@ pub(crate) struct Level;
 /// We use this to preload assets before the level is spawned.
 #[derive(Resource, Asset, Clone, TypePath)]
 pub(crate) struct LevelAssets {
-    // #[dependency]
-    // pub(crate) level: TILEMAP
+    #[dependency]
+    pub(crate) level: Handle<LdtkProject>,
     #[dependency]
     pub(crate) music: Handle<AudioSample>,
 }
@@ -69,6 +49,7 @@ impl FromWorld for LevelAssets {
         let assets = world.resource::<AssetServer>();
 
         Self {
+            level: assets.load("level/dungeon.ldtk"),
             music: assets.load("audio/music/city.ogg"),
         }
     }

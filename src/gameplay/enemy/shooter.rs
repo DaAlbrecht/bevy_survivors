@@ -6,7 +6,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    SPAWN_RADIUS,
+    ENEMY_SIZE, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         enemy::{
@@ -74,12 +74,15 @@ fn spawn_shooter(
     _trigger: On<ShooterSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    player_query: Query<&Transform, With<Player>>,
+    player_q: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     shooter_q: Query<&Shooter>,
     shooter_stats: Res<ShooterStats>,
 ) -> Result {
-    let player_pos = player_query.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let stats = shooter_stats;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
@@ -101,11 +104,12 @@ fn spawn_shooter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
-        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
-        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+            .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.0)),
+        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.0)),
         MovementController {
-            speed: 100.0,
+            speed: 30.0,
             ..default()
         },
         Health(stats.health),
@@ -137,8 +141,10 @@ fn shooter_attack(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
     let shooter = trigger.0;
-    let player_pos = player_q.single()?;
 
     let Ok(shooter_pos) = shooter_q.get(shooter) else {
         return Ok(());

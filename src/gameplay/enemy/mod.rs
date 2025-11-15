@@ -1,7 +1,7 @@
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
-    PLAYER_SIZE, PausableSystems, PhysicsAppSystems, SPELL_SIZE,
+    PLAYER_SIZE, PausableSystems, PhysicsAppSystems, PostPhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         Health,
         enemy::{
@@ -28,11 +28,20 @@ pub(crate) mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
-        jumper::plugin,
+        // jumper::plugin,
         walker::plugin,
         shooter::plugin,
         sprinter::plugin,
     ));
+
+    app.add_systems(
+        Update,
+        ((update_animation_movement,)
+            .chain()
+            .in_set(PostPhysicsAppSystems::PlayAnimations),)
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
+    );
 
     app.add_systems(
         FixedUpdate,
@@ -168,7 +177,10 @@ fn enemy_movement(
     >,
     player_q: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
 ) -> Result {
-    let player_pos = player_q.single()?.truncate();
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+    let player_pos = player_pos.truncate();
 
     let enemy_positions = enemy_q
         .iter()
@@ -197,6 +209,18 @@ fn enemy_movement(
     }
 
     Ok(())
+}
+///
+/// Update the sprite direction and animation state (idling/walking).
+fn update_animation_movement(
+    mut enemies_q: Query<(&MovementController, &mut Sprite), With<Enemy>>,
+) {
+    for (movement, mut sprite) in enemies_q.iter_mut() {
+        let dx = movement.velocity.x;
+        if dx != 0.0 {
+            sprite.flip_x = dx < 0.0;
+        }
+    }
 }
 
 //Calc is short for calculator btw
@@ -240,7 +264,9 @@ fn enemy_colliding_detection(
     player_query: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
-    let player_pos = player_query.single()?;
+    let Ok(player_pos) = player_query.single() else {
+        return Ok(());
+    };
 
     for (enemy_pos, enemy, charge, jump) in &mut enemy_query {
         let distance_to_player = enemy_pos.distance(player_pos.0);
@@ -268,7 +294,9 @@ fn enemy_stop_colliding_detection(
     player_query: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
-    let player_pos = player_query.single()?;
+    let Ok(player_pos) = player_query.single() else {
+        return Ok(());
+    };
 
     for (&enemy_pos, enemy) in &enemy_query {
         let distance_to_player = enemy_pos.distance(player_pos.0);
@@ -285,7 +313,9 @@ fn enemy_push_detection(
     player_query: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
     mut commands: Commands,
 ) -> Result {
-    let player_pos = player_query.single()?;
+    let Ok(player_pos) = player_query.single() else {
+        return Ok(());
+    };
 
     for (&enemy_pos, enemy, charge, jump) in &enemy_query {
         //Player cant push charging or jumping enemies
@@ -303,14 +333,14 @@ fn enemy_push_detection(
 
 fn enemy_pushing(
     trigger: On<PlayerPushingEvent>,
-    player_query: Query<
-        (&PhysicalTranslation, &MovementController),
-        (With<Player>, Without<Enemy>),
-    >,
+    player_q: Query<(&PhysicalTranslation, &MovementController), (With<Player>, Without<Enemy>)>,
     mut enemy_query: Query<(&PhysicalTranslation, &mut MovementController, Entity), With<Enemy>>,
 ) -> Result {
+    let Ok((player_pos, player_mc)) = player_q.single() else {
+        return Ok(());
+    };
+
     let push_entity = trigger.event().0;
-    let (player_pos, player_mc) = player_query.single()?;
 
     for (enemy_pos, mut forces, enemy_entity) in &mut enemy_query {
         if enemy_entity == push_entity {
@@ -398,7 +428,10 @@ fn enemy_range_keeper(
     player_q: Query<&PhysicalTranslation, With<Player>>,
     mut commands: Commands,
 ) -> Result {
-    let player_pos = player_q.single()?.truncate();
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+    let player_pos = player_pos.truncate();
 
     for (enemy, physics_translation, range, halt) in &enemy_q {
         let enemy_pos = physics_translation.truncate();
@@ -436,6 +469,11 @@ fn enemy_timer_handle(
     time: Res<Time>,
     mut commands: Commands,
 ) -> Result {
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+    let player_pos = player_pos.truncate();
+
     for (enemy, mut cooldown_timer, enemy_type, transform, halt, range) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
 
@@ -448,7 +486,7 @@ fn enemy_timer_handle(
                 }
                 //We calculate only in the case so we dont cluter the update loop with unneeded calculations
                 EnemyType::Sprinter => {
-                    let distance = player_q.single()?.truncate().distance(transform.truncate());
+                    let distance = player_pos.distance(transform.truncate());
                     if let Some(range) = range
                         && range.0 >= distance
                     {
@@ -457,8 +495,7 @@ fn enemy_timer_handle(
                 }
                 //We calculate only in the case so we dont cluter the update loop with unneeded calculations
                 EnemyType::Jumper => {
-                    let distance = player_q.single()?.truncate().distance(transform.truncate());
-                    info!(distance);
+                    let distance = player_pos.distance(transform.truncate());
                     if let Some(range) = range
                         && range.0 >= distance
                     {
@@ -482,8 +519,11 @@ fn projectile_hit_detection(
     projectile_q: Query<&PhysicalTranslation, With<EnemyProjectile>>,
     mut commands: Commands,
 ) -> Result {
-    let player_transform = player_q.single()?;
-    let player_pos = player_transform.truncate();
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
+    let player_pos = player_pos.truncate();
     // Get all enemies
     for (enemy, enemy_type) in &enemy_q {
         // Get each projectile of this enemy
@@ -533,7 +573,11 @@ fn terrain_manager(
     mut commands: Commands,
     time: Res<Time>,
 ) -> Result {
-    let player_pos = player_q.single()?.translation.truncate();
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
+    let player_pos = player_pos.translation.truncate();
 
     for (terrain, transform, damage, mut duration, mut ticker, size) in &mut terrain_q {
         let terrain_pos = transform.translation.truncate();

@@ -55,13 +55,16 @@ fn upgrade_scale(
 
 fn spawn_scale_projectile(
     _trigger: On<ScaleAttackEvent>,
-    player_pos_q: Query<&Transform, With<Player>>,
+    player_q: Query<&Transform, With<Player>>,
     scale: Query<Entity, With<Scale>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) -> Result {
-    let player_pos = player_pos_q.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let scale = scale.single()?;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));

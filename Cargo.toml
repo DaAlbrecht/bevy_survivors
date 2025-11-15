@@ -58,6 +58,7 @@ bevy-inspector-egui = "0.35"
 bevy_enhanced_input = "0.19"
 bevy_seedling = { git = "https://github.com/CorvusPrudens/bevy_seedling.git", branch = "master" }
 bevy_ecs_tilemap = "0.17.0"
+bevy_ecs_ldtk = {version = "0.13.0", features = ["atlas"]}
 
 # Latest version that works with bevy_seedling
 wasm-bindgen = { version = "=0.2.101", optional = true }

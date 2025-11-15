@@ -75,19 +75,22 @@ fn upgrade_orb(
 
 fn spawn_orb_projectile(
     _trigger: On<OrbAttackEvent>,
-    player: Query<&PhysicalTranslation, With<Player>>,
+    player_q: Query<&PhysicalTranslation, With<Player>>,
     orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let player_pos = player.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let (orb, radius, projectile_count) = orb_q.single()?;
 
     for n in 1..=projectile_count.0 as usize {
         // Compute starting phase for each orb (even spacing)
         let phase = (std::f32::consts::TAU) * (n as f32 / projectile_count.0);
         let offset = Vec2::from_angle(phase) * radius.0;
-        let world_pos = player_pos.0 + offset.extend(0.0);
+        let world_pos = player_pos.0 + offset.extend(10.0);
 
         // tangent direction (orthogonal to radius)
         let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
@@ -101,7 +104,7 @@ fn spawn_orb_projectile(
             },
             OrbProjectile,
             CastSpell(orb),
-            Transform::from_xyz(world_pos.x, world_pos.y, 0.0),
+            Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
             PreviousPhysicalTranslation(world_pos),
             PhysicalTranslation(world_pos),
             MovementController {
@@ -136,7 +139,9 @@ fn record_orb_movement(
     time: Res<Time<Fixed>>,
 ) -> Result {
     let dt = time.delta_secs();
-    let player_pos = player_q.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
 
     for (orb_pos, mut controller, mut phase, orbit_radius) in &mut orb_q {
         // Advance orbital phase

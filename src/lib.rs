@@ -1,4 +1,5 @@
-use bevy::{prelude::*, render::view::Hdr};
+use bevy::{camera::ScalingMode, prelude::*};
+use bevy_ecs_ldtk::{IntGridRendering, LdtkPlugin, LdtkSettings};
 use bevy_enhanced_input::EnhancedInputPlugin;
 use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
 use bevy_seedling::prelude::*;
@@ -26,10 +27,16 @@ pub fn plugin(app: &mut App) {
                 ..default()
             })
             .set(ImagePlugin::default_nearest()),
+        LdtkPlugin,
         EnhancedInputPlugin,
         EntropyPlugin::<WyRand>::default(),
         SeedlingPlugin::default(),
     ));
+
+    app.insert_resource(LdtkSettings {
+        int_grid_rendering: IntGridRendering::Invisible,
+        ..Default::default()
+    });
 
     app.add_plugins((
         fixed_update_inspection::plugin,
@@ -95,13 +102,13 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_camera);
 }
 
-const ENEMY_SIZE: f32 = 30.0;
-const PLAYER_SIZE: f32 = 30.0;
-const SPELL_SIZE: f32 = 16.0;
+const ENEMY_SIZE: f32 = 32.0;
+const PLAYER_SIZE: f32 = 32.0;
+const SPELL_SIZE: f32 = 8.0;
 const XP_GAIN_GEM: f32 = 10.;
 
-const SPAWN_RADIUS: f32 = 1000.0;
-const SPAWN_RADIUS_BUFFER: f32 = 200.0;
+const SPAWN_RADIUS: f32 = 200.0;
+const SPAWN_RADIUS_BUFFER: f32 = 80.0;
 
 /// How quickly should the camera snap to the desired location.
 const CAMERA_DECAY_RATE: f32 = 2.;
@@ -161,11 +168,11 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
         Camera2d,
-        Hdr,
         Projection::from(OrthographicProjection {
-            scaling_mode: bevy::camera::ScalingMode::FixedVertical {
-                viewport_height: (1000.0),
+            scaling_mode: ScalingMode::FixedVertical {
+                viewport_height: 504.,
             },
+            viewport_origin: Vec2::ZERO,
             ..OrthographicProjection::default_2d()
         }),
     ));

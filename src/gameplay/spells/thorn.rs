@@ -83,7 +83,11 @@ fn spawn_thorn_projectile(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let player_pos = player_pos_q.single()?.translation.truncate();
+    let Ok(player_pos) = player_pos_q.single() else {
+        return Ok(());
+    };
+    let player_pos = player_pos.translation.truncate();
+
     let thorn = thorn_q.single()?;
 
     let mut min_distance = f32::MAX;

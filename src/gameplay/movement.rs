@@ -56,8 +56,14 @@ pub(crate) struct MovementController {
     /// Exponential damping for knockback (higher => faster decay).
     pub knockback_damping: f32,
 
-    /// Movement speed multiplier: used to turn `velocity` into world units/sec.
+    /// Max Movement speed multiplier: used to turn `velocity` into world units/sec.
     pub speed: f32,
+
+    /// CUrrent speed. We accelerate towards speed
+    pub current_speed: f32,
+
+    /// Acceleration rate towards target speed (units: world units/s²).
+    pub acceleration: f32,
 }
 
 impl Default for MovementController {
@@ -67,7 +73,9 @@ impl Default for MovementController {
             velocity: Vec3::ZERO,
             knockback_velocity: Vec3::ZERO,
             knockback_resistance: 0.0,
-            speed: 400.0,
+            speed: 50.0,
+            current_speed: 50.0,
+            acceleration: 0.,
             knockback_damping: 25.0,
         }
     }
@@ -155,7 +163,17 @@ fn advance_physics(
     {
         let dt = fixed_time.delta_secs();
 
-        let movement_vel = controller.velocity * controller.speed;
+        if controller.acceleration > 0.0 {
+            if controller.velocity.length_squared() > 0.0 {
+                controller.current_speed += controller.acceleration * dt;
+                controller.current_speed = controller.current_speed.clamp(0.0, controller.speed);
+            }
+        } else {
+            controller.current_speed = controller.speed;
+        }
+
+        let movement_vel = controller.velocity * controller.current_speed;
+
         let knockback_vel = controller.knockback_velocity;
 
         // magnitudes

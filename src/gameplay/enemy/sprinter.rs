@@ -5,7 +5,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    SPAWN_RADIUS,
+    ENEMY_SIZE, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         enemy::{
@@ -79,12 +79,15 @@ fn spawn_sprinter(
     _trigger: On<SprinterSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    player_query: Query<&PhysicalTranslation, With<Player>>,
+    player_q: Query<&PhysicalTranslation, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
     sprinter_stats: Res<SprinterStats>,
 ) -> Result {
-    let player_pos = player_query.single()?;
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+
     let stats = sprinter_stats;
 
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
@@ -106,11 +109,12 @@ fn spawn_sprinter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.),
-        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
-        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 0.)),
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+            .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.0)),
+        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.0)),
         MovementController {
-            speed: 50.0,
+            speed: 30.0,
             ..default()
         },
         Health(stats.health),
@@ -142,8 +146,12 @@ fn sprinter_attack(
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
 ) -> Result {
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+    let player_pos = player_pos.translation.truncate();
+
     let sprinter = trigger.0;
-    let player_pos = player_q.single()?.translation.truncate();
 
     let Ok((transform, mut direction, halt)) = sprinter_q.get_mut(sprinter) else {
         return Ok(());
@@ -178,7 +186,10 @@ fn move_charging_sprinter(
     mut commands: Commands,
     time: Res<Time>,
 ) -> Result {
-    let player_pos = player_q.single()?.translation.truncate();
+    let Ok(player_pos) = player_q.single() else {
+        return Ok(());
+    };
+    let player_pos = player_pos.translation.truncate();
 
     for (mut transform, sprinter, speed, range, direction, charge) in &mut sprinter_q {
         let sprinter_pos = transform.translation.truncate();
