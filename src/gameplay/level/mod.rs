@@ -1,8 +1,5 @@
 use bevy::prelude::*;
-use bevy_ecs_ldtk::{
-    LdtkProjectHandle, LdtkWorldBundle, LevelSelection,
-    assets::LdtkProject,
-};
+use bevy_ecs_ldtk::{LdtkProjectHandle, LdtkWorldBundle, LevelSelection, assets::LdtkProject};
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
 
 use crate::{asset_tracking::LoadResource, audio::MusicPool, screens::Screen};
