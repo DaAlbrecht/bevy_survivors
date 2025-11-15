@@ -1,4 +1,5 @@
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
+use bevy_ecs_ldtk::GridCoords;
 use bevy_ecs_ldtk::{LdtkEntity, app::LdtkEntityAppExt};
 use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
@@ -98,6 +99,8 @@ struct PlayerBundle {
     player: Player,
     #[sprite_sheet]
     sprite_sheet: Sprite,
+    #[grid_coords]
+    grid_coords: GridCoords,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]

@@ -12,6 +12,7 @@ use crate::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType, Meele,
             RANGE_BUFFER,
         },
+        level::{LevelWalls, find_valid_spawn_position},
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Halt, Range},
@@ -83,6 +84,7 @@ fn spawn_sprinter(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
     sprinter_stats: Res<SprinterStats>,
+    level_walls: Res<LevelWalls>,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
@@ -95,8 +97,12 @@ fn spawn_sprinter(
     let offset_x = f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
-    let enemy_pos_x = player_pos.x + offset_x;
-    let enemy_pos_y = player_pos.y + offset_y;
+    // tile size, search radius
+    let desired = Vec2::new(player_pos.x + offset_x, player_pos.y + offset_y);
+    let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
+
+    let enemy_pos_x = adjusted_pos.x;
+    let enemy_pos_y = adjusted_pos.y;
 
     let mut sprinter_count = sprinter_q.iter().count();
     sprinter_count += 1;

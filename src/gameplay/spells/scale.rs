@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
 
-use crate::gameplay::spells::UpgradeSpellEvent;
+use crate::gameplay::spells::{HitTarget, UpgradeSpellEvent};
 use crate::gameplay::{
     Speed,
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
@@ -32,7 +32,7 @@ pub(crate) struct ScaleAttackEvent;
 
 #[derive(Event, Reflect)]
 pub(crate) struct ScaleHitEvent {
-    pub enemy: Entity,
+    pub target: HitTarget,
     pub projectile: Entity,
 }
 
@@ -90,7 +90,12 @@ fn scale_hit(
     mut commands: Commands,
     scale_dmg: Query<&Damage, With<Scale>>,
 ) -> Result {
-    let enemy = trigger.enemy;
+    let enemy = match trigger.target {
+        HitTarget::Enemy(entity) => entity,
+        _ => {
+            return Ok(());
+        }
+    };
     let spell_entity = trigger.projectile;
     let dmg = scale_dmg.single()?.0;
 

@@ -6,7 +6,7 @@ use crate::gameplay::movement::{
     MovementController, PhysicalTranslation, PreviousPhysicalTranslation,
 };
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::spells::UpgradeSpellEvent;
+use crate::gameplay::spells::{HitTarget, UpgradeSpellEvent};
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -35,7 +35,7 @@ pub(crate) struct FireballAttackEvent;
 
 #[derive(Event, Reflect)]
 pub(crate) struct FireballHitEvent {
-    pub enemy: Entity,
+    pub target: HitTarget,
     pub projectile: Entity,
 }
 
@@ -117,6 +117,7 @@ fn spawn_fireball_projectile(
                 current_speed: 100.,
                 acceleration: 1000.,
                 mass: 80.,
+                solid: false,
                 ..default()
             },
             CastSpell(fireball),
@@ -149,43 +150,46 @@ fn fireball_hit(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    explosion_radius: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
+    projectile_q: Query<&Transform, With<PlayerProjectile>>,
+    spell_q: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
 ) -> Result {
-    let enemy_entity = trigger.enemy;
     let spell_entity = trigger.projectile;
-    let (explosion_radius, dmg) = explosion_radius.single()?;
+    let translation = match projectile_q.get(spell_entity) {
+        Ok(phys) => phys.translation,
+        Err(_) => {
+            commands.entity(spell_entity).despawn();
+            return Ok(());
+        }
+    };
+
+    let (explosion_radius, dmg) = spell_q.single()?;
+    let hit_target = trigger.target;
+
+    let hit_position = match hit_target {
+        HitTarget::Enemy(enemy_entity) => {
+            let (enemy_transform, _) = enemy_q.get(enemy_entity)?;
+            enemy_transform.translation
+        }
+        HitTarget::Wall => translation,
+    };
 
     let dmg = dmg.0;
 
-    //Spawn impact effect
-    let texture = asset_server.load("demo/fireball_hit.png");
-    let layout = TextureAtlasLayout::from_grid(UVec2::new(25, 30), 8, 1, None, None);
-    let texture_atlas_layout = texture_atlas_layout.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 7 };
+    spawn_visual_effect_at_hit_position(
+        hit_position,
+        &mut commands,
+        &asset_server,
+        &mut texture_atlas_layout,
+    )?;
 
-    commands.spawn((
-        Name::new("Fireball Impact Effect"),
-        Sprite::from_atlas_image(
-            texture,
-            TextureAtlas {
-                layout: texture_atlas_layout,
-                index: animation_indices.first,
-            },
-        ),
-        animation_indices,
-        AnimationTimer::once_from_fps(24),
-        Transform::from_xyz(
-            enemy_q.get(enemy_entity)?.0.translation.x,
-            enemy_q.get(enemy_entity)?.0.translation.y,
-            10.0,
-        )
-        .with_scale(Vec3::splat(2.0)),
-    ));
-    commands.spawn((
-        SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_impact.wav")),
-        SfxPool,
-    ));
-
+    let enemy_entity = match hit_target {
+        HitTarget::Enemy(enemy_entity) => enemy_entity,
+        HitTarget::Wall => {
+            //No enemy to damage
+            commands.entity(spell_entity).despawn();
+            return Ok(());
+        }
+    };
     //Deal damage
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy_entity,
@@ -220,6 +224,38 @@ fn fireball_hit(
     });
 
     commands.entity(spell_entity).despawn();
+
+    Ok(())
+}
+
+fn spawn_visual_effect_at_hit_position(
+    hit_position: Vec3,
+    commands: &mut Commands,
+    asset_server: &Res<AssetServer>,
+    texture_atlas_layout: &mut ResMut<Assets<TextureAtlasLayout>>,
+) -> Result {
+    let texture = asset_server.load("fx/fireball_hit.png");
+    let layout = TextureAtlasLayout::from_grid(UVec2::new(25, 30), 8, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layout.add(layout);
+    let animation_indices = AnimationIndices { first: 0, last: 7 };
+
+    commands.spawn((
+        Name::new("Fireball Impact Effect"),
+        Sprite::from_atlas_image(
+            texture,
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: animation_indices.first,
+            },
+        ),
+        animation_indices,
+        AnimationTimer::once_from_fps(24),
+        Transform::from_xyz(hit_position.x, hit_position.y, 10.0).with_scale(Vec3::splat(2.0)),
+    ));
+    commands.spawn((
+        SamplePlayer::new(asset_server.load("demo/fireball_impact.wav")),
+        SfxPool,
+    ));
 
     Ok(())
 }

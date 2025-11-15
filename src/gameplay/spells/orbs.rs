@@ -9,8 +9,8 @@ use crate::{
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::Player,
         spells::{
-            CastSpell, Cooldown, Damage, PlayerProjectile, ProjectileCount, Range, Spell,
-            SpellDuration, SpellType, UpgradeSpellEvent,
+            CastSpell, Cooldown, Damage, HitTarget, PlayerProjectile, ProjectileCount, Range,
+            Spell, SpellDuration, SpellType, UpgradeSpellEvent,
         },
     },
     screens::Screen,
@@ -38,7 +38,7 @@ pub(crate) struct OrbAttackEvent;
 
 #[derive(Event, Reflect)]
 pub(crate) struct OrbHitEvent {
-    pub enemy: Entity,
+    pub target: HitTarget,
     pub projectile: Entity,
 }
 
@@ -171,8 +171,12 @@ fn orb_hit(
     mut commands: Commands,
     orb_dmg: Query<&Damage, With<Orb>>,
 ) -> Result {
-    info!("Orb hit enemy: {:?}", trigger.enemy);
-    let enemy = trigger.enemy;
+    let enemy = match trigger.target {
+        HitTarget::Enemy(entity) => entity,
+        _ => {
+            return Ok(());
+        }
+    };
     let spell_entity = trigger.projectile;
     let dmg = orb_dmg.single()?.0;
 
