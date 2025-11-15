@@ -28,7 +28,7 @@ pub(crate) mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
-        jumper::plugin,
+        // jumper::plugin,
         walker::plugin,
         shooter::plugin,
         sprinter::plugin,

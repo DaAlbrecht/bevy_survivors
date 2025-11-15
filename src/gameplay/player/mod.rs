@@ -78,7 +78,7 @@ fn process_player(
 
                         ..Default::default()
                     },
-                    Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                    Transform::from_xyz(-4., -16.0, -0.1).with_scale(Vec3 {
                         x: 2.,
                         y: 1.,
                         z: 1.
@@ -106,7 +106,7 @@ struct PlayerBundle {
     XpCollectionRange(150.0),
     XP(0.),
     Level(1.),
-    MovementController { speed: 50.0, ..default()},
+    MovementController { speed: 80.0, ..default()},
     AccumulatedInput::default(),
 )]
 pub(crate) struct Player;

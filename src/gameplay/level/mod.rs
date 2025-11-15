@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use bevy_ecs_ldtk::{LdtkProjectHandle, LdtkWorldBundle, LevelSelection, assets::LdtkProject};
+use bevy_ecs_ldtk::{
+    LdtkEntity, LdtkProjectHandle, LdtkWorldBundle, LevelSelection, app::LdtkEntityAppExt,
+    assets::LdtkProject,
+};
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
 
 use crate::{asset_tracking::LoadResource, audio::MusicPool, screens::Screen};
@@ -46,7 +49,7 @@ impl FromWorld for LevelAssets {
         let assets = world.resource::<AssetServer>();
 
         Self {
-            level: assets.load("level/basemap.ldtk"),
+            level: assets.load("level/dungeon.ldtk"),
             music: assets.load("audio/music/city.ogg"),
         }
     }

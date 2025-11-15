@@ -90,7 +90,7 @@ fn spawn_orb_projectile(
         // Compute starting phase for each orb (even spacing)
         let phase = (std::f32::consts::TAU) * (n as f32 / projectile_count.0);
         let offset = Vec2::from_angle(phase) * radius.0;
-        let world_pos = player_pos.0 + offset.extend(0.0);
+        let world_pos = player_pos.0 + offset.extend(10.0);
 
         // tangent direction (orthogonal to radius)
         let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
@@ -104,7 +104,7 @@ fn spawn_orb_projectile(
             },
             OrbProjectile,
             CastSpell(orb),
-            Transform::from_xyz(world_pos.x, world_pos.y, 0.0),
+            Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
             PreviousPhysicalTranslation(world_pos),
             PhysicalTranslation(world_pos),
             MovementController {

@@ -102,8 +102,8 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_camera);
 }
 
-const ENEMY_SIZE: f32 = 16.0;
-const PLAYER_SIZE: f32 = 16.0;
+const ENEMY_SIZE: f32 = 32.0;
+const PLAYER_SIZE: f32 = 32.0;
 const SPELL_SIZE: f32 = 8.0;
 const XP_GAIN_GEM: f32 = 10.;
 

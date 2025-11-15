@@ -113,8 +113,10 @@ fn spawn_fireball_projectile(
             },
             MovementController {
                 velocity: direction.extend(0.),
-                speed: 40.,
-                mass: 80.0,
+                speed: 200.,
+                current_speed: 100.,
+                acceleration: 1000.,
+                mass: 80.,
                 ..default()
             },
             CastSpell(fireball),
@@ -133,7 +135,7 @@ fn spawn_fireball_projectile(
             PlayerProjectile,
         ));
         commands.spawn((
-            SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_whoosh.wav")),
+            SamplePlayer::new(asset_server.load("demo/fireball_whoosh.wav")),
             SfxPool,
         ));
     }
@@ -156,7 +158,7 @@ fn fireball_hit(
     let dmg = dmg.0;
 
     //Spawn impact effect
-    let texture = asset_server.load("fx/fireball_hit.png");
+    let texture = asset_server.load("demo/fireball_hit.png");
     let layout = TextureAtlasLayout::from_grid(UVec2::new(25, 30), 8, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
     let animation_indices = AnimationIndices { first: 0, last: 7 };
