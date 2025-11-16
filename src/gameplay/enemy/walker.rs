@@ -5,7 +5,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE, SPAWN_RADIUS,
+    SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
