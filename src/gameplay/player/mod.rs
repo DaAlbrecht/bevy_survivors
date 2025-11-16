@@ -1,3 +1,4 @@
+use avian2d::prelude::{Collider, Mass};
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
 use bevy_ecs_ldtk::GridCoords;
 use bevy_ecs_ldtk::{LdtkEntity, app::LdtkEntityAppExt};
@@ -5,12 +6,12 @@ use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
+use crate::gameplay::character_controller::CharacterController;
 use crate::{
     asset_tracking::LoadResource,
     gameplay::{
         Health,
         healthbar::HealthBarMaterial,
-        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::{
             hit::player_hit,
             movement::{AccumulatedInput, Move},
@@ -30,68 +31,11 @@ pub(super) fn plugin(app: &mut App) {
 
     app.load_resource::<PlayerAssets>();
 
-    app.add_observer(player_hit);
-    app.add_systems(Update, process_player);
-
     app.register_ldtk_entity::<PlayerBundle>("Player");
     app.register_type::<XP>().register_type::<Level>();
-}
 
-fn process_player(
-    new_players: Query<(Entity, &Transform), Added<Player>>,
-    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
-    player_assets: If<Res<PlayerAssets>>,
-    mut mesh: ResMut<Assets<Mesh>>,
-    mut commands: Commands,
-) {
-    for (entity, transform) in new_players.iter() {
-        // A texture atlas is a way to split a single image into a grid of related images.
-        // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
-        let player_animation = PlayerAnimation::new();
-        let current_trans = transform.translation;
-
-        commands.entity(entity).insert((
-            actions!(Player[
-                (
-                    Action::<Move>::new(),
-                    Bindings::spawn((
-                        Cardinal::wasd_keys(),
-                        Axial::left_stick()
-                    )),
-                ),
-            ]),
-            PhysicalTranslation(current_trans),
-            PreviousPhysicalTranslation(current_trans),
-            player_animation,
-            children![
-                (
-                    Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),
-                    MeshMaterial2d(health_bar_materials.add(HealthBarMaterial {
-                        foreground_color: tailwind::GREEN_300.into(),
-                        background_color: tailwind::RED_300.into(),
-                        percent: 1.,
-                    })),
-                    Transform::from_xyz(0.0, -25.0, 0.),
-                ),
-                (
-                    Sprite {
-                        image: player_assets.shadow.clone(),
-
-                        ..Default::default()
-                    },
-                    Transform::from_xyz(-4., -16.0, -0.1).with_scale(Vec3 {
-                        x: 2.,
-                        y: 1.,
-                        z: 1.
-                    })
-                )
-            ],
-        ));
-
-        commands.trigger(crate::gameplay::PickUpSpell {
-            spell_type: crate::gameplay::spells::SpellType::Fireball,
-        });
-    }
+    app.add_observer(player_hit);
+    app.add_observer(setup_player);
 }
 
 #[derive(Default, Bundle, LdtkEntity)]
@@ -102,17 +46,6 @@ struct PlayerBundle {
     #[grid_coords]
     grid_coords: GridCoords,
 }
-
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-#[require(
-    Health(100.),
-    XpCollectionRange(150.0),
-    XP(0.),
-    Level(1.),
-    MovementController { speed: 80.0, ..default()},
-    AccumulatedInput::default(),
-)]
-pub(crate) struct Player;
 
 #[derive(Event, Reflect)]
 pub(crate) struct PlayerHitEvent {
@@ -163,4 +96,71 @@ impl FromWorld for PlayerAssets {
             shadow: assets.load("shadow.png"),
         }
     }
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[require(
+    Health(100.),
+    XpCollectionRange(150.0),
+    XP(0.),
+    Level(1.),
+    CharacterController{speed: 100.},
+    AccumulatedInput,
+)]
+pub(crate) struct Player;
+
+fn setup_player(
+    add: On<Add, Player>,
+    mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    player_assets: If<Res<PlayerAssets>>,
+    mut mesh: ResMut<Assets<Mesh>>,
+    mut commands: Commands,
+) {
+    commands.entity(add.entity).insert((
+        player_input_actions(),
+        // A texture atlas is a way to split a single image into a grid of related images.
+        // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
+        PlayerAnimation::new(),
+        Mass(0.),
+        Collider::rectangle(32., 32.),
+        children![
+            (
+                Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),
+                MeshMaterial2d(health_bar_materials.add(HealthBarMaterial {
+                    foreground_color: tailwind::GREEN_300.into(),
+                    background_color: tailwind::RED_300.into(),
+                    percent: 1.,
+                })),
+                Transform::from_xyz(0.0, -25.0, 0.),
+            ),
+            (
+                Sprite {
+                    image: player_assets.shadow.clone(),
+
+                    ..Default::default()
+                },
+                Transform::from_xyz(-4., -16.0, -0.1).with_scale(Vec3 {
+                    x: 2.,
+                    y: 1.,
+                    z: 1.
+                })
+            )
+        ],
+    ));
+
+    commands.trigger(crate::gameplay::PickUpSpell {
+        spell_type: crate::gameplay::spells::SpellType::Fireball,
+    });
+}
+
+fn player_input_actions() -> impl Bundle {
+    actions!(Player[
+        (
+            Action::<Move>::new(),
+            Bindings::spawn((
+                Cardinal::wasd_keys(),
+                Axial::left_stick()
+            )),
+        ),
+    ])
 }

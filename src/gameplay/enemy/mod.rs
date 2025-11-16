@@ -1,9 +1,11 @@
+use avian2d::prelude::LinearVelocity;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
     PLAYER_SIZE, PausableSystems, PhysicsAppSystems, PostPhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         Health,
+        character_controller::CharacterController,
         enemy::{
             jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
@@ -46,12 +48,10 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
         (
-            (enemy_timer_handle),
-            (enemy_movement).in_set(PhysicsAppSystems::PhysicsAdjustments),
+            (enemy_timer_handle, enemy_movement),
             (
                 enemy_colliding_detection,
                 enemy_stop_colliding_detection,
-                enemy_push_detection,
                 projectile_hit_detection,
                 attack,
                 enemy_range_keeper,
@@ -70,15 +70,12 @@ pub(crate) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 
-    app.add_observer(enemy_pushing)
-        .add_observer(enemy_take_dmg)
+    app.add_observer(enemy_take_dmg)
         .add_observer(enemy_get_pushed_from_hit);
 }
 
 const SEPARATION_RADIUS: f32 = 40.;
-const SEPARATION_FORCE: f32 = 10.;
 const RANGE_BUFFER: f32 = 50.0;
-const PUSH_FORCE: f32 = 20.0;
 
 #[derive(Component, Default, Reflect)]
 pub(crate) struct DamageCooldown(pub Timer);
@@ -166,89 +163,54 @@ pub(crate) struct Size(pub f32);
 fn enemy_movement(
     enemy_q: Query<
         (
-            &mut MovementController,
-            &PhysicalTranslation,
+            &CharacterController,
+            &Transform,
+            &mut LinearVelocity,
             Option<&Root>,
             Option<&Halt>,
             Option<&Charge>,
             Option<&Jump>,
         ),
-        With<Enemy>,
+        (With<Enemy>, Without<Player>),
     >,
-    player_q: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
-) -> Result {
+    player_q: Query<&Transform, (With<Player>, Without<Enemy>)>,
+) {
     let Ok(player_pos) = player_q.single() else {
-        return Ok(());
+        return;
     };
-    let player_pos = player_pos.truncate();
+    let player_pos = player_pos.translation.truncate();
 
-    let enemy_positions = enemy_q
-        .iter()
-        .map(|t| t.1.truncate())
-        .collect::<Vec<Vec2>>();
-
-    for (mut controller, physics_translation, root, halt, charge, jump) in enemy_q {
+    for (controller, transform, mut linear_velocity, root, halt, charge, jump) in enemy_q {
         if root.is_some() || halt.is_some() || charge.is_some() || jump.is_some() {
             //skip movement if enemy gets knockedback or is rooted
-            controller.velocity = Vec3::ZERO;
+            linear_velocity.x = 0.;
+            linear_velocity.y = 0.;
         } else {
-            let enemy_pos = physics_translation.truncate();
-
+            let enemy_pos = transform.translation.truncate();
             let to_player = player_pos - enemy_pos;
             if to_player.length_squared() <= 0.0001 {
-                controller.velocity = Vec3::ZERO;
+                linear_velocity.x = 0.;
+                linear_velocity.y = 0.;
                 continue;
             }
-            let direction = to_player.normalize();
-
-            let separation_force = separation_force_calc(&enemy_positions, enemy_pos, player_pos);
-
-            let movement = (direction + separation_force).normalize();
-            controller.velocity = movement.extend(0.0);
+            let velocity = to_player.normalize() * controller.speed;
+            linear_velocity.x = velocity.x;
+            linear_velocity.y = velocity.y;
         }
+        info!("{:?}", transform);
     }
-
-    Ok(())
 }
 ///
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
     mut enemies_q: Query<(&MovementController, &mut Sprite), With<Enemy>>,
 ) {
-    for (movement, mut sprite) in enemies_q.iter_mut() {
+    for (movement, mut sprite) in &mut enemies_q {
         let dx = movement.velocity.x;
         if dx != 0.0 {
             sprite.flip_x = dx < 0.0;
         }
     }
-}
-
-//Calc is short for calculator btw
-fn separation_force_calc(enemy_positions: &Vec<Vec2>, own_pos: Vec2, player_pos: Vec2) -> Vec2 {
-    let mut separation_force = Vec2::ZERO;
-    for &other_pos in enemy_positions {
-        // skip ourselves
-        if other_pos == own_pos {
-            continue;
-        }
-        // Check if the distance between enemy `A` and all other enemies is less than the
-        // `SEPARATION_RADIUS`. If so, push enemy `A` away from the other enemy to maintain spacing.
-        let distance = own_pos.distance(other_pos);
-        if distance < SEPARATION_RADIUS {
-            let push_dir = (own_pos - other_pos).normalize();
-            let push_strength = (SEPARATION_RADIUS - distance) / SEPARATION_RADIUS;
-            separation_force += push_dir * push_strength * SEPARATION_FORCE;
-        }
-    }
-    // Separation force calculation for the player
-    let distance_to_player = own_pos.distance(player_pos);
-    if distance_to_player < SEPARATION_RADIUS {
-        let push_dir = (own_pos - player_pos).normalize();
-        let push_strength = (SEPARATION_RADIUS - distance_to_player) / SEPARATION_RADIUS;
-        separation_force += push_dir * push_strength * SEPARATION_FORCE;
-    }
-
-    separation_force
 }
 
 fn enemy_colliding_detection(
@@ -305,50 +267,6 @@ fn enemy_stop_colliding_detection(
             commands.entity(enemy).remove::<Colliding>();
         }
     }
-    Ok(())
-}
-
-fn enemy_push_detection(
-    enemy_query: Query<(&PhysicalTranslation, Entity, Option<&Charge>, Option<&Jump>), With<Enemy>>,
-    player_query: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
-    mut commands: Commands,
-) -> Result {
-    let Ok(player_pos) = player_query.single() else {
-        return Ok(());
-    };
-
-    for (&enemy_pos, enemy, charge, jump) in &enemy_query {
-        //Player cant push charging or jumping enemies
-        if charge.is_some() || jump.is_some() {
-            continue;
-        }
-        let distance_to_player = enemy_pos.distance(player_pos.0);
-
-        if distance_to_player <= SEPARATION_RADIUS - 5.0 {
-            commands.trigger(PlayerPushingEvent(enemy));
-        }
-    }
-    Ok(())
-}
-
-fn enemy_pushing(
-    trigger: On<PlayerPushingEvent>,
-    player_q: Query<(&PhysicalTranslation, &MovementController), (With<Player>, Without<Enemy>)>,
-    mut enemy_query: Query<(&PhysicalTranslation, &mut MovementController, Entity), With<Enemy>>,
-) -> Result {
-    let Ok((player_pos, player_mc)) = player_q.single() else {
-        return Ok(());
-    };
-
-    let push_entity = trigger.event().0;
-
-    for (enemy_pos, mut forces, enemy_entity) in &mut enemy_query {
-        if enemy_entity == push_entity {
-            let dir = (enemy_pos.0 - player_pos.0).normalize();
-            forces.apply_knockback_from_source(dir * PUSH_FORCE, player_mc);
-        }
-    }
-
     Ok(())
 }
 

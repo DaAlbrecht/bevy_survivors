@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
@@ -8,9 +9,9 @@ use crate::{
     SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
+        character_controller::CharacterController,
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
         level::{LevelWalls, find_valid_spawn_position},
-        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
         spells::Damage,
@@ -50,14 +51,14 @@ fn spawn_walker(
     _trigger: On<WalkerSpawnEvent>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    player_q: Query<&PhysicalTranslation, With<Player>>,
+    player_q: Query<&Transform, With<Player>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     walker_stats: Res<WalkerStats>,
     level_walls: Res<LevelWalls>,
-) -> Result {
+) {
     let Ok(player_pos) = player_q.single() else {
-        return Ok(());
+        return;
     };
 
     let stats = walker_stats;
@@ -67,7 +68,10 @@ fn spawn_walker(
     let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
-    let desired = Vec2::new(player_pos.x + offset_x, player_pos.y + offset_y);
+    let desired = Vec2::new(
+        player_pos.translation.x + offset_x,
+        player_pos.translation.y + offset_y,
+    );
 
     // tile size, search radius
     let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
@@ -83,6 +87,7 @@ fn spawn_walker(
     commands.spawn((
         Name::new("Walker"),
         Walker,
+        (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
         Sprite::from_atlas_image(
             texture,
             TextureAtlas {
@@ -98,13 +103,7 @@ fn spawn_walker(
         Health(stats.health),
         Speed(stats.speed),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
-        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
-        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
-        MovementController {
-            speed: stats.speed,
-            mass: 100.,
-            ..default()
-        },
+        CharacterController { speed: stats.speed },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
         children![(
             Sprite {
@@ -119,8 +118,6 @@ fn spawn_walker(
             })
         )],
     ));
-
-    Ok(())
 }
 
 fn patch_walker(trigger: On<WalkerPatchEvent>, mut stats: ResMut<WalkerStats>) {

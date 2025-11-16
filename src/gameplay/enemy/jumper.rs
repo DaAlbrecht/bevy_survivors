@@ -1,3 +1,4 @@
+use avian2d::prelude::*;
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
@@ -8,6 +9,7 @@ use crate::{
     ENEMY_SIZE, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
+        character_controller::CharacterController,
         enemy::{
             AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
             Meele, Owner, Size,
@@ -121,6 +123,8 @@ fn spawn_jumper(
             Name::new(format!("Jumper {jumper_count}")),
             Enemy,
             Jumper,
+            (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
+            CharacterController { speed: 30.0 },
             Sprite {
                 image: asset_server.load(stats.sprite.clone()),
                 ..default()

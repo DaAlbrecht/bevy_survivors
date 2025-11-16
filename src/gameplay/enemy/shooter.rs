@@ -1,3 +1,4 @@
+use avian2d::prelude::*;
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
@@ -9,6 +10,7 @@ use crate::{
     ENEMY_SIZE, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
+        character_controller::CharacterController,
         enemy::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
         },
@@ -109,18 +111,14 @@ fn spawn_shooter(
         Name::new(format!("Shooter {shooter_count}")),
         Enemy,
         Shooter,
+        (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
         Sprite {
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
-        PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.0)),
-        PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.0)),
-        MovementController {
-            speed: 30.0,
-            ..default()
-        },
+        CharacterController { speed: 30.0 },
         Health(stats.health),
         Damage(stats.damage),
         AbilityDamage(stats.ability_damage),

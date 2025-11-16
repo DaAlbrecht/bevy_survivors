@@ -25,7 +25,6 @@ pub fn plugin(app: &mut App) {
         .set(ImagePlugin::default_nearest()),));
 
     // Add all third party plugins.
-
     app.add_plugins(third_party::plugin);
 
     // Add all first party plugins.

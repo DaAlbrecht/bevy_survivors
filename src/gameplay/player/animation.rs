@@ -4,6 +4,7 @@
 //! - [Sprite animation](https://github.com/bevyengine/bevy/blob/latest/examples/2d/sprite_animation.rs)
 //! - [Timers](https://github.com/bevyengine/bevy/blob/latest/examples/time/timers.rs)
 
+use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 use rand::prelude::*;
@@ -12,10 +13,7 @@ use std::time::Duration;
 use crate::{
     PausableSystems, PostPhysicsAppSystems,
     audio::SpatialPool,
-    gameplay::{
-        movement::MovementController,
-        player::{Player, PlayerAssets},
-    },
+    gameplay::player::{Player, PlayerAssets},
     screens::Screen,
 };
 
@@ -47,16 +45,16 @@ fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation
 
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
-    player: Single<(&MovementController, &mut Sprite, &mut PlayerAnimation), With<Player>>,
+    player: Single<(&LinearVelocity, &mut Sprite, &mut PlayerAnimation), With<Player>>,
 ) {
-    let (movement, mut sprite, mut animation) = player.into_inner();
+    let (linear_velocity, mut sprite, mut animation) = player.into_inner();
 
-    let dx = movement.velocity.x;
+    let dx = linear_velocity.x;
     if dx != 0.0 {
         sprite.flip_x = dx < 0.0;
     }
 
-    let animation_state = if movement.velocity == Vec3::ZERO {
+    let animation_state = if **linear_velocity == Vec2::ZERO {
         PlayerAnimationState::Idling
     } else {
         PlayerAnimationState::Walking
