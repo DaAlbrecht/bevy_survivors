@@ -93,7 +93,7 @@ fn spawn_orb_projectile(
         let world_pos = player_pos.0 + offset.extend(10.0);
 
         // tangent direction (orthogonal to radius)
-        let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
+        let direction = Vec3::new(-offset.y, offset.x, 10.0).normalize();
         let tangential_speed = ORB_ANGULAR_SPEED * radius.0;
 
         commands.spawn((
@@ -152,7 +152,7 @@ fn record_orb_movement(
 
         // Compute the target orbit position relative to player
         let offset = Vec2::from_angle(phase.0) * orbit_radius.0;
-        let target_pos = player_pos.0 + offset.extend(0.0);
+        let target_pos = player_pos.0 + offset.extend(10.0);
 
         // Compute velocity needed to reach target_pos this frame
         let delta = target_pos - orb_pos.0;

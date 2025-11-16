@@ -71,7 +71,7 @@ fn process_player(
                         background_color: tailwind::RED_300.into(),
                         percent: 1.,
                     })),
-                    Transform::from_xyz(0.0, -25.0, 0.),
+                    Transform::from_xyz(0.0, -25.0, 10.),
                 ),
                 (
                     Sprite {
@@ -89,7 +89,7 @@ fn process_player(
         ));
 
         commands.trigger(crate::gameplay::PickUpSpell {
-            spell_type: crate::gameplay::spells::SpellType::Fireball,
+            spell_type: crate::gameplay::spells::SpellType::Orb,
         });
     }
 }
