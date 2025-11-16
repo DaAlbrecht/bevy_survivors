@@ -76,9 +76,9 @@ fn spawn_walker(
     let enemy_pos_y = adjusted_pos.y;
 
     let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(31), 1, 1, None, None);
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 90, y: 64 }, 10, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 0 };
+    let animation_indices = AnimationIndices { first: 0, last: 9 };
 
     commands.spawn((
         Name::new("Walker"),
@@ -97,8 +97,7 @@ fn spawn_walker(
         Damage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
-            .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
         PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
         PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
         MovementController {
@@ -112,8 +111,8 @@ fn spawn_walker(
 
                 ..Default::default()
             },
-            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
-                x: 2.,
+            Transform::from_xyz(0., -32.0, -0.1).with_scale(Vec3 {
+                x: 4.,
                 y: 1.,
                 z: 1.
             })

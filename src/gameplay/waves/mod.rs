@@ -80,7 +80,7 @@ fn make_wave_plan() -> WavePlan {
     WavePlan {
         waves: VecDeque::from([
             WaveStats {
-                enemy_pool: HashMap::from([(EnemyType::Walker, 0.8), (EnemyType::Jumper, 0.2)]),
+                enemy_pool: HashMap::from([(EnemyType::Walker, 0.7), (EnemyType::Shooter, 0.3)]),
                 enemy_screen_count: 30.0,
                 spawn_frequency: 1.0,
                 duration: 60.0 * 0.5,
@@ -92,8 +92,8 @@ fn make_wave_plan() -> WavePlan {
             },
             WaveStats {
                 enemy_pool: HashMap::from([
-                    (EnemyType::Walker, 0.6),
-                    (EnemyType::Jumper, 0.2),
+                    (EnemyType::Walker, 0.5),
+                    (EnemyType::Shooter, 0.3),
                     (EnemyType::Sprinter, 0.2),
                 ]),
                 enemy_screen_count: 20.0,
@@ -101,12 +101,12 @@ fn make_wave_plan() -> WavePlan {
                 duration: 60.0 * 0.5,
                 power_level: 2.0,
                 sprite_pool: HashMap::from([
-                    (EnemyType::Walker, "enemies/walker_purple.png".to_string()),
+                    (EnemyType::Walker, "enemies/walker_blue.png".to_string()),
                     (
                         EnemyType::Sprinter,
                         "enemies/sprinter_purple.png".to_string(),
                     ),
-                    (EnemyType::Shooter, "enemies/shooter.png".to_string()),
+                    (EnemyType::Shooter, "enemies/shooter_yellow.png".to_string()),
                 ]),
             },
             WaveStats {
@@ -125,7 +125,7 @@ fn make_wave_plan() -> WavePlan {
                         EnemyType::Sprinter,
                         "enemies/sprinter_purple.png".to_string(),
                     ),
-                    (EnemyType::Shooter, "enemies/shooter.png".to_string()),
+                    (EnemyType::Shooter, "enemies/shooter_purple.png".to_string()),
                 ]),
             },
         ]),

@@ -126,6 +126,18 @@ fn spawn_shooter(
         AbilityDamage(stats.ability_damage),
         Range(stats.range),
         Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
+        children![(
+            Sprite {
+                image: asset_server.load("shadow.png"),
+
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                x: 2.,
+                y: 1.,
+                z: 1.
+            })
+        )],
     ));
 
     Ok(())
@@ -160,6 +172,7 @@ fn shooter_attack(
     };
 
     let direction = (player_pos.0 - shooter_pos.0).normalize();
+    let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
 
     commands.spawn((
         EnemyProjectile,
@@ -167,7 +180,9 @@ fn shooter_attack(
             image: asset_server.load("enemies/shooter_bullet.png"),
             ..default()
         },
-        Transform::from_translation(shooter_pos.0).looking_at(player_pos.0, Dir3::Y),
+        Transform::from_translation(shooter_pos.0)
+            .with_rotation(towards_quaternion)
+            .with_scale(Vec3::splat(0.5)),
         PhysicalTranslation(shooter_pos.0),
         PreviousPhysicalTranslation(shooter_pos.0),
         MovementController {
