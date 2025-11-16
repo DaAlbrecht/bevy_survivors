@@ -8,8 +8,9 @@ use crate::{
         movement::{PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
-            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent,
+            CastSpell, Cooldown, Damage, Despawn, Halt, HitTarget, PlayerProjectile,
+            ProjectileCount, Root, Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail,
+            UpgradeSpellEvent,
             dot::{Bleed, DoT},
         },
     },
@@ -47,7 +48,7 @@ pub(crate) struct ThornAttackEvent;
 
 #[derive(Event, Reflect)]
 pub(crate) struct ThornHitEvent {
-    pub enemy: Entity,
+    pub target: HitTarget,
     pub projectile: Entity,
 }
 
@@ -226,7 +227,13 @@ fn thorn_hit(
     enemy_q: Query<Entity, With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
-    let enemy = trigger.enemy;
+    let enemy = match trigger.target {
+        HitTarget::Enemy(entity) => entity,
+        _ => {
+            return Ok(());
+        }
+    };
+
     let _thorn = trigger.projectile;
     let (damage, mut cooldown, dot) = thorn_q.single_mut()?;
 

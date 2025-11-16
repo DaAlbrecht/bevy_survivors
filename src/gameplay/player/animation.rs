@@ -126,7 +126,7 @@ impl PlayerAnimation {
     /// The number of walking frames.
     const WALKING_FRAMES: usize = 5;
     /// The duration of each walking frame.
-    const WALKING_INTERVAL: Duration = Duration::from_millis(160);
+    const WALKING_INTERVAL: Duration = Duration::from_millis(120);
 
     fn idling() -> Self {
         Self {

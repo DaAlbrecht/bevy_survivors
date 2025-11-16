@@ -5,10 +5,11 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE, SPAWN_RADIUS,
+    SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
+        level::{LevelWalls, find_valid_spawn_position},
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
@@ -53,6 +54,7 @@ fn spawn_walker(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     walker_stats: Res<WalkerStats>,
+    level_walls: Res<LevelWalls>,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
@@ -65,13 +67,18 @@ fn spawn_walker(
     let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
-    let enemy_pos_x = player_pos.x + offset_x;
-    let enemy_pos_y = player_pos.y + offset_y;
+    let desired = Vec2::new(player_pos.x + offset_x, player_pos.y + offset_y);
+
+    // tile size, search radius
+    let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
+
+    let enemy_pos_x = adjusted_pos.x;
+    let enemy_pos_y = adjusted_pos.y;
 
     let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(31), 1, 1, None, None);
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 90, y: 64 }, 10, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 0 };
+    let animation_indices = AnimationIndices { first: 0, last: 9 };
 
     commands.spawn((
         Name::new("Walker"),
@@ -90,12 +97,12 @@ fn spawn_walker(
         Damage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
-            .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
         PhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
         PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
         MovementController {
             speed: stats.speed,
+            mass: 100.,
             ..default()
         },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
@@ -105,8 +112,8 @@ fn spawn_walker(
 
                 ..Default::default()
             },
-            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
-                x: 2.,
+            Transform::from_xyz(0., -32.0, -0.1).with_scale(Vec3 {
+                x: 4.,
                 y: 1.,
                 z: 1.
             })

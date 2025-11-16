@@ -1,6 +1,9 @@
 use bevy::prelude::*;
+use bevy_ecs_ldtk::utils::translation_to_grid_coords;
 
-use crate::{PausableSystems, PhysicsAppSystems, PostPhysicsAppSystems};
+use crate::{
+    PausableSystems, PhysicsAppSystems, PostPhysicsAppSystems, gameplay::level::LevelWalls,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -64,6 +67,9 @@ pub(crate) struct MovementController {
 
     /// Acceleration rate towards target speed (units: world units/s²).
     pub acceleration: f32,
+
+    /// If it should be treated as a solid object for collision purposes
+    pub solid: bool,
 }
 
 impl Default for MovementController {
@@ -77,6 +83,7 @@ impl Default for MovementController {
             current_speed: 50.0,
             acceleration: 0.,
             knockback_damping: 25.0,
+            solid: true,
         }
     }
 }
@@ -152,6 +159,7 @@ pub(crate) struct Teleported;
 /// system.
 fn advance_physics(
     fixed_time: Res<Time<Fixed>>,
+    level_walls: Res<LevelWalls>,
     mut query: Query<(
         &mut MovementController,
         &mut PhysicalTranslation,
@@ -191,11 +199,55 @@ fn advance_physics(
 
         let final_velocity = movement_vel.lerp(knockback_vel, blend);
 
+        let desired_delta = final_velocity * dt;
+
+        let allowed_delta = if controller.solid {
+            resolve_grid_collision(
+                current_physical_translation.0,
+                desired_delta,
+                &level_walls,
+                32.0, // tile size
+            )
+        } else {
+            desired_delta
+        };
+
         previous_physical_translation.0 = current_physical_translation.0;
-        current_physical_translation.0 += final_velocity * dt;
+        current_physical_translation.0 += allowed_delta;
 
         controller.decay_knockback(dt);
     }
+}
+
+pub fn resolve_grid_collision(
+    current_pos: Vec3,
+    desired_delta: Vec3,
+    walls: &LevelWalls,
+    tile_size: f32,
+) -> Vec3 {
+    let mut allowed = desired_delta;
+
+    // --- X axis ---
+    if desired_delta.x != 0.0 {
+        let next = current_pos + Vec3::new(desired_delta.x, 0.0, 0.0);
+        let next_cell = translation_to_grid_coords(next.truncate(), IVec2::splat(tile_size as i32));
+
+        if walls.in_wall(&next_cell) {
+            allowed.x = 0.0;
+        }
+    }
+
+    // --- Y axis ---
+    if desired_delta.y != 0.0 {
+        let next = current_pos + Vec3::new(0.0, desired_delta.y, 0.0);
+        let next_cell = translation_to_grid_coords(next.truncate(), IVec2::splat(tile_size as i32));
+
+        if walls.in_wall(&next_cell) {
+            allowed.y = 0.0;
+        }
+    }
+
+    allowed
 }
 
 fn interpolate_rendered_transform(

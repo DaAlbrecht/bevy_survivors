@@ -12,6 +12,7 @@ use crate::{
         enemy::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
         },
+        level::{LevelWalls, find_valid_spawn_position},
         movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Range},
@@ -78,6 +79,7 @@ fn spawn_shooter(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     shooter_q: Query<&Shooter>,
     shooter_stats: Res<ShooterStats>,
+    level_walls: Res<LevelWalls>,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
@@ -90,8 +92,15 @@ fn spawn_shooter(
     let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
     let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
 
-    let enemy_pos_x = player_pos.translation.x + offset_x;
-    let enemy_pos_y = player_pos.translation.y + offset_y;
+    // tile size, search radius
+    let desired = Vec2::new(
+        player_pos.translation.x + offset_x,
+        player_pos.translation.y + offset_y,
+    );
+    let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
+
+    let enemy_pos_x = adjusted_pos.x;
+    let enemy_pos_y = adjusted_pos.y;
 
     let mut shooter_count = shooter_q.iter().count();
     shooter_count += 1;
@@ -117,6 +126,18 @@ fn spawn_shooter(
         AbilityDamage(stats.ability_damage),
         Range(stats.range),
         Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
+        children![(
+            Sprite {
+                image: asset_server.load("shadow.png"),
+
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                x: 2.,
+                y: 1.,
+                z: 1.
+            })
+        )],
     ));
 
     Ok(())
@@ -151,6 +172,7 @@ fn shooter_attack(
     };
 
     let direction = (player_pos.0 - shooter_pos.0).normalize();
+    let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
 
     commands.spawn((
         EnemyProjectile,
@@ -158,7 +180,9 @@ fn shooter_attack(
             image: asset_server.load("enemies/shooter_bullet.png"),
             ..default()
         },
-        Transform::from_translation(shooter_pos.0).looking_at(player_pos.0, Dir3::Y),
+        Transform::from_translation(shooter_pos.0)
+            .with_rotation(towards_quaternion)
+            .with_scale(Vec3::splat(0.5)),
         PhysicalTranslation(shooter_pos.0),
         PreviousPhysicalTranslation(shooter_pos.0),
         MovementController {

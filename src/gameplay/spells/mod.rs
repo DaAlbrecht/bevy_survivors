@@ -5,8 +5,10 @@ use crate::{
     gameplay::{
         PickUpSpell,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
+        level::LevelWalls,
         movement::PhysicalTranslation,
         player::{AddToInventory, Inventory, Player},
+        simple_animation::HurtAnimationTimer,
         spells::{
             dot::Bleed,
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
@@ -208,6 +210,12 @@ fn attack(
     Ok(())
 }
 
+#[derive(Reflect, Copy, Clone)]
+pub enum HitTarget {
+    Wall,
+    Enemy(Entity),
+}
+
 fn projectile_hit_detection(
     spells: Query<(Entity, &SpellType), With<Spell>>,
     tail_phys: Query<&PhysicalTranslation, With<Tail>>,
@@ -217,6 +225,7 @@ fn projectile_hit_detection(
         (With<Enemy>, Without<PlayerProjectile>),
     >,
     projectile_phys: Query<&PhysicalTranslation, With<PlayerProjectile>>,
+    level_walls: Res<LevelWalls>,
     mut commands: Commands,
 ) -> Result {
     // Get all spells
@@ -231,6 +240,16 @@ fn projectile_hit_detection(
                 projectile_pos = tail_pos.0;
             }
 
+            let grid = bevy_ecs_ldtk::utils::translation_to_grid_coords(
+                projectile_pos.truncate(),
+                IVec2::splat(32),
+            );
+
+            if level_walls.in_wall(&grid) {
+                trigger_hit_event(&mut commands, spell_type, projectile, HitTarget::Wall);
+                continue;
+            }
+
             // Loop over all enemies and check collisions
             for (enemy_phys, enemy_entity, jump) in &enemy_q {
                 if jump.is_some() {
@@ -240,7 +259,15 @@ fn projectile_hit_detection(
                 let enemy_pos = enemy_phys.0;
                 let distance = projectile_pos.truncate().distance(enemy_pos.truncate());
                 if (distance - (SPELL_SIZE / 2.0)) <= ENEMY_SIZE / 2.0 {
-                    trigger_hit_event(&mut commands, spell_type, projectile, enemy_entity);
+                    trigger_hit_event(
+                        &mut commands,
+                        spell_type,
+                        projectile,
+                        HitTarget::Enemy(enemy_entity),
+                    );
+                    commands
+                        .entity(enemy_entity)
+                        .insert(HurtAnimationTimer::default());
                 }
             }
         }
@@ -297,13 +324,13 @@ pub(crate) fn trigger_hit_event(
     commands: &mut Commands,
     spell_type: &SpellType,
     projectile: Entity,
-    enemy: Entity,
+    target: HitTarget,
 ) {
     match spell_type {
-        SpellType::Scale => commands.trigger(ScaleHitEvent { enemy, projectile }),
-        SpellType::Fireball => commands.trigger(FireballHitEvent { enemy, projectile }),
-        SpellType::Orb => commands.trigger(OrbHitEvent { enemy, projectile }),
-        SpellType::Thorn => commands.trigger(ThornHitEvent { enemy, projectile }),
+        SpellType::Scale => commands.trigger(ScaleHitEvent { target, projectile }),
+        SpellType::Fireball => commands.trigger(FireballHitEvent { target, projectile }),
+        SpellType::Orb => commands.trigger(OrbHitEvent { target, projectile }),
+        SpellType::Thorn => commands.trigger(ThornHitEvent { target, projectile }),
         _ => (),
     }
 }
