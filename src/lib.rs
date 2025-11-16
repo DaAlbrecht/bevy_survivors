@@ -1,8 +1,4 @@
 use bevy::{camera::ScalingMode, prelude::*};
-use bevy_ecs_ldtk::{IntGridRendering, LdtkPlugin, LdtkSettings};
-use bevy_enhanced_input::EnhancedInputPlugin;
-use bevy_rand::{plugin::EntropyPlugin, prelude::WyRand};
-use bevy_seedling::prelude::*;
 
 mod asset_tracking;
 mod audio;
@@ -13,31 +9,26 @@ mod gameplay;
 mod menus;
 mod screens;
 mod theme;
+mod third_party;
 
 pub fn plugin(app: &mut App) {
-    app.add_plugins((
-        DefaultPlugins
-            .set(WindowPlugin {
-                primary_window: Window {
-                    title: "bevy survivor".to_string(),
-                    fit_canvas_to_parent: true,
-                    ..default()
-                }
-                .into(),
+    app.add_plugins((DefaultPlugins
+        .set(WindowPlugin {
+            primary_window: Window {
+                title: "bevy survivor".to_string(),
+                fit_canvas_to_parent: true,
                 ..default()
-            })
-            .set(ImagePlugin::default_nearest()),
-        LdtkPlugin,
-        EnhancedInputPlugin,
-        EntropyPlugin::<WyRand>::default(),
-        SeedlingPlugin::default(),
-    ));
+            }
+            .into(),
+            ..default()
+        })
+        .set(ImagePlugin::default_nearest()),));
 
-    app.insert_resource(LdtkSettings {
-        int_grid_rendering: IntGridRendering::Invisible,
-        ..Default::default()
-    });
+    // Add all third party plugins.
 
+    app.add_plugins(third_party::plugin);
+
+    // Add all first party plugins.
     app.add_plugins((
         fixed_update_inspection::plugin,
         asset_tracking::plugin,
