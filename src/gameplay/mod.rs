@@ -2,8 +2,6 @@ use bevy::prelude::*;
 
 use crate::gameplay::spells::SpellType;
 
-mod movement;
-
 pub(crate) mod character_controller;
 pub(crate) mod enemy;
 pub(crate) mod experience;
@@ -32,7 +30,6 @@ pub(crate) fn plugin(app: &mut App) {
         experience::plugin,
         healthbar::plugin,
         level::plugin,
-        movement::plugin,
         overlays::plugin,
         player::plugin,
         spells::plugin,
