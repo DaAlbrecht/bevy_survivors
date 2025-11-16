@@ -59,12 +59,18 @@ bevy-inspector-egui = "0.35"
 # Handling user input
 bevy_enhanced_input = "0.20"
 # Sound
-bevy_seedling = { git = "https://github.com/CorvusPrudens/bevy_seedling.git", branch = "master" }
+bevy_seedling = { version = "0.6.0", default-features = false, features = [
+    "ogg",
+    "mp3",
+    "wav",
+] }
 # ldtk integration.
 bevy_ecs_ldtk = { version = "0.13.0", features = ["atlas"] }
+# Physics engine 
+avian2d = "0.4"
 
 # Latest version that works with bevy_seedling
-wasm-bindgen = { version = "=0.2.101", optional = true }
+wasm-bindgen = { version = "=0.2.101", optional = true, default-features = false }
 
 [features]
 default = ["dev_native"]
@@ -104,11 +110,7 @@ opt-level = 3
 debug-assertions = false
 
 [profile.release]
-# Compile the entire crate as one unit.
-# Slows compile times, marginal improvements.
 codegen-units = 1
-# Do a second optimization pass over the entire program, including dependencies.
-# Slows compile times, marginal improvements.
 lto = "thin"
 
 [profile.ci]
