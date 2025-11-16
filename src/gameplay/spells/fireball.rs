@@ -2,9 +2,6 @@ use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 
 use crate::audio::SfxPool;
-use crate::gameplay::movement::{
-    MovementController, PhysicalTranslation, PreviousPhysicalTranslation,
-};
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
 use crate::gameplay::spells::{HitTarget, UpgradeSpellEvent};
 use crate::gameplay::{
@@ -111,28 +108,9 @@ fn spawn_fireball_projectile(
             AnimationTimer {
                 timer: Timer::from_seconds(0.1, TimerMode::Repeating),
             },
-            MovementController {
-                velocity: direction.extend(0.),
-                speed: 200.,
-                current_speed: 100.,
-                acceleration: 1000.,
-                mass: 40.,
-                solid: false,
-                ..default()
-            },
             CastSpell(fireball),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
                 .with_rotation(towards_quaternion),
-            PhysicalTranslation(Vec3::new(
-                player_pos.translation.x,
-                player_pos.translation.y,
-                10.0,
-            )),
-            PreviousPhysicalTranslation(Vec3::new(
-                player_pos.translation.x,
-                player_pos.translation.y,
-                10.0,
-            )),
             PlayerProjectile,
         ));
         commands.spawn((

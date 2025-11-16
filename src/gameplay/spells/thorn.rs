@@ -5,7 +5,6 @@ use crate::{
     gameplay::{
         Speed,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
-        movement::{PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, Despawn, Halt, HitTarget, PlayerProjectile,
@@ -179,8 +178,6 @@ fn thorn_range_keeper(
                         rotation: Quat::IDENTITY,
                         ..default()
                     },
-                    PhysicalTranslation(Vec3::new(thorn_pos.x, thorn_pos.y, 0.0)),
-                    PreviousPhysicalTranslation(Vec3::new(thorn_pos.x, thorn_pos.y, 0.0)),
                 ))
                 .id();
 

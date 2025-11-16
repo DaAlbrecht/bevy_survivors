@@ -9,14 +9,10 @@ use crate::{
         enemy::{
             jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
-            sprinter::{SprinterAbilityHitEvent, SprinterAttackEvent},
+            sprinter::SprinterAttackEvent,
         },
-        movement::{MovementController, PhysicalTranslation},
         player::PlayerHitEvent,
-        spells::{
-            Cooldown, Damage, Despawn, Halt, PlayerProjectile, Range, Root, SpellDuration,
-            SpellTick,
-        },
+        spells::{Cooldown, Damage, Despawn, Halt, Range, Root, SpellDuration, SpellTick},
     },
     screens::Screen,
 };
@@ -50,8 +46,6 @@ pub(crate) fn plugin(app: &mut App) {
         (
             (enemy_timer_handle, enemy_movement),
             (
-                enemy_colliding_detection,
-                enemy_stop_colliding_detection,
                 projectile_hit_detection,
                 attack,
                 enemy_range_keeper,
@@ -70,11 +64,9 @@ pub(crate) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 
-    app.add_observer(enemy_take_dmg)
-        .add_observer(enemy_get_pushed_from_hit);
+    app.add_observer(enemy_take_dmg);
 }
 
-const SEPARATION_RADIUS: f32 = 40.;
 const RANGE_BUFFER: f32 = 50.0;
 
 #[derive(Component, Default, Reflect)]
@@ -197,77 +189,17 @@ fn enemy_movement(
             linear_velocity.x = velocity.x;
             linear_velocity.y = velocity.y;
         }
-        info!("{:?}", transform);
     }
 }
 ///
 /// Update the sprite direction and animation state (idling/walking).
-fn update_animation_movement(
-    mut enemies_q: Query<(&MovementController, &mut Sprite), With<Enemy>>,
-) {
-    for (movement, mut sprite) in &mut enemies_q {
-        let dx = movement.velocity.x;
+fn update_animation_movement(mut enemies_q: Query<(&LinearVelocity, &mut Sprite), With<Enemy>>) {
+    for (velocity, mut sprite) in &mut enemies_q {
+        let dx = velocity.x;
         if dx != 0.0 {
             sprite.flip_x = dx < 0.0;
         }
     }
-}
-
-fn enemy_colliding_detection(
-    mut enemy_query: Query<
-        (
-            &PhysicalTranslation,
-            Entity,
-            Option<&mut Charge>,
-            Option<&Jump>,
-        ),
-        (With<Enemy>, Without<Colliding>),
-    >,
-    player_query: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
-    mut commands: Commands,
-) -> Result {
-    let Ok(player_pos) = player_query.single() else {
-        return Ok(());
-    };
-
-    for (enemy_pos, enemy, charge, jump) in &mut enemy_query {
-        let distance_to_player = enemy_pos.distance(player_pos.0);
-
-        if distance_to_player <= SEPARATION_RADIUS {
-            //Charging enemies handle collision themself
-            if let Some(mut charge) = charge {
-                if charge.active && !charge.hit_target {
-                    charge.hit_target = true;
-                    commands.trigger(SprinterAbilityHitEvent(enemy));
-                }
-            } else if jump.is_some() {
-                //Jumping enemies can't collide with player
-                continue;
-            } else {
-                commands.entity(enemy).insert(Colliding);
-            }
-        }
-    }
-    Ok(())
-}
-
-fn enemy_stop_colliding_detection(
-    enemy_query: Query<(&PhysicalTranslation, Entity), (With<Enemy>, With<Colliding>)>,
-    player_query: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
-    mut commands: Commands,
-) -> Result {
-    let Ok(player_pos) = player_query.single() else {
-        return Ok(());
-    };
-
-    for (&enemy_pos, enemy) in &enemy_query {
-        let distance_to_player = enemy_pos.distance(player_pos.0);
-
-        if distance_to_player > SEPARATION_RADIUS {
-            commands.entity(enemy).remove::<Colliding>();
-        }
-    }
-    Ok(())
 }
 
 //maybe refactor with timer handle later?
@@ -300,36 +232,38 @@ fn enemy_take_dmg(
     }
 }
 
-fn enemy_get_pushed_from_hit(
-    trigger: On<EnemyKnockbackEvent>,
-    mut enemy_q: Query<
-        (&mut MovementController, Option<&Charge>),
-        (With<Enemy>, Without<PlayerProjectile>),
-    >,
-    projectile_q: Query<&MovementController, (With<PlayerProjectile>, Without<Enemy>)>,
-) -> Result {
-    let enemy_entity = trigger.entity_hit;
-    let projectile_entity = trigger.spell_entity;
-    let projectile_mc = projectile_q.get(projectile_entity)?;
-
-    let proj_world_vel = projectile_mc.velocity * projectile_mc.speed;
-    if proj_world_vel.length_squared() <= 1e-6 {
-        return Ok(());
-    }
-
-    let dir = proj_world_vel.normalize();
-
-    if let Ok((mut enemy_move, charge)) = enemy_q.get_mut(enemy_entity) {
-        if charge.is_some() {
-            // Charging enemies cannot be knocked back
-            return Ok(());
-        }
-
-        enemy_move.apply_knockback_from_source(dir, projectile_mc);
-    }
-
-    Ok(())
-}
+//fn enemy_get_pushed_from_hit(
+//    trigger: On<EnemyKnockbackEvent>,
+//    mut enemy_q: Query<
+//        (&mut LinearVelocity, Option<&Charge>),
+//        (With<Enemy>, Without<PlayerProjectile>),
+//    >,
+//    projectile_q: Query<&LinearVelocity, (With<PlayerProjectile>, Without<Enemy>)>,
+//) -> Result {
+//    let enemy_entity = trigger.entity_hit;
+//    let projectile_entity = trigger.spell_entity;
+//    let projectile_mc = projectile_q.get(projectile_entity)?;
+//
+//    projectile_mc.as_dvec2() * pro
+//
+//    let proj_world_vel = projectile_mc.velocity * projectile_mc.speed;
+//    if proj_world_vel.length_squared() <= 1e-6 {
+//        return Ok(());
+//    }
+//
+//    let dir = proj_world_vel.normalize();
+//
+//    if let Ok((mut enemy_move, charge)) = enemy_q.get_mut(enemy_entity) {
+//        if charge.is_some() {
+//            // Charging enemies cannot be knocked back
+//            return Ok(());
+//        }
+//
+//        enemy_move.apply_knockback_from_source(dir, projectile_mc);
+//    }
+//
+//    Ok(())
+//}
 
 fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut commands: Commands) {
     for enemy in &enemy_q {
@@ -339,20 +273,17 @@ fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut com
 
 //Inserts Halt if enemy is in range to player and is ranged
 fn enemy_range_keeper(
-    enemy_q: Query<
-        (Entity, &PhysicalTranslation, &Range, Option<&Halt>),
-        (With<Enemy>, With<Ranged>),
-    >,
-    player_q: Query<&PhysicalTranslation, With<Player>>,
+    enemy_q: Query<(Entity, &Transform, &Range, Option<&Halt>), (With<Enemy>, With<Ranged>)>,
+    player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
     };
-    let player_pos = player_pos.truncate();
+    let player_pos = player_pos.translation.truncate();
 
-    for (enemy, physics_translation, range, halt) in &enemy_q {
-        let enemy_pos = physics_translation.truncate();
+    for (enemy, enemy_transform, range, halt) in &enemy_q {
+        let enemy_pos = enemy_transform.translation.truncate();
         let distance = enemy_pos.distance(player_pos);
 
         if distance < range.0 && halt.is_none() {
@@ -377,20 +308,20 @@ fn enemy_timer_handle(
             Entity,
             &mut Cooldown,
             &EnemyType,
-            &PhysicalTranslation,
+            &Transform,
             Option<&Halt>,
             Option<&Range>,
         ),
         With<Enemy>,
     >,
-    player_q: Query<&PhysicalTranslation, (With<Player>, Without<Enemy>)>,
+    player_q: Query<&Transform, (With<Player>, Without<Enemy>)>,
     time: Res<Time>,
     mut commands: Commands,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
     };
-    let player_pos = player_pos.truncate();
+    let player_pos = player_pos.translation;
 
     for (enemy, mut cooldown_timer, enemy_type, transform, halt, range) in &mut cooldown_q {
         cooldown_timer.0.tick(time.delta());
@@ -404,7 +335,7 @@ fn enemy_timer_handle(
                 }
                 //We calculate only in the case so we dont cluter the update loop with unneeded calculations
                 EnemyType::Sprinter => {
-                    let distance = player_pos.distance(transform.truncate());
+                    let distance = player_pos.distance(transform.translation);
                     if let Some(range) = range
                         && range.0 >= distance
                     {
@@ -413,7 +344,7 @@ fn enemy_timer_handle(
                 }
                 //We calculate only in the case so we dont cluter the update loop with unneeded calculations
                 EnemyType::Jumper => {
-                    let distance = player_pos.distance(transform.truncate());
+                    let distance = player_pos.distance(transform.translation);
                     if let Some(range) = range
                         && range.0 >= distance
                     {
@@ -432,25 +363,26 @@ fn enemy_timer_handle(
 
 fn projectile_hit_detection(
     enemy_q: Query<(Entity, &EnemyType), With<Enemy>>,
-    player_q: Query<&PhysicalTranslation, With<Player>>,
+    player_q: Query<&Transform, With<Player>>,
     projectiles: Query<&EnemyProjectiles>,
-    projectile_q: Query<&PhysicalTranslation, With<EnemyProjectile>>,
+    projectile_q: Query<&Transform, With<EnemyProjectile>>,
     mut commands: Commands,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
     };
 
-    let player_pos = player_pos.truncate();
     // Get all enemies
     for (enemy, enemy_type) in &enemy_q {
         // Get each projectile of this enemy
         for projectile in projectiles.iter_descendants(enemy) {
             // Get position of this particular projectile
-            let projectile_pos = projectile_q.get(projectile)?.truncate();
+            let projectile_pos = projectile_q.get(projectile)?;
 
             //Check if player is hit by this projectile
-            if (player_pos.distance(projectile_pos) - (SPELL_SIZE / 2.0)) <= (PLAYER_SIZE / 2.0) {
+            if (player_pos.translation.distance(projectile_pos.translation) - (SPELL_SIZE / 2.0))
+                <= (PLAYER_SIZE / 2.0)
+            {
                 trigger_player_hit_event(enemy_type, projectile, enemy, &mut commands);
             }
         }

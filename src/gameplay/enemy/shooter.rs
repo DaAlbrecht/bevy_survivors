@@ -15,7 +15,6 @@ use crate::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
         },
         level::{LevelWalls, find_valid_spawn_position},
-        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::{Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Range},
     },
@@ -155,21 +154,17 @@ fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>
 
 fn shooter_attack(
     trigger: On<ShooterAttackEvent>,
-    shooter_q: Query<&PhysicalTranslation, With<Shooter>>,
-    player_q: Query<&PhysicalTranslation, With<Player>>,
+    shooter_q: Query<&Transform, With<Shooter>>,
+    player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let Ok(player_pos) = player_q.single() else {
-        return Ok(());
-    };
+    let player_pos = player_q.single()?;
     let shooter = trigger.0;
 
-    let Ok(shooter_pos) = shooter_q.get(shooter) else {
-        return Ok(());
-    };
+    let shooter_pos = shooter_q.get(shooter)?;
 
-    let direction = (player_pos.0 - shooter_pos.0).normalize();
+    let direction = (player_pos.translation - shooter_pos.translation).normalize();
     let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.normalize());
 
     commands.spawn((
@@ -178,16 +173,9 @@ fn shooter_attack(
             image: asset_server.load("enemies/shooter_bullet.png"),
             ..default()
         },
-        Transform::from_translation(shooter_pos.0)
+        Transform::from_translation(shooter_pos.translation)
             .with_rotation(towards_quaternion)
             .with_scale(Vec3::splat(0.5)),
-        PhysicalTranslation(shooter_pos.0),
-        PreviousPhysicalTranslation(shooter_pos.0),
-        MovementController {
-            velocity: direction,
-            speed: 125.0,
-            ..default()
-        },
         ProjectileOf(shooter),
     ));
 

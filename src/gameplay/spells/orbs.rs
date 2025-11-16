@@ -6,7 +6,6 @@ use crate::{
     PausableSystems, PhysicsAppSystems,
     gameplay::{
         enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
-        movement::{MovementController, PhysicalTranslation, PreviousPhysicalTranslation},
         player::Player,
         spells::{
             CastSpell, Cooldown, Damage, HitTarget, PlayerProjectile, ProjectileCount, Range,
@@ -75,12 +74,12 @@ fn upgrade_orb(
 
 fn spawn_orb_projectile(
     _trigger: On<OrbAttackEvent>,
-    player_q: Query<&PhysicalTranslation, With<Player>>,
+    player_q: Query<&Transform, With<Player>>,
     orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
-    let Ok(player_pos) = player_q.single() else {
+    let Ok(player_transform) = player_q.single() else {
         return Ok(());
     };
 
@@ -90,7 +89,7 @@ fn spawn_orb_projectile(
         // Compute starting phase for each orb (even spacing)
         let phase = (std::f32::consts::TAU) * (n as f32 / projectile_count.0);
         let offset = Vec2::from_angle(phase) * radius.0;
-        let world_pos = player_pos.0 + offset.extend(10.0);
+        let world_pos = player_transform.translation + offset.extend(10.0);
 
         // tangent direction (orthogonal to radius)
         let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
@@ -105,15 +104,6 @@ fn spawn_orb_projectile(
             OrbProjectile,
             CastSpell(orb),
             Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
-            PreviousPhysicalTranslation(world_pos),
-            PhysicalTranslation(world_pos),
-            MovementController {
-                velocity: direction,
-                // set tangential speed so advance_physics will move the orb immediately
-                speed: tangential_speed,
-                mass: 20.0,
-                ..default()
-            },
             OrbPhase(phase),
             Range(radius.0),
             PlayerProjectile,
@@ -126,24 +116,16 @@ fn spawn_orb_projectile(
 
 //Keeps direction orthogonal to radius -> circel
 fn record_orb_movement(
-    player_q: Query<&PhysicalTranslation, (With<Player>, Without<OrbProjectile>)>,
-    mut orb_q: Query<
-        (
-            &PhysicalTranslation,
-            &mut MovementController,
-            &mut OrbPhase,
-            &Range,
-        ),
-        (With<OrbProjectile>, Without<Player>),
-    >,
+    player_q: Query<&Transform, (With<Player>, Without<OrbProjectile>)>,
+    mut orb_q: Query<(&Transform, &mut OrbPhase, &Range), (With<OrbProjectile>, Without<Player>)>,
     time: Res<Time<Fixed>>,
 ) -> Result {
     let dt = time.delta_secs();
-    let Ok(player_pos) = player_q.single() else {
+    let Ok(player_transform) = player_q.single() else {
         return Ok(());
     };
 
-    for (orb_pos, mut controller, mut phase, orbit_radius) in &mut orb_q {
+    for (orb_transform, mut phase, orbit_radius) in &mut orb_q {
         // Advance orbital phase
         phase.0 += ORB_ANGULAR_SPEED * dt;
         if phase.0 > std::f32::consts::TAU {
@@ -152,15 +134,15 @@ fn record_orb_movement(
 
         // Compute the target orbit position relative to player
         let offset = Vec2::from_angle(phase.0) * orbit_radius.0;
-        let target_pos = player_pos.0 + offset.extend(0.0);
+        let target_pos = player_transform.translation + offset.extend(0.0);
 
         // Compute velocity needed to reach target_pos this frame
-        let delta = target_pos - orb_pos.0;
+        let delta = target_pos - orb_transform.translation;
         let velocity = if dt > 0.0 { delta / dt } else { Vec3::ZERO };
 
         // Apply velocity to MovementController
-        controller.velocity = velocity.normalize_or_zero();
-        controller.speed = velocity.length();
+        // controller.velocity = velocity.normalize_or_zero();
+        // controller.speed = velocity.length();
     }
 
     Ok(())

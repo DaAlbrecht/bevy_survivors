@@ -6,7 +6,6 @@ use crate::{
         PickUpSpell,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
         level::LevelWalls,
-        movement::PhysicalTranslation,
         player::{AddToInventory, Inventory, Player},
         simple_animation::HurtAnimationTimer,
         spells::{
@@ -218,13 +217,10 @@ pub enum HitTarget {
 
 fn projectile_hit_detection(
     spells: Query<(Entity, &SpellType), With<Spell>>,
-    tail_phys: Query<&PhysicalTranslation, With<Tail>>,
+    tail_phys: Query<&Transform, With<Tail>>,
     projectiles: Query<&SpellProjectiles>,
-    enemy_q: Query<
-        (&PhysicalTranslation, Entity, Option<&Jump>),
-        (With<Enemy>, Without<PlayerProjectile>),
-    >,
-    projectile_phys: Query<&PhysicalTranslation, With<PlayerProjectile>>,
+    enemy_q: Query<(&Transform, Entity, Option<&Jump>), (With<Enemy>, Without<PlayerProjectile>)>,
+    projectile_phys: Query<&Transform, With<PlayerProjectile>>,
     level_walls: Res<LevelWalls>,
     mut commands: Commands,
 ) -> Result {
@@ -233,15 +229,15 @@ fn projectile_hit_detection(
         // Get each fired projectile for this spell
         for projectile in projectiles.iter_descendants(spell) {
             // Start with physics position
-            let mut projectile_pos = projectile_phys.get(projectile)?.0;
+            let mut projectile_pos = projectile_phys.get(projectile)?;
 
             // If projectile is a tail, use its physics world pos
             if let Ok(tail_pos) = tail_phys.get(projectile) {
-                projectile_pos = tail_pos.0;
+                projectile_pos = tail_pos;
             }
 
             let grid = bevy_ecs_ldtk::utils::translation_to_grid_coords(
-                projectile_pos.truncate(),
+                projectile_pos.translation.truncate(),
                 IVec2::splat(32),
             );
 
@@ -256,8 +252,8 @@ fn projectile_hit_detection(
                     continue; // jumping enemies can't be hit
                 }
 
-                let enemy_pos = enemy_phys.0;
-                let distance = projectile_pos.truncate().distance(enemy_pos.truncate());
+                let enemy_pos = enemy_phys;
+                let distance = projectile_pos.translation.distance(enemy_pos.translation);
                 if (distance - (SPELL_SIZE / 2.0)) <= ENEMY_SIZE / 2.0 {
                     trigger_hit_event(
                         &mut commands,
