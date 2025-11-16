@@ -8,6 +8,7 @@ use crate::{
         level::LevelWalls,
         movement::PhysicalTranslation,
         player::{AddToInventory, Inventory, Player},
+        simple_animation::HurtAnimationTimer,
         spells::{
             dot::Bleed,
             fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
@@ -263,7 +264,10 @@ fn projectile_hit_detection(
                         spell_type,
                         projectile,
                         HitTarget::Enemy(enemy_entity),
-                    )
+                    );
+                    commands
+                        .entity(enemy_entity)
+                        .insert(HurtAnimationTimer::default());
                 }
             }
         }

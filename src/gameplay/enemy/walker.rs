@@ -102,6 +102,7 @@ fn spawn_walker(
         PreviousPhysicalTranslation(Vec3::new(enemy_pos_x, enemy_pos_y, 10.)),
         MovementController {
             speed: stats.speed,
+            mass: 100.,
             ..default()
         },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),

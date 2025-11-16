@@ -116,7 +116,7 @@ fn spawn_fireball_projectile(
                 speed: 200.,
                 current_speed: 100.,
                 acceleration: 1000.,
-                mass: 80.,
+                mass: 40.,
                 solid: false,
                 ..default()
             },
