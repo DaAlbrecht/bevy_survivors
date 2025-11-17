@@ -112,10 +112,24 @@ fn spawn_shooter(
         Shooter,
         LockedAxes::ROTATION_LOCKED,
         RigidBody::Dynamic,
-        children![(
-            Collider::rectangle(32., 16.),
-            Transform::from_xyz(0., -6., 0.0)
-        )],
+        children![
+            (
+                Collider::rectangle(32., 16.),
+                Transform::from_xyz(0., -6., 0.0)
+            ),
+            (
+                Sprite {
+                    image: asset_server.load("shadow.png"),
+
+                    ..Default::default()
+                },
+                Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                    x: 4.,
+                    y: 1.,
+                    z: 1.
+                })
+            )
+        ],
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
         Sprite {
             image: asset_server.load(stats.sprite.clone()),
