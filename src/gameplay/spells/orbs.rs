@@ -1,12 +1,13 @@
 use core::f32;
 
+use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
     PausableSystems,
     gameplay::{
         enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
-        player::Player,
+        player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, HitTarget, PlayerProjectile, ProjectileCount, Range,
             Spell, SpellDuration, SpellType, UpgradeSpellEvent,
@@ -50,7 +51,7 @@ const ORB_ANGULAR_SPEED: f32 = std::f32::consts::TAU * 0.25; // one orbit per 4s
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
-        (record_orb_movement, orb_lifetime)
+        (update_orb_movement, orb_lifetime)
             .in_set(PausableSystems)
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -91,8 +92,7 @@ fn spawn_orb_projectile(
         let world_pos = player_transform.translation + offset.extend(10.0);
 
         // tangent direction (orthogonal to radius)
-        //        let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
-        //        let tangential_speed = ORB_ANGULAR_SPEED * radius.0;
+        let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
 
         commands.spawn((
             Name::new("orb projectile"),
@@ -104,6 +104,7 @@ fn spawn_orb_projectile(
             CastSpell(orb),
             Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
             OrbPhase(phase),
+            Direction(direction),
             Range(radius.0),
             PlayerProjectile,
             SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
@@ -114,17 +115,20 @@ fn spawn_orb_projectile(
 }
 
 //Keeps direction orthogonal to radius -> circel
-fn record_orb_movement(
+fn update_orb_movement(
     player_q: Query<&Transform, (With<Player>, Without<OrbProjectile>)>,
-    mut orb_q: Query<(&Transform, &mut OrbPhase, &Range), (With<OrbProjectile>, Without<Player>)>,
+    mut orb_q: Query<
+        (&mut LinearVelocity, &Transform, &mut OrbPhase, &Range),
+        (With<OrbProjectile>, Without<Player>),
+    >,
     time: Res<Time<Fixed>>,
-) -> Result {
+) {
     let dt = time.delta_secs();
     let Ok(player_transform) = player_q.single() else {
-        return Ok(());
+        return;
     };
 
-    for (orb_transform, mut phase, orbit_radius) in &mut orb_q {
+    for (mut linear_velocity, orb_transform, mut phase, orbit_radius) in &mut orb_q {
         // Advance orbital phase
         phase.0 += ORB_ANGULAR_SPEED * dt;
         if phase.0 > std::f32::consts::TAU {
@@ -139,12 +143,10 @@ fn record_orb_movement(
         let delta = target_pos - orb_transform.translation;
         let velocity = if dt > 0.0 { delta / dt } else { Vec3::ZERO };
 
-        // Apply velocity to MovementController
-        // controller.velocity = velocity.normalize_or_zero();
-        // controller.speed = velocity.length();
+        // Apply velocity
+        linear_velocity.x = velocity.x;
+        linear_velocity.y = velocity.y;
     }
-
-    Ok(())
 }
 
 fn orb_hit(

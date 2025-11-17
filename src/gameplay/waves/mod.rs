@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use crate::{
-    SPAWN_RADIUS, SPAWN_RADIUS_BUFFER,
+    PausableSystems, SPAWN_RADIUS, SPAWN_RADIUS_BUFFER,
     gameplay::{
         enemy::{
             Enemy, EnemyType,
@@ -22,7 +22,9 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         FixedUpdate,
-        (wave_timer_handle).run_if(in_state(Screen::Gameplay)),
+        (wave_timer_handle)
+            .run_if(in_state(Screen::Gameplay))
+            .in_set(PausableSystems),
     );
 
     app.add_observer(patch_wave)

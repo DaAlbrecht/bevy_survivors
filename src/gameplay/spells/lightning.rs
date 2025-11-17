@@ -122,7 +122,7 @@ fn spawn_lightning_bolt(
         commands.spawn((
             Name::new("LightningBolt"),
             Sprite {
-                image: asset_server.load("Lightning.png"),
+                image: asset_server.load("lightning.png"),
                 custom_size: Some(Vec2::new(length, 13.0)),
                 ..default()
             },
