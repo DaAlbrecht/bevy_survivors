@@ -88,35 +88,40 @@ fn spawn_walker(
         Name::new("Walker"),
         Walker,
         (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
-        Sprite::from_atlas_image(
-            texture,
-            TextureAtlas {
-                layout: texture_atlas_layout,
-                index: animation_indices.first,
-            },
-        ),
-        animation_indices,
-        AnimationTimer {
-            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
-        },
         Damage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
         CharacterController { speed: stats.speed },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-        children![(
-            Sprite {
-                image: asset_server.load("shadow.png"),
+        children![
+            (
+                Sprite::from_atlas_image(
+                    texture,
+                    TextureAtlas {
+                        layout: texture_atlas_layout,
+                        index: animation_indices.first,
+                    },
+                ),
+                animation_indices,
+                AnimationTimer {
+                    timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+                },
+                Transform::from_xyz(0., 16., 0.)
+            ),
+            (
+                Sprite {
+                    image: asset_server.load("shadow.png"),
 
-                ..Default::default()
-            },
-            Transform::from_xyz(0., -32.0, -0.1).with_scale(Vec3 {
-                x: 4.,
-                y: 1.,
-                z: 1.
-            })
-        )],
+                    ..Default::default()
+                },
+                Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                    x: 4.,
+                    y: 1.,
+                    z: 1.
+                })
+            )
+        ],
     ));
 }
 
