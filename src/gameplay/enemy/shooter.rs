@@ -113,6 +113,7 @@ fn spawn_shooter(
         (Collider::rectangle(32., 16.), LockedAxes::ROTATION_LOCKED),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+        Visibility::default(),
         CharacterController { speed: 30.0 },
         Health(stats.health),
         Damage(stats.damage),

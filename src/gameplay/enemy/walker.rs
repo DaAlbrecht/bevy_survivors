@@ -92,6 +92,7 @@ fn spawn_walker(
         Health(stats.health),
         Speed(stats.speed),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
+        Visibility::default(),
         CharacterController { speed: stats.speed },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
         children![
