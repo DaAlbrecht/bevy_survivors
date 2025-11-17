@@ -1,14 +1,9 @@
-# About
+# Spells
 
-What are the key features of spells, and how do they differ from each other? 
+Spells differ from weapons in that they are active abilities that the player can use. While weapons are primarily focused on dealing damage to enemies, spells can provide a wider range of effects, including area control, buffs, debuffs, and utility.
 
-- Targeting: Where does the spell go?
-- Range: Melee or ranged. 
-- Cooldown: How often does the spell trigger?
-- Scaling: Improvements when leveled.
-- Status Effects: Stun, slow, DoT, knockback, confusion, or charm.
+Design principles for spells should consider the following aspects:
 
-Each spell type should make the player behave differently to use it effectively.  
-For each spell type, let's ask ourselves: How does this spell shape the player's movement and strategy, and how is it different from the other types?\\
-
-The following subsections describe the different types of spells.
+- **Targeting**: Spells can be targeted at specific locations, enemies, or even the player themselves. This allows for strategic placement and timing of spell usage. Spells should require the player to aim or select a target, adding an element of skill.
+- **Types**: We use the classic `Q-W-E-R` spell system, where each key corresponds to a different spell type. This allows for quick access and easy memorization of spell functions. Spells can be categorized into offensive, defensive, and utility types.
+- **Combos**: Do give spells more impact they can be used to create `Combo` Attacks (First spawn water, then lightning, combine `StatusEffect`...).
