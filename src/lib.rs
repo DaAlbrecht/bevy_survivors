@@ -1,3 +1,4 @@
+use avian2d::prelude::PhysicsLayer;
 use bevy::{camera::ScalingMode, prelude::*};
 
 mod asset_tracking;
@@ -78,14 +79,6 @@ const CAMERA_DECAY_RATE: f32 = 2.;
 /// When adding a new variant, make sure to order it in the `configure_sets`
 /// call above.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum PrePhysicsAppSystems {
-    AccumulateInput,
-}
-
-/// High-level groupings of systems for the app in the `Update` schedule.
-/// When adding a new variant, make sure to order it in the `configure_sets`
-/// call above.
-#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 enum PostPhysicsAppSystems {
     /// Tick timers.
     TickTimers,
@@ -97,6 +90,21 @@ enum PostPhysicsAppSystems {
     PlayAnimations,
     /// Do everything else (consider splitting this into further variants).
     Update,
+}
+
+#[derive(PhysicsLayer, Default)]
+pub(crate) enum GameLayer {
+    #[default]
+    // Layer 0 - the default layer that objects are assigned to
+    Default,
+    // Layer 1
+    Player,
+    // Layer 2
+    PlayerProjectiles,
+    // Layer 3
+    Enemy,
+    // Layer 4
+    EnemyProjectiles,
 }
 
 /// Whether or not the game is paused.

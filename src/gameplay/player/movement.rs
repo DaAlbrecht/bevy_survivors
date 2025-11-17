@@ -7,7 +7,7 @@ use bevy_ecs_ldtk::{
 use bevy_enhanced_input::{EnhancedInputSystems, action::Action, prelude::InputAction};
 
 use crate::{
-    CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems, PrePhysicsAppSystems,
+    CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems,
     fixed_update_inspection::did_fixed_update_happen,
     gameplay::{character_controller::CharacterController, player::Player},
 };
@@ -17,9 +17,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         PreUpdate,
-        (record_player_directional_input)
-            .after(EnhancedInputSystems::Apply)
-            .in_set(PrePhysicsAppSystems::AccumulateInput),
+        (record_player_directional_input).after(EnhancedInputSystems::Apply),
     );
 
     app.add_systems(Update, clear_input.run_if(did_fixed_update_happen));

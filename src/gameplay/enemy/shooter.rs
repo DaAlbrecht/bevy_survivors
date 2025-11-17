@@ -7,7 +7,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    SPAWN_RADIUS,
+    GameLayer, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
@@ -15,7 +15,7 @@ use crate::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
         },
         level::{LevelWalls, find_valid_spawn_position},
-        player::{Player, PlayerHitEvent},
+        player::{Direction, Player, PlayerHitEvent},
         spells::{Cooldown, Damage, Range},
     },
 };
@@ -81,9 +81,9 @@ fn spawn_shooter(
     shooter_q: Query<&Shooter>,
     shooter_stats: Res<ShooterStats>,
     level_walls: Res<LevelWalls>,
-) -> Result {
+) {
     let Ok(player_pos) = player_q.single() else {
-        return Ok(());
+        return;
     };
 
     let stats = shooter_stats;
@@ -110,11 +110,20 @@ fn spawn_shooter(
         Name::new(format!("Shooter {shooter_count}")),
         Enemy,
         Shooter,
-        LockedAxes::ROTATION_LOCKED,
-        RigidBody::Dynamic,
+        // Overwrite default Collider size
+        Collider::default(),
         children![
             (
                 Collider::rectangle(32., 16.),
+                //Reapply the collision layer
+                CollisionLayers::new(
+                    GameLayer::Enemy,
+                    [
+                        GameLayer::Player,
+                        GameLayer::Default,
+                        GameLayer::PlayerProjectiles
+                    ]
+                ),
                 Transform::from_xyz(0., -6., 0.0)
             ),
             (
@@ -135,7 +144,6 @@ fn spawn_shooter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        Visibility::default(),
         CharacterController { speed: 30.0 },
         Health(stats.health),
         Damage(stats.damage),
@@ -143,8 +151,6 @@ fn spawn_shooter(
         Range(stats.range),
         Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
     ));
-
-    Ok(())
 }
 
 fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>) {
@@ -156,7 +162,7 @@ fn patch_shooter(trigger: On<ShooterPatchEvent>, mut stats: ResMut<ShooterStats>
     stats.projectile_speed += 50.0 * power_level;
     stats.range += 50.0 * power_level;
     stats.cooldown -= 0.1 * power_level;
-    stats.sprite = sprite.clone();
+    stats.sprite.clone_from(sprite);
 }
 
 fn shooter_attack(
@@ -176,6 +182,8 @@ fn shooter_attack(
 
     commands.spawn((
         EnemyProjectile,
+        Speed(80.),
+        Direction(direction),
         Sprite {
             image: asset_server.load("enemies/shooter_bullet.png"),
             ..default()

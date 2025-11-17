@@ -123,7 +123,6 @@ fn spawn_jumper(
             Name::new(format!("Jumper {jumper_count}")),
             Enemy,
             Jumper,
-            (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
             CharacterController { speed: 30.0 },
             Sprite {
                 image: asset_server.load(stats.sprite.clone()),

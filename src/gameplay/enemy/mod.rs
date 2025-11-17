@@ -1,17 +1,17 @@
-use avian2d::prelude::LinearVelocity;
+use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
-    PLAYER_SIZE, PausableSystems, PostPhysicsAppSystems, SPELL_SIZE,
+    GameLayer, PLAYER_SIZE, PausableSystems, PostPhysicsAppSystems, SPELL_SIZE,
     gameplay::{
-        Health,
+        Health, Speed,
         character_controller::CharacterController,
         enemy::{
             jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
             sprinter::SprinterAttackEvent,
         },
-        player::PlayerHitEvent,
+        player::{Direction, PlayerHitEvent},
         spells::{Cooldown, Damage, Despawn, Halt, Range, Root, SpellDuration, SpellTick},
     },
     screens::Screen,
@@ -50,6 +50,7 @@ pub(crate) fn plugin(app: &mut App) {
             attack,
             enemy_range_keeper,
             terrain_manager,
+            move_enemy_projectile,
         )
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
@@ -71,6 +72,15 @@ const RANGE_BUFFER: f32 = 50.0;
 pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component, Default, Reflect)]
+#[require(
+    LockedAxes::ROTATION_LOCKED,
+    RigidBody::Dynamic,
+    Collider = Collider::rectangle(32., 32.),
+    CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
+    GameLayer::Player,
+    GameLayer::Default,
+    GameLayer::PlayerProjectiles
+]))]
 pub(crate) struct Enemy;
 
 #[derive(Event, Reflect)]
@@ -95,6 +105,15 @@ pub(crate) struct EnemyDeathEvent(pub Transform);
 pub(crate) struct Colliding;
 
 #[derive(Component)]
+#[require(
+    RigidBody::Kinematic,
+    Collider = Collider::rectangle(16., 16.),
+    DebugRender = DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 0.0)),
+    CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
+    GameLayer::Player,
+    GameLayer::Default,
+    GameLayer::PlayerProjectiles
+]))]
 pub(crate) struct EnemyProjectile;
 
 #[derive(Component)]
@@ -189,6 +208,31 @@ fn enemy_movement(
         }
     }
 }
+
+fn move_enemy_projectile(
+    enemy_q: Query<Entity, With<Enemy>>,
+    projectiles: Query<&EnemyProjectiles>,
+    mut projectile_q: Query<
+        (&mut LinearVelocity, &Direction, &Speed),
+        (With<EnemyProjectile>, Without<Halt>),
+    >,
+) {
+    //Loop over all types of enemies
+    for enemy in &enemy_q {
+        // Iter over each projectile for this given enemy type
+        for projectile in projectiles.iter_descendants(enemy) {
+            let Ok((mut linear_velocity, direction, speed)) = projectile_q.get_mut(projectile)
+            else {
+                continue;
+            };
+
+            let movement = direction.0 * speed.0;
+            linear_velocity.x = movement.x;
+            linear_velocity.y = movement.y;
+        }
+    }
+}
+
 ///
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(mut enemies_q: Query<(&LinearVelocity, &mut Sprite), With<Enemy>>) {

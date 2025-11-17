@@ -1,4 +1,4 @@
-use avian2d::prelude::{Collider, Mass};
+use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
 use bevy_ecs_ldtk::GridCoords;
 use bevy_ecs_ldtk::{LdtkEntity, app::LdtkEntityAppExt};
@@ -6,6 +6,7 @@ use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
+use crate::GameLayer;
 use crate::gameplay::character_controller::CharacterController;
 use crate::{
     asset_tracking::LoadResource,
@@ -121,8 +122,18 @@ fn setup_player(
         // A texture atlas is a way to split a single image into a grid of related images.
         // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
         PlayerAnimation::new(),
-        Mass(0.),
+        LockedAxes::ROTATION_LOCKED,
+        // Prevent the player from getting impacted by external forces.
+        RigidBody::Kinematic,
         Collider::rectangle(32., 32.),
+        CollisionLayers::new(
+            GameLayer::Player,
+            [
+                GameLayer::Enemy,
+                GameLayer::Default,
+                GameLayer::EnemyProjectiles,
+            ],
+        ),
         children![
             (
                 Mesh2d(mesh.add(Rectangle::new(32.0, 5.0))),

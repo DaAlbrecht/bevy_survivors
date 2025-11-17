@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use avian2d::prelude::*;
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
@@ -87,7 +87,6 @@ fn spawn_walker(
     commands.spawn((
         Name::new("Walker"),
         Walker,
-        (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
         Damage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),

@@ -115,7 +115,7 @@ fn spawn_sprinter(
         Name::new(format!("Shooter {sprinter_count}")),
         Enemy,
         Sprinter,
-        (Collider::rectangle(32., 32.), LockedAxes::ROTATION_LOCKED),
+        Collider::rectangle(32., 32.),
         Sprite {
             image: asset_server.load(stats.sprite.clone()),
             ..default()

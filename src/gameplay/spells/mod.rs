@@ -56,7 +56,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Reflect)]
-#[require(RigidBody::Kinematic, Collider, DebugRender = DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 0.0)))]
+#[require(RigidBody::Kinematic, Collider, DebugRender = DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)))]
 pub(crate) struct PlayerProjectile;
 
 #[derive(Component, Default, Reflect)]
