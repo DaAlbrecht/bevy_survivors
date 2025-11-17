@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use avian2d::prelude::*;
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
@@ -80,7 +80,7 @@ fn spawn_walker(
     let enemy_pos_y = adjusted_pos.y;
 
     let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
-    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 90, y: 64 }, 10, 1, None, None);
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 42, y: 40 }, 10, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
     let animation_indices = AnimationIndices { first: 0, last: 9 };
 
@@ -92,37 +92,31 @@ fn spawn_walker(
         Health(stats.health),
         Speed(stats.speed),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
-        Visibility::default(),
+        Sprite::from_atlas_image(
+            texture,
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: animation_indices.first,
+            },
+        ),
+        animation_indices,
+        AnimationTimer {
+            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+        },
         CharacterController { speed: stats.speed },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-        children![
-            (
-                Sprite::from_atlas_image(
-                    texture,
-                    TextureAtlas {
-                        layout: texture_atlas_layout,
-                        index: animation_indices.first,
-                    },
-                ),
-                animation_indices,
-                AnimationTimer {
-                    timer: Timer::from_seconds(0.1, TimerMode::Repeating),
-                },
-                Transform::from_xyz(0., 16., 0.)
-            ),
-            (
-                Sprite {
-                    image: asset_server.load("shadow.png"),
+        children![(
+            Sprite {
+                image: asset_server.load("shadow.png"),
 
-                    ..Default::default()
-                },
-                Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
-                    x: 4.,
-                    y: 1.,
-                    z: 1.
-                })
-            )
-        ],
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                x: 4.,
+                y: 1.,
+                z: 1.
+            })
+        )],
     ));
 }
 

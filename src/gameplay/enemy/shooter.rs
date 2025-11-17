@@ -1,7 +1,7 @@
 use avian2d::prelude::*;
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::Anchor};
 
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
@@ -113,6 +113,11 @@ fn spawn_shooter(
         (Collider::rectangle(32., 16.), LockedAxes::ROTATION_LOCKED),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+        Anchor::CENTER,
+        Sprite {
+            image: asset_server.load(stats.sprite.clone()),
+            ..default()
+        },
         Visibility::default(),
         CharacterController { speed: 30.0 },
         Health(stats.health),
@@ -120,27 +125,18 @@ fn spawn_shooter(
         AbilityDamage(stats.ability_damage),
         Range(stats.range),
         Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
-        children![
-            (
-                Sprite {
-                    image: asset_server.load(stats.sprite.clone()),
-                    ..default()
-                },
-                Transform::from_xyz(0., 8.0, 0.)
-            ),
-            (
-                Sprite {
-                    image: asset_server.load("shadow.png"),
+        children![(
+            Sprite {
+                image: asset_server.load("shadow.png"),
 
-                    ..Default::default()
-                },
-                Transform::from_xyz(0., -8.0, -0.1).with_scale(Vec3 {
-                    x: 2.,
-                    y: 1.,
-                    z: 1.
-                })
-            )
-        ],
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -16.0, -0.1).with_scale(Vec3 {
+                x: 2.,
+                y: 1.,
+                z: 1.
+            })
+        )],
     ));
 
     Ok(())
