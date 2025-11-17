@@ -14,18 +14,19 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(FixedUpdate, (apply_movement).in_set(PausableSystems));
+
     app.add_systems(
-        RunFixedMainLoop,
-        (
-            (record_player_directional_input)
-                .after(EnhancedInputSystems::Apply)
-                .in_set(PrePhysicsAppSystems::AccumulateInput),
-            clear_input
-                .in_set(PostPhysicsAppSystems::FixedTimestepDidRun)
-                .run_if(did_fixed_update_happen),
-            translate_camera.in_set(PostPhysicsAppSystems::UpdateCamera),
-        )
-            .in_set(PausableSystems),
+        PreUpdate,
+        (record_player_directional_input)
+            .after(EnhancedInputSystems::Apply)
+            .in_set(PrePhysicsAppSystems::AccumulateInput),
+    );
+
+    app.add_systems(Update, clear_input.run_if(did_fixed_update_happen));
+
+    app.add_systems(
+        Update,
+        translate_camera.in_set(PostPhysicsAppSystems::Update),
     );
 }
 

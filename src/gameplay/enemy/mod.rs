@@ -2,7 +2,7 @@ use avian2d::prelude::LinearVelocity;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 
 use crate::{
-    PLAYER_SIZE, PausableSystems, PhysicsAppSystems, PostPhysicsAppSystems, SPELL_SIZE,
+    PLAYER_SIZE, PausableSystems, PostPhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         Health,
         character_controller::CharacterController,
@@ -44,14 +44,12 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
         (
-            (enemy_timer_handle, enemy_movement),
-            (
-                projectile_hit_detection,
-                attack,
-                enemy_range_keeper,
-                terrain_manager,
-            )
-                .in_set(PhysicsAppSystems::PhysicsResolution),
+            enemy_timer_handle,
+            enemy_movement,
+            projectile_hit_detection,
+            attack,
+            enemy_range_keeper,
+            terrain_manager,
         )
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
@@ -59,7 +57,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         FixedLast,
-        ((enemy_despawner).in_set(PhysicsAppSystems::PhysicsAdjustments))
+        ((enemy_despawner).in_set(PostPhysicsAppSystems::Update))
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
     );

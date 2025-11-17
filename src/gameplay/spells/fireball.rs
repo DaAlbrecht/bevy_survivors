@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 
 use crate::audio::SfxPool;
+use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
 use crate::gameplay::spells::{HitTarget, UpgradeSpellEvent};
 use crate::gameplay::{
@@ -111,6 +112,7 @@ fn spawn_fireball_projectile(
             CastSpell(fireball),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
                 .with_rotation(towards_quaternion),
+            Direction(direction.extend(0.)),
             PlayerProjectile,
         ));
         commands.spawn((

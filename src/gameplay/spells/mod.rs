@@ -1,12 +1,13 @@
+use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    ENEMY_SIZE, PausableSystems, PhysicsAppSystems, SPELL_SIZE,
+    ENEMY_SIZE, PausableSystems, SPELL_SIZE,
     gameplay::{
-        PickUpSpell,
+        PickUpSpell, Speed,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
         level::LevelWalls,
-        player::{AddToInventory, Inventory, Player},
+        player::{AddToInventory, Direction, Inventory, Player},
         simple_animation::HurtAnimationTimer,
         spells::{
             dot::Bleed,
@@ -40,9 +41,10 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
         (
-            (handle_timers),
-            attack.in_set(PhysicsAppSystems::PhysicsAdjustments),
-            projectile_hit_detection.in_set(PhysicsAppSystems::PhysicsResolution),
+            handle_timers,
+            attack,
+            projectile_hit_detection,
+            move_projectile,
         )
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
@@ -54,6 +56,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Reflect)]
+#[require(RigidBody::Kinematic, Collider, DebugRender = DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 0.0)))]
 pub(crate) struct PlayerProjectile;
 
 #[derive(Component, Default, Reflect)]
@@ -328,5 +331,30 @@ pub(crate) fn trigger_hit_event(
         SpellType::Orb => commands.trigger(OrbHitEvent { target, projectile }),
         SpellType::Thorn => commands.trigger(ThornHitEvent { target, projectile }),
         _ => (),
+    }
+}
+
+fn move_projectile(
+    spells: Query<(Entity, &Speed), With<Spell>>,
+    projectiles: Query<&SpellProjectiles>,
+    mut projectile_q: Query<
+        (&mut LinearVelocity, &Direction),
+        (With<PlayerProjectile>, Without<Halt>),
+    >,
+) {
+    // Loop over all types of spells
+    for (spell, speed) in &spells {
+        // Iterate over each projectile for this given spell type
+
+        for projectile in projectiles.iter_descendants(spell) {
+            let Ok((mut linear_velocity, bullet_direction)) = projectile_q.get_mut(projectile)
+            else {
+                continue;
+            };
+
+            let movement = bullet_direction.0.normalize_or_zero() * speed.0;
+            linear_velocity.0.x = movement.x;
+            linear_velocity.0.y = movement.y;
+        }
     }
 }

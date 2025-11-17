@@ -3,7 +3,7 @@ use core::f32;
 use bevy::prelude::*;
 
 use crate::{
-    PausableSystems, PhysicsAppSystems,
+    PausableSystems,
     gameplay::{
         enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
         player::Player,
@@ -51,7 +51,6 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
         (record_orb_movement, orb_lifetime)
-            .in_set(PhysicsAppSystems::PhysicsAdjustments)
             .in_set(PausableSystems)
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -92,8 +91,8 @@ fn spawn_orb_projectile(
         let world_pos = player_transform.translation + offset.extend(10.0);
 
         // tangent direction (orthogonal to radius)
-        let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
-        let tangential_speed = ORB_ANGULAR_SPEED * radius.0;
+        //        let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
+        //        let tangential_speed = ORB_ANGULAR_SPEED * radius.0;
 
         commands.spawn((
             Name::new("orb projectile"),
