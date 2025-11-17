@@ -15,6 +15,9 @@ pub fn plugin(app: &mut App) {
     app.add_plugins((DefaultPlugins
         .set(WindowPlugin {
             primary_window: Window {
+                #[cfg(feature = "dev")]
+                title: "float".to_string(),
+                #[cfg(not(feature = "dev"))]
                 title: "bevy survivor".to_string(),
                 fit_canvas_to_parent: true,
                 ..default()
