@@ -1,13 +1,13 @@
 use avian2d::prelude::*;
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::prelude::*;
 
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE, SPAWN_RADIUS,
+    SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
@@ -110,7 +110,12 @@ fn spawn_shooter(
         Name::new(format!("Shooter {shooter_count}")),
         Enemy,
         Shooter,
-        (Collider::rectangle(32., 16.), LockedAxes::ROTATION_LOCKED),
+        LockedAxes::ROTATION_LOCKED,
+        RigidBody::Dynamic,
+        children![(
+            Collider::rectangle(32., 16.),
+            Transform::from_xyz(0., -6., 0.0)
+        )],
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
         Sprite {
             image: asset_server.load(stats.sprite.clone()),

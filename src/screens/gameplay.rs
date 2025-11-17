@@ -30,11 +30,13 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn unpause(mut next_pause: ResMut<NextState<Pause>>) {
+fn unpause(mut next_pause: ResMut<NextState<Pause>>, mut time: ResMut<Time<Virtual>>) {
+    time.unpause();
     next_pause.set(Pause(false));
 }
 
-fn pause(mut next_pause: ResMut<NextState<Pause>>) {
+fn pause(mut next_pause: ResMut<NextState<Pause>>, mut time: ResMut<Time<Virtual>>) {
+    time.pause();
     next_pause.set(Pause(true));
 }
 
