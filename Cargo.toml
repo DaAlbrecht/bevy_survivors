@@ -67,7 +67,13 @@ bevy_seedling = { version = "0.6.0", default-features = false, features = [
 # ldtk integration.
 bevy_ecs_ldtk = { version = "0.13.0", features = ["atlas"] }
 # Physics engine 
-avian2d = "0.4"
+avian2d = { version = "0.4", default-features = false, features = [
+    "2d",
+    "f32",
+    "default-collider",
+    "parry-f32",
+    "debug-plugin",
+] }
 
 # Latest version that works with bevy_seedling
 wasm-bindgen = { version = "=0.2.101", optional = true, default-features = false }
