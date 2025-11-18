@@ -1,4 +1,3 @@
-use avian2d::prelude::*;
 use std::f32::consts::PI;
 
 use bevy::prelude::*;

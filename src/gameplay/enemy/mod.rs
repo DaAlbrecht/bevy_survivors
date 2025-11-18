@@ -143,6 +143,7 @@ pub(crate) struct AbilityDamage(pub f32);
 pub(crate) struct AbilitySpeed(pub f32);
 
 #[derive(Component)]
+#[allow(dead_code)]
 pub(crate) struct Charge {
     active: bool,
     hit_target: bool,
