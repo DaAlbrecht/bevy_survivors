@@ -77,9 +77,10 @@ pub(crate) struct DamageCooldown(pub Timer);
     RigidBody::Dynamic,
     Collider = Collider::rectangle(32., 32.),
     CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
+    GameLayer::Enemy,
     GameLayer::Player,
     GameLayer::Default,
-    GameLayer::PlayerProjectiles
+    GameLayer::PlayerProjectiles,
 ]))]
 pub(crate) struct Enemy;
 
