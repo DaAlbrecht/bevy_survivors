@@ -1,3 +1,4 @@
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 
@@ -39,7 +40,6 @@ pub(crate) struct FireballHitEvent {
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_fireball_projectile);
-    app.add_observer(fireball_hit);
     app.add_observer(upgrade_fireball);
 }
 
@@ -96,25 +96,28 @@ fn spawn_fireball_projectile(
 
         let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.extend(0.).normalize());
 
-        commands.spawn((
-            Name::new("fireball projectile"),
-            Sprite::from_atlas_image(
-                texture,
-                TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: animation_indices.first,
+        commands
+            .spawn((
+                Name::new("fireball projectile"),
+                Sprite::from_atlas_image(
+                    texture,
+                    TextureAtlas {
+                        layout: texture_atlas_layout,
+                        index: animation_indices.first,
+                    },
+                ),
+                animation_indices,
+                AnimationTimer {
+                    timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
-            ),
-            animation_indices,
-            AnimationTimer {
-                timer: Timer::from_seconds(0.1, TimerMode::Repeating),
-            },
-            CastSpell(fireball),
-            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
-                .with_rotation(towards_quaternion),
-            Direction(direction.extend(0.)),
-            PlayerProjectile,
-        ));
+                CastSpell(fireball),
+                Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
+                    .with_rotation(towards_quaternion),
+                Direction(direction.extend(0.)),
+                PlayerProjectile,
+            ))
+            .observe(on_fireball_hit);
+
         commands.spawn((
             SamplePlayer::new(asset_server.load("demo/fireball_whoosh.wav")),
             SfxPool,
@@ -124,69 +127,43 @@ fn spawn_fireball_projectile(
     Ok(())
 }
 
-fn fireball_hit(
-    trigger: On<FireballHitEvent>,
+fn on_fireball_hit(
+    event: On<CollisionStart>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    projectile_q: Query<&Transform, With<PlayerProjectile>>,
     spell_q: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
 ) -> Result {
-    let spell_entity = trigger.projectile;
-    let translation = match projectile_q.get(spell_entity) {
-        Ok(phys) => phys.translation,
-        Err(_) => {
-            commands.entity(spell_entity).despawn();
-            return Ok(());
-        }
-    };
+    let spell = event.collider1;
+    let enemy = event.collider2;
 
     let (explosion_radius, dmg) = spell_q.single()?;
-    let hit_target = trigger.target;
 
-    let hit_position = match hit_target {
-        HitTarget::Enemy(enemy_entity) => {
-            let (enemy_transform, _) = enemy_q.get(enemy_entity)?;
-            enemy_transform.translation
-        }
-        HitTarget::Wall => translation,
-    };
+    if let Ok((enemy_transform, enemy)) = enemy_q.get(enemy) {
+        let dmg = dmg.0;
 
-    let dmg = dmg.0;
+        spawn_visual_effect_at_hit_position(
+            enemy_transform.translation,
+            &mut commands,
+            &asset_server,
+            &mut texture_atlas_layout,
+        )?;
 
-    spawn_visual_effect_at_hit_position(
-        hit_position,
-        &mut commands,
-        &asset_server,
-        &mut texture_atlas_layout,
-    )?;
+        commands.trigger(EnemyDamageEvent {
+            entity_hit: enemy,
+            dmg,
+        });
 
-    let enemy_entity = match hit_target {
-        HitTarget::Enemy(enemy_entity) => enemy_entity,
-        HitTarget::Wall => {
-            //No enemy to damage
-            commands.entity(spell_entity).despawn();
-            return Ok(());
-        }
-    };
-    //Deal damage
-    commands.trigger(EnemyDamageEvent {
-        entity_hit: enemy_entity,
-        dmg,
-    });
-
-    //Deal damage to all enemys in explosion radius
-    if let Ok((enemy_pos, _)) = enemy_q.get(enemy_entity) {
-        for (other_enemy_pos, other_enemy) in &enemy_q {
-            if other_enemy_pos == enemy_pos {
+        for (other_enemy_transfor, other_enemy) in &enemy_q {
+            if other_enemy_transfor == enemy_transform {
                 //Skipp enemy hit
                 continue;
             }
-            let distance = enemy_pos
+            let distance = enemy_transform
                 .translation
                 .truncate()
-                .distance(other_enemy_pos.translation.truncate());
+                .distance(other_enemy_transfor.translation.truncate());
 
             if distance < explosion_radius.0 {
                 commands.trigger(EnemyDamageEvent {
@@ -195,15 +172,14 @@ fn fireball_hit(
                 });
             }
         }
+
+        //Knockback
+        commands.trigger(EnemyKnockbackEvent {
+            entity_hit: enemy,
+            spell_entity: spell,
+        });
     }
-
-    //Knockback
-    commands.trigger(EnemyKnockbackEvent {
-        entity_hit: enemy_entity,
-        spell_entity,
-    });
-
-    commands.entity(spell_entity).despawn();
+    commands.entity(spell).despawn();
 
     Ok(())
 }

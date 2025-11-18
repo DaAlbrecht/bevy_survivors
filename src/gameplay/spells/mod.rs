@@ -2,7 +2,7 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    ENEMY_SIZE, PausableSystems, SPELL_SIZE,
+    ENEMY_SIZE, GameLayer, PausableSystems, SPELL_SIZE,
     gameplay::{
         PickUpSpell, Speed,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
@@ -56,7 +56,20 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 #[derive(Component, Reflect)]
-#[require(RigidBody::Kinematic, Collider, DebugRender = DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)))]
+#[require(
+    RigidBody::Kinematic,
+    Collider,
+    DebugRender = DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
+    CollisionEventsEnabled,
+    CollisionLayers =  CollisionLayers::new(
+        GameLayer::Player,
+        [
+            GameLayer::Enemy,
+            GameLayer::Default,
+            GameLayer::EnemyProjectiles,
+        ],
+    ),
+)]
 pub(crate) struct PlayerProjectile;
 
 #[derive(Component, Default, Reflect)]
