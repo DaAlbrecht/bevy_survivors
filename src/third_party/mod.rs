@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 
+mod avian2d;
 mod bevy_ecs_ldtk;
 mod bevy_enhanced_input;
 mod bevy_rand;
@@ -15,5 +16,6 @@ pub(super) fn plugin(app: &mut App) {
         bevy_enhanced_input::plugin,
         bevy_rand::plugin,
         bevy_seedling::plugin,
+        avian2d::plugin,
     ));
 }

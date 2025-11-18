@@ -1,42 +1,30 @@
-//! Handle player input and translate it into movement through a character
-//! controller. A character controller is the collection of systems that govern
-//! the movement of characters.
-//!
-//! In our case, the character controller has the following logic:
-//! - Set [`MovementController`] intent based on directional keyboard input.
-//!   This is done in the `player` module, as it is specific to the player
-//!   character.
-//! - Apply movement based on [`MovementController`] intent and maximum speed.
-//! - Wrap the character within the window.
-//!
-//! Note that the implementation used here is limited for demonstration
-//! purposes. If you want to move the player in a smoother way,
-//! consider using a [fixed timestep](https://github.com/bevyengine/bevy/blob/main/examples/movement/physics_in_fixed_timestep.rs).
-
+use avian2d::prelude::LinearVelocity;
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_ecs_ldtk::{
     LdtkProjectHandle, LevelIid, LevelSelection,
     assets::{LdtkProject, LevelIndices, LevelMetadataAccessor},
 };
-use bevy_enhanced_input::{action::Action, prelude::InputAction};
+use bevy_enhanced_input::{EnhancedInputSystems, action::Action, prelude::InputAction};
 
 use crate::{
-    CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems, PrePhysicsAppSystems,
+    CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems,
     fixed_update_inspection::did_fixed_update_happen,
-    gameplay::{movement::MovementController, player::Player},
+    gameplay::{character_controller::CharacterController, player::Player},
 };
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_systems(FixedUpdate, (apply_movement).in_set(PausableSystems));
+
     app.add_systems(
-        RunFixedMainLoop,
-        (
-            record_player_directional_input.in_set(PrePhysicsAppSystems::AccumulateInput),
-            clear_input
-                .in_set(PostPhysicsAppSystems::FixedTimestepDidRun)
-                .run_if(did_fixed_update_happen),
-            translate_camera.in_set(PostPhysicsAppSystems::UpdateCamera),
-        )
-            .in_set(PausableSystems),
+        PreUpdate,
+        (record_player_directional_input).after(EnhancedInputSystems::Apply),
+    );
+
+    app.add_systems(Update, clear_input.run_if(did_fixed_update_happen));
+
+    app.add_systems(
+        Update,
+        translate_camera.in_set(PostPhysicsAppSystems::Update),
     );
 }
 
@@ -49,7 +37,7 @@ pub(crate) struct Move;
 #[derive(Debug, Component, Clone, Copy, PartialEq, Default, Deref, DerefMut)]
 pub struct AccumulatedInput {
     // The player's movement input (WASD).
-    pub movement: Vec3,
+    pub last_move: Vec2,
     // Other input that could make sense would be e.g.
     // boost: bool
 }
@@ -61,21 +49,9 @@ fn clear_input(mut input: Single<&mut AccumulatedInput>) {
 
 fn record_player_directional_input(
     move_action: Single<&Action<Move>>,
-    player: Single<(&mut AccumulatedInput, &mut MovementController)>,
-) -> Result {
-    let (mut input, mut controller) = player.into_inner();
-    //
-    // Collect directional input.
-    input.movement = Vec3::ZERO;
-
-    let mut dir = move_action.extend(0.0);
-    dir = dir.normalize_or_zero();
-
-    input.movement += dir;
-
-    controller.velocity = input.movement;
-
-    Ok(())
+    mut input: Single<&mut AccumulatedInput>,
+) {
+    input.last_move = move_action.normalize_or_zero();
 }
 
 // Sync the camera's position with the player's interpolated position
@@ -140,4 +116,18 @@ fn translate_camera(
         );
     }
     Ok(())
+}
+
+fn apply_movement(
+    controller: Single<
+        (&CharacterController, &mut LinearVelocity, &AccumulatedInput),
+        With<Player>,
+    >,
+) {
+    let (controller, mut linear_velocity, accumulated_input) = controller.into_inner();
+
+    let velocity = accumulated_input.last_move * controller.speed;
+
+    linear_velocity.x = velocity.x;
+    linear_velocity.y = velocity.y;
 }

@@ -1,3 +1,4 @@
+use avian2d::prelude::PhysicsLayer;
 use bevy::{camera::ScalingMode, prelude::*};
 
 mod asset_tracking;
@@ -28,7 +29,6 @@ pub fn plugin(app: &mut App) {
         .set(ImagePlugin::default_nearest()),));
 
     // Add all third party plugins.
-
     app.add_plugins(third_party::plugin);
 
     // Add all first party plugins.
@@ -56,42 +56,10 @@ pub fn plugin(app: &mut App) {
             .chain(),
     );
 
-    app.configure_sets(
-        RunFixedMainLoop,
-        (
-            (PrePhysicsAppSystems::AccumulateInput,)
-                .chain()
-                .in_set(RunFixedMainLoopSystems::BeforeFixedMainLoop),
-            (
-                PostPhysicsAppSystems::FixedTimestepDidRun,
-                PostPhysicsAppSystems::InterpolateTransforms,
-                PostPhysicsAppSystems::UpdateCamera,
-                PostPhysicsAppSystems::UpdateAnimations,
-            )
-                .chain()
-                .in_set(RunFixedMainLoopSystems::AfterFixedMainLoop),
-        )
-            .chain(),
-    );
-
-    app.configure_sets(
-        FixedUpdate,
-        (
-            PhysicsAppSystems::PhysicsAdjustments,
-            PhysicsAppSystems::AdvancePhysics,
-            PhysicsAppSystems::PhysicsResolution,
-        )
-            .chain(),
-    );
-
     // Set up the `Pause` state.
     app.init_state::<Pause>();
     app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
     app.configure_sets(FixedUpdate, PausableSystems.run_if(in_state(Pause(false))));
-    app.configure_sets(
-        RunFixedMainLoop,
-        PausableSystems.run_if(in_state(Pause(false))),
-    );
 
     app.add_systems(Startup, spawn_camera);
 }
@@ -111,24 +79,6 @@ const CAMERA_DECAY_RATE: f32 = 2.;
 /// When adding a new variant, make sure to order it in the `configure_sets`
 /// call above.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum PrePhysicsAppSystems {
-    AccumulateInput,
-}
-
-/// High-level groupings of systems for the app in the `Update` schedule.
-/// When adding a new variant, make sure to order it in the `configure_sets`
-/// call above.
-#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
-enum PhysicsAppSystems {
-    PhysicsAdjustments,
-    AdvancePhysics,
-    PhysicsResolution,
-}
-
-/// High-level groupings of systems for the app in the `Update` schedule.
-/// When adding a new variant, make sure to order it in the `configure_sets`
-/// call above.
-#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 enum PostPhysicsAppSystems {
     /// Tick timers.
     TickTimers,
@@ -136,18 +86,25 @@ enum PostPhysicsAppSystems {
     ChangeUi,
     /// Play sound
     PlaySound,
-    /// FixedTimestepDidRun
-    FixedTimestepDidRun,
-    /// Interpolate
-    InterpolateTransforms,
-    /// Camera follow
-    UpdateCamera,
-    /// UpdateAnimations
-    UpdateAnimations,
     /// Play animations.
     PlayAnimations,
     /// Do everything else (consider splitting this into further variants).
     Update,
+}
+
+#[derive(PhysicsLayer, Default)]
+pub(crate) enum GameLayer {
+    #[default]
+    // Layer 0 - the default layer that objects are assigned to
+    Default,
+    // Layer 1
+    Player,
+    // Layer 2
+    PlayerProjectiles,
+    // Layer 3
+    Enemy,
+    // Layer 4
+    EnemyProjectiles,
 }
 
 /// Whether or not the game is paused.
