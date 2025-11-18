@@ -2,20 +2,36 @@
 
 [Introduction](intro.md)
 
-# Enemies
+# Game Design
 
-- [About](enemies/index.md)
-- [Walker](enemies/walker.md)
-- [Sprinter](enemies/sprinter.md)
-- [Jumper](enemies/jumper.md)
-- [Shooter](enemies/shooter.md)
-- [Swarm](enemies/swarm.md)
+- [Levels](levels/index.md)
+- [Cozy Woods]()
+- [Abandoned Mine](levels/mine.md)
+- [Enemy Fortress]()
 
-# Items
+- [Enemies](enemies/index.md)
+  - [Enemy Types](enemies/types.md)
+    - [Walker](enemies/walker.md)
+    - [Sprinter](enemies/sprinter.md)
+    - [Jumper](enemies/jumper.md)
+    - [Shooter](enemies/shooter.md)
+    - [Swarm](enemies/swarm.md)
 
-- [About](./spells/index.md)
-- [Scale](./spells/scale.md)
-- [Fireball](./spells/fireball.md)
-- [Magic Missile](./spells/magic-missile.md)
-- [Lightning](./spells/lightning.md)
-- [Celestial Orbs](./spells/celestial-orbs.md)
+- [Items](items/index.md)
+
+- [Weapons](weapons/index.md)
+  - [Scale]()
+  - [Fireball](weapons/fireball.md)
+  - [Magic Missile]()
+  - [Lightning]()
+  - [Celestial Orbs]()
+
+- [Spells](spells/index.md)
+  - [Fire Rain]()
+
+---
+
+# World
+
+- [Lore/Design](world/lore.md)
+- [Hub](world/hub.md)

@@ -137,7 +137,13 @@ fn update_orb_movement(
 
         // Compute the target orbit position relative to player
         let offset = Vec2::from_angle(phase.0) * orbit_radius.0;
+<<<<<<< HEAD
         let target_pos = player_transform.translation + offset.extend(0.0);
+||||||| 512481b
+        let target_pos = player_pos.0 + offset.extend(0.0);
+=======
+        let target_pos = player_pos.0 + offset.extend(10.0);
+>>>>>>> main
 
         // Compute velocity needed to reach target_pos this frame
         let delta = target_pos - orb_transform.translation;
