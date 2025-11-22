@@ -160,7 +160,7 @@ fn setup_player(
     ));
 
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Fireball,
+        spell_type: crate::gameplay::spells::SpellType::Scale,
     });
 }
 

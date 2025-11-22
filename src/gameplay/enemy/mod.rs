@@ -113,7 +113,6 @@ pub(crate) struct Colliding;
     CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
     GameLayer::Player,
     GameLayer::Default,
-    GameLayer::PlayerProjectiles
 ]))]
 pub(crate) struct EnemyProjectile;
 

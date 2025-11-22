@@ -1,3 +1,4 @@
+use avian2d::prelude::CollisionStart;
 use bevy::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
@@ -19,7 +20,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
     Spell,
     SpellType::Scale,
     Cooldown(Timer::from_seconds(1., TimerMode::Once)),
-    Speed(600.),
+    Speed(50.),
     Knockback(1500.),
     Damage(5.),
     Name::new("Scale")
@@ -38,7 +39,6 @@ pub(crate) struct ScaleHitEvent {
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_scale_projectile);
-    app.add_observer(scale_hit);
     app.add_observer(upgrade_scale);
 }
 
@@ -70,33 +70,33 @@ fn spawn_scale_projectile(
     let random_angle: f32 = rng.random_range(0.0..(2. * PI));
     let direction = Vec3::new(f32::cos(random_angle), f32::sin(random_angle), 0.).normalize();
 
-    commands.spawn((
-        Name::new("scale projectile"),
-        Sprite {
-            image: asset_server.load("scale.png"),
-            ..default()
-        },
-        CastSpell(scale),
-        Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.),
-        Direction(direction),
-        PlayerProjectile,
-    ));
+    commands
+        .spawn((
+            Name::new("scale projectile"),
+            Sprite {
+                image: asset_server.load("scale.png"),
+                ..default()
+            },
+            CastSpell(scale),
+            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.),
+            Direction(direction),
+            PlayerProjectile,
+        ))
+        .observe(on_scale_hit);
 
     Ok(())
 }
 
-fn scale_hit(
-    trigger: On<ScaleHitEvent>,
+fn on_scale_hit(
+    // trigger: On<ScaleHitEvent>,
+    event: On<CollisionStart>,
     mut commands: Commands,
     scale_dmg: Query<&Damage, With<Scale>>,
 ) -> Result {
-    let enemy = match trigger.target {
-        HitTarget::Enemy(entity) => entity,
-        _ => {
-            return Ok(());
-        }
-    };
-    let spell_entity = trigger.projectile;
+    info!("hit detected");
+    let spell = event.collider1;
+    let enemy = event.collider2;
+
     let dmg = scale_dmg.single()?.0;
 
     commands.trigger(EnemyDamageEvent {
@@ -106,9 +106,9 @@ fn scale_hit(
 
     commands.trigger(EnemyKnockbackEvent {
         entity_hit: enemy,
-        spell_entity,
+        spell_entity: spell,
     });
 
-    commands.entity(spell_entity).despawn();
+    commands.entity(spell).despawn();
     Ok(())
 }

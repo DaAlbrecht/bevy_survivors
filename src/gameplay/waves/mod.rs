@@ -183,7 +183,6 @@ fn account_enemies(
     enemy_q: Query<(&Transform, &EnemyType), With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
-    info!("Enemies spawning");
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
     };

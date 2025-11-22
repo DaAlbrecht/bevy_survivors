@@ -58,7 +58,7 @@ pub(crate) fn plugin(app: &mut App) {
 #[derive(Component, Reflect)]
 #[require(
     RigidBody::Kinematic,
-    Collider,
+    Collider= Collider::rectangle(16., 16.) ,
     DebugRender = DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
     CollisionEventsEnabled,
     CollisionLayers =  CollisionLayers::new(
@@ -66,7 +66,6 @@ pub(crate) fn plugin(app: &mut App) {
         [
             GameLayer::Enemy,
             GameLayer::Default,
-            GameLayer::EnemyProjectiles,
         ],
     ),
 )]
