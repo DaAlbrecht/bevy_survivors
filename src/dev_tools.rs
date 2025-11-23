@@ -1,3 +1,4 @@
+use avian2d::prelude::PhysicsGizmos;
 #[cfg(not(target_family = "wasm"))]
 use bevy::dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin, FrameTimeGraphConfig};
 
@@ -23,12 +24,14 @@ const TOGGLE_DEBUG_UI_KEY: KeyCode = KeyCode::Backquote;
 const TRIGGER_LEVEL_UP_KEY: KeyCode = KeyCode::F1;
 const TOGGLE_INSEPCTOR: KeyCode = KeyCode::F2;
 const ADD_ALL_SPELLS: KeyCode = KeyCode::F3;
+const TOGGLE_COLLIDERS_KEY: KeyCode = KeyCode::F4;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
             toggle_debug_ui.run_if(input_just_pressed(TOGGLE_DEBUG_UI_KEY)),
+            toggle_colliders.run_if(input_just_pressed(TOGGLE_COLLIDERS_KEY)),
             trigger_level_up.run_if(input_just_pressed(TRIGGER_LEVEL_UP_KEY)),
             add_all_spells.run_if(input_just_pressed(ADD_ALL_SPELLS)),
         ),
@@ -63,6 +66,11 @@ pub(super) fn plugin(app: &mut App) {
 
 fn toggle_debug_ui(mut options: ResMut<UiDebugOptions>) {
     options.toggle();
+}
+
+fn toggle_colliders(mut gizmo_config_store: ResMut<GizmoConfigStore>) {
+    let gizmo_config: &mut GizmoConfig = gizmo_config_store.config_mut::<PhysicsGizmos>().0;
+    gizmo_config.enabled = !gizmo_config.enabled;
 }
 
 fn trigger_level_up(mut commands: Commands) {
