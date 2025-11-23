@@ -5,7 +5,6 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    Pause,
     gameplay::{PickUpSpell, overlays::Overlay, spells::SpellType},
     theme::widget,
 };
@@ -19,10 +18,8 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_level_up_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut next_pause: ResMut<NextState<Pause>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
-    next_pause.set(Pause(true));
     let border_image = asset_server.load("kenny/panel-border-011.png");
 
     commands
@@ -103,7 +100,6 @@ fn upgrade(
     trigger: On<Pointer<Click>>,
     mut commands: Commands,
     mut next_menu: ResMut<NextState<Overlay>>,
-    mut next_pause: ResMut<NextState<Pause>>,
     spell_types: Query<&SpellType>,
 ) {
     let selected_spell = trigger.entity;
@@ -119,6 +115,4 @@ fn upgrade(
 
     // Transition back to the gameplay
     next_menu.set(Overlay::None);
-
-    next_pause.set(Pause(false));
 }
