@@ -4,13 +4,13 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    PausableSystems,
+    GameLayer, PausableSystems,
     gameplay::{
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, PlayerProjectile, ProjectileCount, Range, Spell,
-            SpellDuration, SpellType, UpgradeSpellEvent,
+            CastSpell, Cooldown, Damage, ProjectileCount, Range, Spell, SpellDuration, SpellType,
+            UpgradeSpellEvent,
         },
     },
     screens::Screen,
@@ -21,9 +21,8 @@ use crate::{
     Spell,
     SpellType::Orb,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
-    // SpellDuration(Timer::from_seconds(2., TimerMode::Once)),
     Range(75.),
-    Damage(1.),
+    Damage(4.),
     ProjectileCount(3.),
     Name::new("Orb Spell")
 )]
@@ -94,14 +93,18 @@ fn spawn_orb_projectile(
                     image: asset_server.load("fx/orb.png"),
                     ..default()
                 },
+                Collider::rectangle(16., 16.),
+                DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
+                TranslationInterpolation,
+                CollisionEventsEnabled,
+                CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
                 OrbProjectile,
                 CastSpell(orb),
                 Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
+                SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
                 OrbPhase(phase),
                 Direction(direction),
                 Range(radius.0),
-                PlayerProjectile,
-                SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
             ))
             .observe(on_orb_hit);
     }
@@ -142,7 +145,7 @@ fn on_orb_hit(
 fn update_orb_movement(
     player_q: Query<&Transform, (With<Player>, Without<OrbProjectile>)>,
     mut orb_q: Query<
-        (&mut LinearVelocity, &Transform, &mut OrbPhase, &Range),
+        (&mut Transform, &mut OrbPhase, &Range),
         (With<OrbProjectile>, Without<Player>),
     >,
     time: Res<Time<Fixed>>,
@@ -152,7 +155,7 @@ fn update_orb_movement(
         return;
     };
 
-    for (mut linear_velocity, orb_transform, mut phase, orbit_radius) in &mut orb_q {
+    for (mut orb_transform, mut phase, orbit_radius) in &mut orb_q {
         // Advance orbital phase
         phase.0 += ORB_ANGULAR_SPEED * dt;
         if phase.0 > std::f32::consts::TAU {
@@ -161,15 +164,10 @@ fn update_orb_movement(
 
         // Compute the target orbit position relative to player
         let offset = Vec2::from_angle(phase.0) * orbit_radius.0;
-        let target_pos = player_transform.translation + offset.extend(0.0);
+        let target_pos = player_transform.translation + offset.extend(10.0);
 
-        // Compute velocity needed to reach target_pos this frame
-        let delta = target_pos - orb_transform.translation;
-        let velocity = if dt > 0.0 { delta / dt } else { Vec3::ZERO };
-
-        // Apply velocity
-        linear_velocity.x = velocity.x;
-        linear_velocity.y = velocity.y;
+        // Update orb position
+        orb_transform.translation = target_pos;
     }
 }
 
