@@ -22,15 +22,19 @@ pub(crate) fn plugin(app: &mut App) {
 
 pub fn upgrade_lightning(
     _trigger: On<UpgradeSpellEvent>,
-    mut lightning_q: Query<&mut Cooldown, With<Lightning>>,
+    mut lightning_q: Query<(&mut Cooldown, &mut Jumps), With<Lightning>>,
 ) -> Result {
-    let mut cooldown = lightning_q.single_mut()?;
+    let (mut cooldown, mut jumps) = lightning_q.single_mut()?;
+
     let current_duration = cooldown.0.duration().as_secs_f32();
     let new_duration = (current_duration * 0.9).max(0.5); // Reduce by 10%, min 0.5s
     cooldown
         .0
         .set_duration(std::time::Duration::from_secs_f32(new_duration));
     info!("Lightning cooldown upgraded to: {}s", new_duration);
+
+    jumps.0 += 1;
+    info!("Lightning jumps upgraded to: {}", jumps.0);
 
     Ok(())
 }
@@ -135,7 +139,7 @@ fn spawn_lightning_bolt(
         ));
 
         commands.spawn((
-            SamplePlayer::new(asset_server.load("audio/sound_effects/pew.wav")),
+            SamplePlayer::new(asset_server.load("audio/sound_effects/lightning.ogg")),
             SfxPool,
         ));
 
