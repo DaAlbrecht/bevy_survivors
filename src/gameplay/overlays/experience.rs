@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{BLUE, GREY},
+    color::palettes::tailwind::{AMBER_300, SLATE_900},
     prelude::*,
     render::render_resource::AsBindGroup,
     shader::ShaderRef,
@@ -168,10 +168,10 @@ fn spawn_xp_bar(mut commands: Commands, mut ui_materials: ResMut<Assets<XpBarMat
                 },
                 BorderRadius::all(Px(10.0)),
                 MaterialNode(ui_materials.add(XpBarMaterial {
-                    filled_color: BLUE.into(),
-                    background_color: GREY.into(),
+                    filled_color: AMBER_300.into(),
+                    background_color: SLATE_900.into(),
                     factor: 0.,
-                    border_color: GREY.into(),
+                    border_color: SLATE_900.into(),
                     border_radius: Vec4::splat(20.),
                     offset: Vec4::splat(0.),
                 })),
