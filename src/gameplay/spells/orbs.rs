@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use crate::{
     PausableSystems,
     gameplay::{
-        enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
+        enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
         spells::{
             CastSpell, Cooldown, Damage, PlayerProjectile, ProjectileCount, Range, Spell,
@@ -87,21 +87,52 @@ fn spawn_orb_projectile(
         // tangent direction (orthogonal to radius)
         let direction = Vec3::new(-offset.y, offset.x, 0.0).normalize();
 
-        commands.spawn((
-            Name::new("orb projectile"),
-            Sprite {
-                image: asset_server.load("fx/orb.png"),
-                ..default()
-            },
-            OrbProjectile,
-            CastSpell(orb),
-            Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
-            OrbPhase(phase),
-            Direction(direction),
-            Range(radius.0),
-            PlayerProjectile,
-            SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
-        ));
+        commands
+            .spawn((
+                Name::new("orb projectile"),
+                Sprite {
+                    image: asset_server.load("fx/orb.png"),
+                    ..default()
+                },
+                OrbProjectile,
+                CastSpell(orb),
+                Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
+                OrbPhase(phase),
+                Direction(direction),
+                Range(radius.0),
+                PlayerProjectile,
+                SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
+            ))
+            .observe(on_orb_hit);
+    }
+
+    Ok(())
+}
+
+fn on_orb_hit(
+    event: On<CollisionStart>,
+    enemy_q: Query<Entity, With<Enemy>>,
+    mut commands: Commands,
+    spell_q: Query<&Damage, With<Orb>>,
+) -> Result {
+    let spell = event.collider1;
+    let enemy = event.collider2;
+
+    let dmg = spell_q.single()?;
+
+    if let Ok(enemy) = enemy_q.get(enemy) {
+        let dmg = dmg.0;
+
+        commands.trigger(EnemyDamageEvent {
+            entity_hit: enemy,
+            dmg,
+        });
+
+        //Knockback
+        commands.trigger(EnemyKnockbackEvent {
+            entity_hit: enemy,
+            spell_entity: spell,
+        });
     }
 
     Ok(())
