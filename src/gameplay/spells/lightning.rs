@@ -18,10 +18,9 @@ pub(crate) fn plugin(app: &mut App) {
     );
     app.add_observer(spawn_lightning_bolt);
     app.add_observer(lightning_hit);
-    app.add_observer(upgrade_lightning);
 }
 
-fn upgrade_lightning(
+pub fn upgrade_lightning(
     _trigger: On<UpgradeSpellEvent>,
     mut lightning_q: Query<&mut Cooldown, With<Lightning>>,
 ) -> Result {

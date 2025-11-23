@@ -52,10 +52,9 @@ pub(crate) fn plugin(app: &mut App) {
         ),
     );
     app.add_observer(spawn_thorn_projectile);
-    app.add_observer(upgrade_thorn);
 }
 
-fn upgrade_thorn(
+pub fn upgrade_thorn(
     _trigger: On<UpgradeSpellEvent>,
     mut thorn_q: Query<&mut ProjectileCount, With<Thorn>>,
 ) -> Result {

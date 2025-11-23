@@ -9,11 +9,11 @@ use crate::{
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
             dot::Bleed,
-            fireball::{Fireball, FireballAttackEvent},
-            lightning::{Lightning, LightningAttackEvent},
-            orbs::{Orb, OrbAttackEvent},
-            scale::{Scale, ScaleAttackEvent},
-            thorn::{Thorn, ThornAttackEvent},
+            fireball::{Fireball, FireballAttackEvent, upgrade_fireball},
+            lightning::{Lightning, LightningAttackEvent, upgrade_lightning},
+            orbs::{Orb, OrbAttackEvent, upgrade_orb},
+            scale::{Scale, ScaleAttackEvent, upgrade_scale},
+            thorn::{Thorn, ThornAttackEvent, upgrade_thorn},
         },
     },
     screens::Screen,
@@ -171,18 +171,23 @@ pub(crate) fn add_spell_to_inventory(
     match trigger.spell_type {
         SpellType::Scale => {
             e.insert(Scale);
+            e.observe(upgrade_scale);
         }
         SpellType::Fireball => {
             e.insert(Fireball);
+            e.observe(upgrade_fireball);
         }
         SpellType::Lightning => {
             e.insert(Lightning);
+            e.observe(upgrade_lightning);
         }
         SpellType::Orb => {
             e.insert(Orb);
+            e.observe(upgrade_orb);
         }
         SpellType::Thorn => {
             e.insert(Thorn);
+            e.observe(upgrade_thorn);
         }
     }
 

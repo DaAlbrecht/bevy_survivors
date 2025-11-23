@@ -33,10 +33,9 @@ pub(crate) struct ScaleAttackEvent;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_scale_projectile);
-    app.add_observer(upgrade_scale);
 }
 
-fn upgrade_scale(
+pub fn upgrade_scale(
     _trigger: On<UpgradeSpellEvent>,
     mut scale_q: Query<&mut Knockback, With<Scale>>,
 ) -> Result {

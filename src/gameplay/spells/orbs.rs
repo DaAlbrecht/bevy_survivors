@@ -50,10 +50,9 @@ pub(crate) fn plugin(app: &mut App) {
     );
 
     app.add_observer(spawn_orb_projectile);
-    app.add_observer(upgrade_orb);
 }
 
-fn upgrade_orb(
+pub fn upgrade_orb(
     _trigger: On<UpgradeSpellEvent>,
     mut orb_q: Query<&mut ProjectileCount, With<Orb>>,
 ) -> Result {

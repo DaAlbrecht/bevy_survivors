@@ -34,10 +34,9 @@ pub(crate) struct FireballAttackEvent;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_fireball_projectile);
-    app.add_observer(upgrade_fireball);
 }
 
-fn upgrade_fireball(
+pub fn upgrade_fireball(
     _trigger: On<UpgradeSpellEvent>,
     mut fireball_q: Query<&mut Damage, With<Fireball>>,
 ) -> Result {
