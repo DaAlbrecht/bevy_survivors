@@ -87,7 +87,7 @@ fn trigger_step_sound_effect(
     for animation in &mut step_query {
         if animation.state == PlayerAnimationState::Walking
             && animation.changed()
-            && (animation.frame == 2 || animation.frame == 5)
+            && (animation.frame == 0 || animation.frame == 3)
         {
             let rng = &mut rand::rng();
             let random_step = player_assets.steps.choose(rng).unwrap().clone();

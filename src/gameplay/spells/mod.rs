@@ -2,20 +2,18 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    ENEMY_SIZE, GameLayer, PausableSystems, SPELL_SIZE,
+    GameLayer, PausableSystems,
     gameplay::{
         PickUpSpell, Speed,
-        enemy::{DamageCooldown, Enemy, EnemyDamageEvent, Jump},
-        level::LevelWalls,
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{AddToInventory, Direction, Inventory, Player},
-        simple_animation::HurtAnimationTimer,
         spells::{
             dot::Bleed,
-            fireball::{Fireball, FireballAttackEvent, FireballHitEvent},
+            fireball::{Fireball, FireballAttackEvent},
             lightning::{Lightning, LightningAttackEvent},
-            orbs::{Orb, OrbAttackEvent, OrbHitEvent},
-            scale::{Scale, ScaleAttackEvent, ScaleHitEvent},
-            thorn::{Thorn, ThornAttackEvent, ThornHitEvent},
+            orbs::{Orb, OrbAttackEvent},
+            scale::{Scale, ScaleAttackEvent},
+            thorn::{Thorn, ThornAttackEvent},
         },
     },
     screens::Screen,
@@ -40,12 +38,7 @@ pub(crate) fn plugin(app: &mut App) {
 
     app.add_systems(
         FixedUpdate,
-        (
-            handle_timers,
-            attack,
-            projectile_hit_detection,
-            move_projectile,
-        )
+        (handle_timers, attack, move_projectile)
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
     );
@@ -224,69 +217,6 @@ fn attack(
     Ok(())
 }
 
-#[derive(Reflect, Copy, Clone)]
-pub enum HitTarget {
-    Wall,
-    Enemy(Entity),
-}
-
-fn projectile_hit_detection(
-    spells: Query<(Entity, &SpellType), With<Spell>>,
-    tail_phys: Query<&Transform, With<Tail>>,
-    projectiles: Query<&SpellProjectiles>,
-    enemy_q: Query<(&Transform, Entity, Option<&Jump>), (With<Enemy>, Without<PlayerProjectile>)>,
-    projectile_phys: Query<&Transform, With<PlayerProjectile>>,
-    level_walls: Res<LevelWalls>,
-    mut commands: Commands,
-) -> Result {
-    // Get all spells
-    for (spell, spell_type) in &spells {
-        // Get each fired projectile for this spell
-        for projectile in projectiles.iter_descendants(spell) {
-            // Start with physics position
-            let mut projectile_pos = projectile_phys.get(projectile)?;
-
-            // If projectile is a tail, use its physics world pos
-            if let Ok(tail_pos) = tail_phys.get(projectile) {
-                projectile_pos = tail_pos;
-            }
-
-            let grid = bevy_ecs_ldtk::utils::translation_to_grid_coords(
-                projectile_pos.translation.truncate(),
-                IVec2::splat(32),
-            );
-
-            if level_walls.in_wall(&grid) {
-                trigger_hit_event(&mut commands, spell_type, projectile, HitTarget::Wall);
-                continue;
-            }
-
-            // Loop over all enemies and check collisions
-            for (enemy_phys, enemy_entity, jump) in &enemy_q {
-                if jump.is_some() {
-                    continue; // jumping enemies can't be hit
-                }
-
-                let enemy_pos = enemy_phys;
-                let distance = projectile_pos.translation.distance(enemy_pos.translation);
-                if (distance - (SPELL_SIZE / 2.0)) <= ENEMY_SIZE / 2.0 {
-                    trigger_hit_event(
-                        &mut commands,
-                        spell_type,
-                        projectile,
-                        HitTarget::Enemy(enemy_entity),
-                    );
-                    commands
-                        .entity(enemy_entity)
-                        .insert(HurtAnimationTimer::default());
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
 fn handle_timers(
     time: Res<Time>,
     mut cooldowns: Query<&mut Cooldown, With<Spell>>,
@@ -328,21 +258,6 @@ fn handle_timers(
         if bleed.duration.is_finished() {
             commands.entity(target).remove::<Bleed>();
         }
-    }
-}
-
-pub(crate) fn trigger_hit_event(
-    commands: &mut Commands,
-    spell_type: &SpellType,
-    projectile: Entity,
-    target: HitTarget,
-) {
-    match spell_type {
-        SpellType::Scale => commands.trigger(ScaleHitEvent { target, projectile }),
-        SpellType::Fireball => commands.trigger(FireballHitEvent { target, projectile }),
-        SpellType::Orb => commands.trigger(OrbHitEvent { target, projectile }),
-        SpellType::Thorn => commands.trigger(ThornHitEvent { target, projectile }),
-        _ => (),
     }
 }
 

@@ -5,7 +5,7 @@ use bevy_seedling::sample::SamplePlayer;
 use crate::audio::SfxPool;
 use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::spells::{HitTarget, UpgradeSpellEvent};
+use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -31,12 +31,6 @@ pub(crate) struct Fireball;
 
 #[derive(Event, Reflect)]
 pub(crate) struct FireballAttackEvent;
-
-#[derive(Event, Reflect)]
-pub(crate) struct FireballHitEvent {
-    pub target: HitTarget,
-    pub projectile: Entity,
-}
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_fireball_projectile);

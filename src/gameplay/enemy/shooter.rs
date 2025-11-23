@@ -128,7 +128,7 @@ fn spawn_shooter(
             ),
             (
                 Sprite {
-                    image: asset_server.load("shadow.png"),
+                    image: asset_server.load("fx/shadow.png"),
 
                     ..Default::default()
                 },

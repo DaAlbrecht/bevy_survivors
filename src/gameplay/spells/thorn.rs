@@ -4,12 +4,11 @@ use crate::{
     PLAYER_SIZE, SPELL_SIZE,
     gameplay::{
         Speed,
-        enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
+        enemy::{DamageCooldown, Enemy},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, Despawn, Halt, HitTarget, PlayerProjectile,
-            ProjectileCount, Root, Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail,
-            UpgradeSpellEvent,
+            CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
+            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent,
             dot::{Bleed, DoT},
         },
     },
@@ -45,12 +44,6 @@ pub(crate) struct ThornSegments(i32);
 #[derive(Event, Reflect)]
 pub(crate) struct ThornAttackEvent;
 
-#[derive(Event, Reflect)]
-pub(crate) struct ThornHitEvent {
-    pub target: HitTarget,
-    pub projectile: Entity,
-}
-
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
@@ -60,7 +53,6 @@ pub(crate) fn plugin(app: &mut App) {
         ),
     );
     app.add_observer(spawn_thorn_projectile);
-    app.add_observer(thorn_hit);
     app.add_observer(upgrade_thorn);
 }
 
@@ -109,7 +101,7 @@ fn spawn_thorn_projectile(
         commands.spawn((
             Name::new("ThornTip"),
             Sprite {
-                image: asset_server.load("thorn_tip.png"),
+                image: asset_server.load("fx/thorn_tip.png"),
                 ..default()
             },
             CastSpell(thorn),
@@ -163,7 +155,7 @@ fn thorn_range_keeper(
                 .spawn((
                     Name::new("ThornBase"),
                     Sprite {
-                        image: asset_server.load("thorn_base.png"),
+                        image: asset_server.load("fx/thorn_base.png"),
                         ..default()
                     },
                     CastSpell(thorn),
@@ -216,43 +208,4 @@ fn thorn_lifetime(
             }
         }
     }
-}
-
-fn thorn_hit(
-    trigger: On<ThornHitEvent>,
-    mut thorn_q: Query<(&Damage, &mut DamageCooldown, &DoT), (With<Thorn>, Without<Despawn>)>,
-    enemy_q: Query<Entity, With<Enemy>>,
-    mut commands: Commands,
-) -> Result {
-    let enemy = match trigger.target {
-        HitTarget::Enemy(entity) => entity,
-        _ => {
-            return Ok(());
-        }
-    };
-
-    let _thorn = trigger.projectile;
-    let (damage, mut cooldown, dot) = thorn_q.single_mut()?;
-
-    if cooldown.0.is_finished() {
-        commands.trigger(EnemyDamageEvent {
-            entity_hit: enemy,
-            dmg: damage.0,
-        });
-        cooldown.0.reset();
-    }
-
-    if enemy_q.get(enemy).is_ok() {
-        commands
-            .entity(enemy)
-            .insert_if_new(Root(Timer::from_seconds(0.5, TimerMode::Once)));
-
-        commands.entity(enemy).insert_if_new(Bleed {
-            duration: dot.duration.clone(),
-            tick: dot.tick.clone(),
-            dmg_per_tick: dot.dmg_per_tick,
-        });
-    }
-
-    Ok(())
 }

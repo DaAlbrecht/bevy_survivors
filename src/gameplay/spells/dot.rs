@@ -33,7 +33,7 @@ fn add_bleed_visual(
     let bleed_visual = commands
         .spawn((
             Sprite {
-                image: asset_server.load("blood.png"),
+                image: asset_server.load("fx/blood.png"),
                 ..default()
             },
             BleedVisual,

@@ -22,7 +22,7 @@ pub(crate) fn player_hit(
     info!("attacking player, player_health: {}", health.0);
 
     commands.spawn((
-        SamplePlayer::new(asset_server.load("audio/sound_effects/hit.wav")),
+        SamplePlayer::new(asset_server.load("audio/sound_effects/impact_1.ogg")),
         SfxPool,
     ));
     let per = health.0 / 100.;

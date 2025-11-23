@@ -105,7 +105,7 @@ fn spawn_walker(
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
         children![(
             Sprite {
-                image: asset_server.load("shadow.png"),
+                image: asset_server.load("fx/shadow.png"),
 
                 ..Default::default()
             },

@@ -122,13 +122,13 @@ fn spawn_lightning_bolt(
         commands.spawn((
             Name::new("LightningBolt"),
             Sprite {
-                image: asset_server.load("lightning.png"),
+                image: asset_server.load("fx/lightning.png"),
                 custom_size: Some(Vec2::new(length, 13.0)),
                 ..default()
             },
             Anchor::CENTER,
             Transform {
-                translation: anchor_point.extend(1.0),
+                translation: anchor_point.extend(10.0),
                 rotation: Quat::from_rotation_z(angle),
                 ..default()
             },
@@ -136,7 +136,7 @@ fn spawn_lightning_bolt(
         ));
 
         commands.spawn((
-            SamplePlayer::new(asset_server.load("sounds/pew.wav")),
+            SamplePlayer::new(asset_server.load("audio/sound_effects/pew.wav")),
             SfxPool,
         ));
 

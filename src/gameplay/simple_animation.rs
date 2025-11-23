@@ -33,7 +33,6 @@ pub(crate) struct HurtAnimationTimer {
     pub timer: Timer,
 }
 
-impl HurtAnimationTimer {}
 impl Default for HurtAnimationTimer {
     fn default() -> Self {
         Self {

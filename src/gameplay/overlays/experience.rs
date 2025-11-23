@@ -5,11 +5,19 @@ use bevy::{
     shader::ShaderRef,
     ui::Val::{Percent, Px},
 };
+use bevy_seedling::sample::SamplePlayer;
 
-use super::Speed;
-use super::enemy::EnemyDeathEvent;
-use super::player::{Level, Player, XP, XpCollectionRange};
-use crate::{PLAYER_SIZE, XP_GAIN_GEM, gameplay::overlays::Overlay, screens::Screen};
+use crate::{
+    PLAYER_SIZE, XP_GAIN_GEM,
+    audio::SfxPool,
+    gameplay::{
+        Speed,
+        enemy::EnemyDeathEvent,
+        overlays::Overlay,
+        player::{Level, Player, XP, XpCollectionRange},
+    },
+    screens::Screen,
+};
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins(UiMaterialPlugin::<XpBarMaterial>::default());
@@ -54,7 +62,7 @@ fn spawn_xp_gem(
             image: asset_server.load("xp_gem.png"),
             ..default()
         },
-        Transform::from_xyz(enemy_pos.x, enemy_pos.y, 0.),
+        Transform::from_xyz(enemy_pos.x, enemy_pos.y, 10.),
         XpGem,
         Speed(200.),
     ));
@@ -65,6 +73,7 @@ fn collect_xp_gem(
     mut gem_q: Query<(&mut Transform, &Speed, Entity), (With<XpGem>, Without<Player>)>,
     time: Res<Time>,
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) -> Result {
     let Ok((player_position, collection_range)) = player_q.single() else {
         return Ok(());
@@ -87,6 +96,10 @@ fn collect_xp_gem(
             <= PLAYER_SIZE / 2.0
         {
             commands.trigger(GainXpEvent);
+            commands.spawn((
+                SamplePlayer::new(asset_server.load("audio/sound_effects/xp.wav")),
+                SfxPool,
+            ));
             commands.entity(gem_entity).despawn();
         }
     }
@@ -98,6 +111,7 @@ fn gain_xp(
     _trigger: On<GainXpEvent>,
     mut player_q: Query<(&Level, &mut XP), With<Player>>,
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
 ) -> Result {
     let (player_level, mut player_xp) = player_q.single_mut()?;
     let xp_needed = BASE_LEVEL_XP * player_level.0.powf(2.);
@@ -106,6 +120,10 @@ fn gain_xp(
 
     if player_xp.0 >= xp_needed {
         //Level Up
+        commands.spawn((
+            SamplePlayer::new(asset_server.load("audio/sound_effects/level.wav")),
+            SfxPool,
+        ));
         commands.trigger(LevelUpEvent);
         player_xp.0 = 0.;
     }

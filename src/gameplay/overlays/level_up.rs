@@ -48,11 +48,13 @@ fn spawn_level_up_menu(
                         let spell_index = rng.random_range(0..SpellType::ALL.len());
 
                         let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
-                            SpellType::Scale => asset_server.load("scale.png"),
-                            SpellType::Fireball => asset_server.load("fireball_icon.png"),
-                            SpellType::Lightning => asset_server.load("lightning_icon.png"),
-                            SpellType::Orb => asset_server.load("orb_icon.png"),
-                            SpellType::Thorn => asset_server.load("thorn_base.png"),
+                            SpellType::Scale => asset_server.load("fx/scale.png"),
+                            SpellType::Fireball => asset_server.load("ui/icons/fireball_item.png"),
+                            SpellType::Lightning => {
+                                asset_server.load("ui/icons/lightning_icon.png")
+                            }
+                            SpellType::Orb => asset_server.load("ui/icons/orb_item.png"),
+                            SpellType::Thorn => asset_server.load("fx/thorn_base.png"),
                         };
                         parent
                             .spawn((

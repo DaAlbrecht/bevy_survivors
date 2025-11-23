@@ -13,7 +13,7 @@ use bevy_inspector_egui::{
 use crate::{
     gameplay::{
         PickUpSpell,
-        experience::LevelUpEvent,
+        overlays::experience::LevelUpEvent,
         spells::{Spell, SpellType},
     },
     screens::Screen,

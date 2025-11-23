@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
 
-use crate::gameplay::spells::{HitTarget, UpgradeSpellEvent};
+use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     Speed,
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
@@ -30,12 +30,6 @@ pub(crate) struct Scale;
 
 #[derive(Event, Reflect)]
 pub(crate) struct ScaleAttackEvent;
-
-#[derive(Event, Reflect)]
-pub(crate) struct ScaleHitEvent {
-    pub target: HitTarget,
-    pub projectile: Entity,
-}
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_observer(spawn_scale_projectile);
@@ -74,7 +68,7 @@ fn spawn_scale_projectile(
         .spawn((
             Name::new("scale projectile"),
             Sprite {
-                image: asset_server.load("scale.png"),
+                image: asset_server.load("fx/scale.png"),
                 ..default()
             },
             CastSpell(scale),

@@ -89,12 +89,13 @@ impl FromWorld for PlayerAssets {
         let assets = world.resource::<AssetServer>();
         Self {
             steps: vec![
-                assets.load("audio/sound_effects/step1.ogg"),
-                assets.load("audio/sound_effects/step2.ogg"),
-                assets.load("audio/sound_effects/step3.ogg"),
-                assets.load("audio/sound_effects/step4.ogg"),
+                assets.load("audio/sound_effects/stone_run_1.ogg"),
+                assets.load("audio/sound_effects/stone_run_2.ogg"),
+                assets.load("audio/sound_effects/stone_run_3.ogg"),
+                assets.load("audio/sound_effects/stone_run_4.ogg"),
+                assets.load("audio/sound_effects/stone_run_5.ogg"),
             ],
-            shadow: assets.load("shadow.png"),
+            shadow: assets.load("fx/shadow.png"),
         }
     }
 }
@@ -160,7 +161,7 @@ fn setup_player(
     ));
 
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Scale,
+        spell_type: crate::gameplay::spells::SpellType::Lightning,
     });
 }
 

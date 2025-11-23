@@ -9,8 +9,8 @@ use crate::{
         enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, HitTarget, PlayerProjectile, ProjectileCount, Range,
-            Spell, SpellDuration, SpellType, UpgradeSpellEvent,
+            CastSpell, Cooldown, Damage, PlayerProjectile, ProjectileCount, Range, Spell,
+            SpellDuration, SpellType, UpgradeSpellEvent,
         },
     },
     screens::Screen,
@@ -36,12 +36,6 @@ pub(crate) struct OrbProjectile;
 #[derive(Event, Reflect)]
 pub(crate) struct OrbAttackEvent;
 
-#[derive(Event, Reflect)]
-pub(crate) struct OrbHitEvent {
-    pub target: HitTarget,
-    pub projectile: Entity,
-}
-
 #[derive(Component, Reflect)]
 struct OrbPhase(pub f32);
 
@@ -57,7 +51,6 @@ pub(crate) fn plugin(app: &mut App) {
     );
 
     app.add_observer(spawn_orb_projectile);
-    app.add_observer(orb_hit);
     app.add_observer(upgrade_orb);
 }
 
@@ -97,7 +90,7 @@ fn spawn_orb_projectile(
         commands.spawn((
             Name::new("orb projectile"),
             Sprite {
-                image: asset_server.load("orb.png"),
+                image: asset_server.load("fx/orb.png"),
                 ..default()
             },
             OrbProjectile,
@@ -147,33 +140,6 @@ fn update_orb_movement(
         linear_velocity.x = velocity.x;
         linear_velocity.y = velocity.y;
     }
-}
-
-fn orb_hit(
-    trigger: On<OrbHitEvent>,
-    mut commands: Commands,
-    orb_dmg: Query<&Damage, With<Orb>>,
-) -> Result {
-    let enemy = match trigger.target {
-        HitTarget::Enemy(entity) => entity,
-        _ => {
-            return Ok(());
-        }
-    };
-    let spell_entity = trigger.projectile;
-    let dmg = orb_dmg.single()?.0;
-
-    commands.trigger(EnemyDamageEvent {
-        entity_hit: enemy,
-        dmg,
-    });
-
-    commands.trigger(EnemyKnockbackEvent {
-        entity_hit: enemy,
-        spell_entity,
-    });
-
-    Ok(())
 }
 
 fn orb_lifetime(

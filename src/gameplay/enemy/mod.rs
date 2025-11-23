@@ -12,6 +12,7 @@ use crate::{
             sprinter::SprinterAttackEvent,
         },
         player::{Direction, PlayerHitEvent},
+        simple_animation::HurtAnimationTimer,
         spells::{Cooldown, Damage, Despawn, Halt, Range, Root, SpellDuration, SpellTick},
     },
     screens::Screen,
@@ -265,6 +266,10 @@ fn enemy_take_dmg(
     mut commands: Commands,
 ) {
     let enemy_entity = trigger.entity_hit;
+
+    commands
+        .entity(enemy_entity)
+        .insert(HurtAnimationTimer::default());
 
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
         health.0 -= trigger.dmg;
