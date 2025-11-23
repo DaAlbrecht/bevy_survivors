@@ -7,9 +7,8 @@ use crate::{
         enemy::{DamageCooldown, Enemy},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, Despawn, Halt, PlayerProjectile, ProjectileCount, Root,
-            Segmented, Spell, SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent,
-            dot::{Bleed, DoT},
+            CastSpell, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Segmented, Spell,
+            SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent, dot::DoT,
         },
     },
     screens::Screen,

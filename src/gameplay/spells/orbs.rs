@@ -4,7 +4,6 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 use crate::{
-    PausableSystems,
     gameplay::{
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
@@ -14,6 +13,7 @@ use crate::{
         },
     },
     screens::Screen,
+    PausableSystems,
 };
 
 #[derive(Component)]
