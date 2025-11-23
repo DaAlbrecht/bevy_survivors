@@ -220,7 +220,7 @@ fn attack(
 fn handle_timers(
     time: Res<Time>,
     mut cooldowns: Query<&mut Cooldown, With<Spell>>,
-    mut durations: Query<&mut SpellDuration, With<PlayerProjectile>>,
+    mut durations: Query<&mut SpellDuration, With<CastSpell>>,
     mut thorn_dmg_timer: Query<&mut DamageCooldown, With<Thorn>>,
     mut root_timer: Query<(Entity, &mut Root), With<Enemy>>,
     mut bleed_timer: Query<(Entity, &mut Bleed), With<Enemy>>,
