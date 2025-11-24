@@ -104,11 +104,11 @@ fn spawn_thorn_projectile(
             },
             CastSpell(thorn),
             Transform {
-                translation: Vec3::new(thorn_pos.x, thorn_pos.y, 0.0),
+                translation: Vec3::new(thorn_pos.x, thorn_pos.y, 10.0),
                 rotation: Quat::from_rotation_z(angle),
                 ..default()
             },
-            Direction(direction.extend(0.0)),
+            Direction(direction.extend(10.0)),
             StartPosition(Vec2::new(thorn_pos.x, thorn_pos.y)),
             ThornTip,
             ThornSegments::default(),
@@ -163,7 +163,7 @@ fn thorn_range_keeper(
                         translation: Vec3::new(
                             -SPELL_SIZE * (segments_spawned.0 + 1) as f32,
                             0.0,
-                            0.0,
+                            10.0,
                         ),
                         rotation: Quat::IDENTITY,
                         ..default()

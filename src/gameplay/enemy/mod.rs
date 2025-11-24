@@ -279,6 +279,7 @@ fn enemy_take_dmg(
         health.0 -= trigger.dmg;
 
         //TODO: GET REAL CRIT
+        //TODO: DamageType only really used for effects
         let mut rng = rand::rng();
         let is_crit = rng.random_bool(0.10);
         damage_writer.write(DamageMessage {

@@ -5,16 +5,43 @@ use crate::gameplay::enemy::EnemyType;
 
 use super::{WavePlan, WaveStats};
 
-//Later read json or someting
+//TODO: Later read json or someting
 pub(crate) fn make_wave_plan() -> WavePlan {
     WavePlan {
         waves: VecDeque::from([
             WaveStats {
-                enemy_pool: HashMap::from([(EnemyType::Walker, 0.7), (EnemyType::Shooter, 0.3)]),
+                enemy_pool: HashMap::from([(EnemyType::Walker, 1.)]),
                 enemy_screen_count: 30.0,
                 spawn_frequency: 1.0,
                 duration: 60.0,
-                power_level: 1.0, //Does not change Basestats
+                power_level: 1.0,
+                sprite_pool: HashMap::from([(EnemyType::Walker, "enemies/walker.png".to_string())]),
+            },
+            WaveStats {
+                enemy_pool: HashMap::from([(EnemyType::Walker, 1.)]),
+                enemy_screen_count: 40.0,
+                spawn_frequency: 1.0,
+                duration: 60.0,
+                power_level: 1.0,
+                sprite_pool: HashMap::from([(EnemyType::Walker, "enemies/walker.png".to_string())]),
+            },
+            WaveStats {
+                enemy_pool: HashMap::from([(EnemyType::Walker, 0.9), (EnemyType::Shooter, 0.1)]),
+                enemy_screen_count: 40.0,
+                spawn_frequency: 1.0,
+                duration: 60.0,
+                power_level: 1.0,
+                sprite_pool: HashMap::from([
+                    (EnemyType::Walker, "enemies/walker.png".to_string()),
+                    (EnemyType::Shooter, "enemies/shooter.png".to_string()),
+                ]),
+            },
+            WaveStats {
+                enemy_pool: HashMap::from([(EnemyType::Walker, 0.8), (EnemyType::Shooter, 0.2)]),
+                enemy_screen_count: 40.0,
+                spawn_frequency: 1.0,
+                duration: 60.0,
+                power_level: 1.0,
                 sprite_pool: HashMap::from([
                     (EnemyType::Walker, "enemies/walker.png".to_string()),
                     (EnemyType::Shooter, "enemies/shooter.png".to_string()),
