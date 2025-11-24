@@ -120,8 +120,9 @@ fn spawn_camera(mut commands: Commands) {
         Name::new("Camera"),
         Camera2d,
         Projection::from(OrthographicProjection {
-            scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 504.,
+            scaling_mode: ScalingMode::Fixed {
+                width: 640.0,
+                height: 360.0,
             },
             viewport_origin: Vec2::ZERO,
             ..OrthographicProjection::default_2d()

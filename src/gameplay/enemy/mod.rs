@@ -1,11 +1,13 @@
 use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
+use rand::Rng;
 
 use crate::{
     GameLayer, PLAYER_SIZE, PausableSystems, PostPhysicsAppSystems, SPELL_SIZE,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
+        damage_numbers::DamageMessage,
         enemy::{
             jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
@@ -262,6 +264,7 @@ fn attack(
 
 fn enemy_take_dmg(
     trigger: On<EnemyDamageEvent>,
+    mut damage_writer: MessageWriter<DamageMessage>,
     mut enemy_q: Query<(&mut Health, &Transform), (With<Enemy>, Without<Despawn>)>,
     mut commands: Commands,
 ) {
@@ -273,6 +276,16 @@ fn enemy_take_dmg(
 
     if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
         health.0 -= trigger.dmg;
+
+        //TODO: GET REAL CRIT
+        let mut rng = rand::rng();
+        let is_crit = rng.random_bool(0.10);
+        damage_writer.write(DamageMessage {
+            amount: trigger.dmg as i32,
+            world_pos: transform.translation.truncate(),
+            crit: is_crit,
+        });
+
         if health.0 <= 0.0 {
             commands.trigger(EnemyDeathEvent(*transform));
             commands.entity(enemy_entity).insert(Despawn);

@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::gameplay::spells::SpellType;
 
 pub(crate) mod character_controller;
+pub(crate) mod damage_numbers;
 pub(crate) mod enemy;
 pub(crate) mod healthbar;
 pub(crate) mod level;
@@ -25,6 +26,7 @@ pub(crate) struct PickUpSpell {
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
+        damage_numbers::plugin,
         enemy::plugin,
         healthbar::plugin,
         level::plugin,
