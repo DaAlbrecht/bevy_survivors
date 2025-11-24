@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use crate::{
     GameLayer, PausableSystems,
     gameplay::{
+        damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
         spells::{
@@ -128,6 +129,7 @@ fn on_orb_hit(
         commands.trigger(EnemyDamageEvent {
             entity_hit: enemy,
             dmg,
+            damage_type: DamageType::Physical,
         });
 
         //Knockback

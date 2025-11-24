@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use std::f32::consts::PI;
 
+use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::spells::UpgradeSpellEvent;
 use crate::gameplay::{
     Speed,
@@ -95,6 +96,7 @@ fn on_scale_hit(
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy,
         dmg,
+        damage_type: DamageType::Physical,
     });
 
     commands.trigger(EnemyKnockbackEvent {

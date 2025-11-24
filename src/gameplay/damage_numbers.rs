@@ -2,11 +2,29 @@ use bevy::{prelude::*, sprite::Text2dShadow, text::FontSmoothing};
 
 use crate::{asset_tracking::LoadResource, screens::Screen};
 
+#[derive(Copy, Clone, Reflect)]
+pub enum DamageType {
+    Physical,
+    Fire,
+    Lightning,
+}
+
+impl DamageType {
+    pub fn to_icon_handle(self, assets: &DamageAssets) -> Option<Handle<Image>> {
+        match self {
+            DamageType::Physical => None,
+            DamageType::Fire => Some(assets.fire.clone()),
+            DamageType::Lightning => Some(assets.lightning.clone()),
+        }
+    }
+}
+
 #[derive(Message)]
 pub struct DamageMessage {
     pub amount: i32,
     pub world_pos: Vec2,
     pub crit: bool,
+    pub damage_type: DamageType,
 }
 
 #[derive(Component)]
@@ -45,36 +63,58 @@ fn spawn_damage_numbers_from_messages(
         let base_pos = Vec3::new(msg.world_pos.x, msg.world_pos.y + 10.0, 20.0);
         let snapped = Vec3::new(base_pos.x.round(), base_pos.y.round(), base_pos.z);
 
-        commands.spawn((
-            Text2d::new(msg.amount.to_string()),
-            TextFont {
-                font: damage_assets.font.clone(),
-                font_size,
-                font_smoothing: FontSmoothing::None,
-                ..default()
-            },
-            TextLayout::new_with_justify(Justify::Center),
-            TextColor(color),
-            Text2dShadow {
-                color: Color::srgb(0.0, 0.0, 0.0),
-                offset: Vec2::new(1.0, -1.0),
-            },
-            Transform::from_translation(snapped),
-            DamageNumber {
-                timer: Timer::from_seconds(0.9, TimerMode::Once),
-                start_pos: snapped,
-                float_distance: 20.0,
-            },
-        ));
+        let parent = commands
+            .spawn((
+                DamageNumber {
+                    timer: Timer::from_seconds(0.9, TimerMode::Once),
+                    start_pos: snapped,
+                    float_distance: 20.0,
+                },
+                Transform::from_translation(snapped),
+                Text2d::new(msg.amount.to_string()),
+                TextFont {
+                    font: damage_assets.font.clone(),
+                    font_size,
+                    font_smoothing: FontSmoothing::None,
+                    ..default()
+                },
+                TextLayout::new_with_justify(Justify::Center),
+                TextColor(color),
+                Text2dShadow {
+                    color: Color::srgb(0.0, 0.0, 0.0),
+                    offset: Vec2::new(1.0, -1.0),
+                },
+            ))
+            .id();
+
+        if let Some(icon_handle) = msg.damage_type.to_icon_handle(&damage_assets) {
+            commands.entity(parent).with_children(|parent| {
+                parent.spawn((
+                    Sprite {
+                        image: icon_handle,
+                        custom_size: Some(Vec2::splat(font_size)),
+                        ..default()
+                    },
+                    Transform::from_translation(Vec3::new(10.0, 0.0, -0.1)),
+                ));
+            });
+        }
     }
 }
 
 fn update_damage_numbers(
     mut commands: Commands,
     time: Res<Time>,
-    mut q: Query<(Entity, &mut DamageNumber, &mut Transform, &mut TextColor), With<Text2d>>,
+    mut q: Query<(
+        Entity,
+        &mut DamageNumber,
+        &mut Transform,
+        &mut TextColor,
+        Option<&Children>,
+    )>,
+    mut sprite_q: Query<Option<&mut Sprite>>,
 ) {
-    for (entity, mut dmg, mut transform, mut text_color) in &mut q {
+    for (entity, mut dmg, mut transform, mut text_color, children) in &mut q {
         dmg.timer.tick(time.delta());
 
         let duration = dmg.timer.duration().as_secs_f32();
@@ -87,9 +127,20 @@ fn update_damage_numbers(
         transform.scale = Vec3::splat(scale);
 
         let fade = (1.0 - t).powf(1.8);
+
         let mut c = text_color.0;
         c.set_alpha(fade);
         text_color.0 = c;
+
+        if let Some(children) = children {
+            for child in children.iter() {
+                if let Ok(Some(mut sprite)) = sprite_q.get_mut(child) {
+                    let mut color = sprite.color;
+                    color.set_alpha(fade);
+                    sprite.color = color;
+                }
+            }
+        }
 
         if dmg.timer.is_finished() {
             commands.entity(entity).despawn();
@@ -101,6 +152,12 @@ fn update_damage_numbers(
 pub(crate) struct DamageAssets {
     #[dependency]
     pub(crate) font: Handle<Font>,
+    #[dependency]
+    pub(crate) heart: Handle<Image>,
+    #[dependency]
+    pub(crate) fire: Handle<Image>,
+    #[dependency]
+    pub(crate) lightning: Handle<Image>,
 }
 
 impl FromWorld for DamageAssets {
@@ -109,6 +166,9 @@ impl FromWorld for DamageAssets {
 
         Self {
             font: assets.load("ui/compass.ttf"),
+            heart: assets.load("ui/icons/tag_life.png"),
+            fire: assets.load("ui/icons/tag_fire.png"),
+            lightning: assets.load("ui/icons/tag_lightning.png"),
         }
     }
 }

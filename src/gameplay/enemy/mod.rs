@@ -7,7 +7,7 @@ use crate::{
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
-        damage_numbers::DamageMessage,
+        damage_numbers::{DamageMessage, DamageType},
         enemy::{
             jumper::JumperAttackEvent,
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
@@ -94,6 +94,7 @@ pub(crate) struct PlayerPushingEvent(pub Entity);
 pub(crate) struct EnemyDamageEvent {
     pub entity_hit: Entity,
     pub dmg: f32,
+    pub damage_type: DamageType,
 }
 
 #[derive(Event, Reflect)]
@@ -284,6 +285,7 @@ fn enemy_take_dmg(
             amount: trigger.dmg as i32,
             world_pos: transform.translation.truncate(),
             crit: is_crit,
+            damage_type: trigger.damage_type,
         });
 
         if health.0 <= 0.0 {

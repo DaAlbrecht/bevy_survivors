@@ -5,6 +5,7 @@ use crate::{
     GameLayer, PausableSystems,
     gameplay::{
         PickUpSpell, Speed,
+        damage_numbers::DamageType,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
@@ -257,6 +258,7 @@ fn handle_timers(
             commands.trigger(EnemyDamageEvent {
                 entity_hit: target,
                 dmg: bleed.dmg_per_tick,
+                damage_type: DamageType::Physical,
             });
             bleed.tick.reset();
         }

@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 
 use crate::audio::SfxPool;
+use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
 use crate::gameplay::spells::UpgradeSpellEvent;
@@ -146,6 +147,7 @@ fn on_fireball_hit(
         commands.trigger(EnemyDamageEvent {
             entity_hit: enemy,
             dmg,
+            damage_type: DamageType::Fire,
         });
 
         for (other_enemy_transfor, other_enemy) in &enemy_q {
@@ -162,6 +164,7 @@ fn on_fireball_hit(
                 commands.trigger(EnemyDamageEvent {
                     entity_hit: other_enemy,
                     dmg,
+                    damage_type: DamageType::Fire,
                 });
             }
         }

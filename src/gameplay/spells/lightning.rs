@@ -4,6 +4,7 @@ use bevy_seedling::sample::SamplePlayer;
 use crate::{
     audio::SfxPool,
     gameplay::{
+        damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
         spells::{Cooldown, Damage, Range, Spell, SpellType, UpgradeSpellEvent},
@@ -179,6 +180,7 @@ fn lightning_hit(
     commands.trigger(EnemyDamageEvent {
         entity_hit: enemy,
         dmg,
+        damage_type: DamageType::Lightning,
     });
     Ok(())
 }
