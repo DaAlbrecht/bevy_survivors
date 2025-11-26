@@ -102,7 +102,10 @@ fn spawn_walker(
         AnimationTimer {
             timer: Timer::from_seconds(0.1, TimerMode::Repeating),
         },
-        CharacterController { speed: stats.speed },
+        CharacterController {
+            speed: stats.speed,
+            ..default()
+        },
         DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
         children![(
             Sprite {

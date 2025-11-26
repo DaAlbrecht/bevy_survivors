@@ -56,6 +56,11 @@ pub fn plugin(app: &mut App) {
             .chain(),
     );
 
+    app.configure_sets(
+        FixedUpdate,
+        (GameplaySystems::MovementModify, GameplaySystems::Movement).chain(),
+    );
+
     // Set up the `Pause` state.
     app.init_state::<Pause>();
     app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
@@ -75,9 +80,16 @@ const SPAWN_RADIUS_BUFFER: f32 = 80.0;
 /// How quickly should the camera snap to the desired location.
 const CAMERA_DECAY_RATE: f32 = 2.;
 
+/// High-level groupings of systems for gameplay in the `FixedUpdate` schedule.
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+pub(crate) enum GameplaySystems {
+    /// Things that modify velocity
+    MovementModify,
+    /// Movement that applies velocity to entities
+    Movement,
+}
+
 /// High-level groupings of systems for the app in the `Update` schedule.
-/// When adding a new variant, make sure to order it in the `configure_sets`
-/// call above.
 #[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 enum PostPhysicsAppSystems {
     /// Tick timers.

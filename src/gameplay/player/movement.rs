@@ -7,13 +7,18 @@ use bevy_ecs_ldtk::{
 use bevy_enhanced_input::{EnhancedInputSystems, action::Action, prelude::InputAction};
 
 use crate::{
-    CAMERA_DECAY_RATE, PausableSystems, PostPhysicsAppSystems,
+    CAMERA_DECAY_RATE, GameplaySystems, PausableSystems, PostPhysicsAppSystems,
     fixed_update_inspection::did_fixed_update_happen,
     gameplay::{character_controller::CharacterController, player::Player},
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(FixedUpdate, (apply_movement).in_set(PausableSystems));
+    app.add_systems(
+        FixedUpdate,
+        apply_movement
+            .in_set(PausableSystems)
+            .in_set(GameplaySystems::Movement),
+    );
 
     app.add_systems(
         PreUpdate,
@@ -128,6 +133,6 @@ fn apply_movement(
 
     let velocity = accumulated_input.last_move * controller.speed;
 
-    linear_velocity.x = velocity.x;
-    linear_velocity.y = velocity.y;
+    linear_velocity.x = velocity.x + controller.ability_velocity.x;
+    linear_velocity.y = velocity.y + controller.ability_velocity.y;
 }

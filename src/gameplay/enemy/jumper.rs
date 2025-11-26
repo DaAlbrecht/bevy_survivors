@@ -132,7 +132,10 @@ fn spawn_jumper(
                 Name::new(format!("Jumper {jumper_count}")),
                 Enemy,
                 Jumper,
-                CharacterController { speed: 30.0 },
+                CharacterController {
+                    speed: 30.0,
+                    ..default()
+                },
                 Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
                 Visibility::Visible,
                 Health(stats.health),
