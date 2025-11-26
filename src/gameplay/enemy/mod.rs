@@ -76,7 +76,7 @@ pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component, Default, Reflect)]
 #[require(
-    IntendedDirection,
+    Direction,
     LockedAxes::ROTATION_LOCKED,
     RigidBody::Dynamic,
     Collider = Collider::rectangle(32., 32.),
@@ -174,9 +174,6 @@ pub(crate) struct HazardousTerrain;
 #[derive(Component)]
 pub(crate) struct Size(pub f32);
 
-#[derive(Component, Default, Reflect)]
-pub(crate) struct IntendedDirection(pub Vec2);
-
 //BUG: Enemies with Halt get dragged by the player refactor collison handle and halt
 fn enemy_movement(
     mut enemy_q: Query<
@@ -184,7 +181,7 @@ fn enemy_movement(
             &CharacterController,
             &Transform,
             &mut LinearVelocity,
-            &mut IntendedDirection,
+            &mut Direction,
             Option<&Root>,
             Option<&Halt>,
             Option<&Charge>,
@@ -197,7 +194,7 @@ fn enemy_movement(
     let Ok(player_pos) = player_q.single() else {
         return;
     };
-    let player_pos = player_pos.translation.truncate();
+    let player_pos = player_pos.translation;
 
     for (
         controller,
@@ -214,14 +211,14 @@ fn enemy_movement(
             //skip movement if enemy gets knockedback or is rooted
             linear_velocity.x = 0.;
             linear_velocity.y = 0.;
-            intended_direction.0 = Vec2::ZERO;
+            intended_direction.0 = Vec3::ZERO;
         } else {
-            let enemy_pos = transform.translation.truncate();
+            let enemy_pos = transform.translation;
             let to_player = player_pos - enemy_pos;
             if to_player.length_squared() <= 0.0001 {
                 linear_velocity.x = 0.;
                 linear_velocity.y = 0.;
-                intended_direction.0 = Vec2::ZERO;
+                intended_direction.0 = Vec3::ZERO;
                 continue;
             }
             let direction = to_player.normalize();
@@ -257,9 +254,8 @@ fn move_enemy_projectile(
     }
 }
 
-///
 /// Update the sprite direction and animation state (idling/walking).
-fn update_animation_movement(mut enemies_q: Query<(&IntendedDirection, &mut Sprite), With<Enemy>>) {
+fn update_animation_movement(mut enemies_q: Query<(&Direction, &mut Sprite), With<Enemy>>) {
     for (intended_direction, mut sprite) in &mut enemies_q {
         let dx = intended_direction.0.x;
         if dx != 0.0 {

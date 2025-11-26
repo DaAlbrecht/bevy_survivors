@@ -53,7 +53,7 @@ pub(crate) struct PlayerHitEvent {
     pub dmg: f32,
 }
 
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Default)]
 pub(crate) struct Direction(pub Vec3);
 
 #[derive(Component, Reflect)]
