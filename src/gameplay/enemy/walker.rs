@@ -5,7 +5,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    SPAWN_RADIUS,
+    ENEMY_SIZE, SPAWN_RADIUS,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
@@ -79,9 +79,9 @@ fn spawn_walker(
     let enemy_pos_y = adjusted_pos.y;
 
     let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
-    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 42, y: 40 }, 10, 1, None, None);
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 58, y: 24 }, 11, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
-    let animation_indices = AnimationIndices { first: 0, last: 9 };
+    let animation_indices = AnimationIndices { first: 0, last: 10 };
 
     commands.spawn((
         Name::new("Walker"),
@@ -89,7 +89,8 @@ fn spawn_walker(
         Damage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+            .with_scale(Vec3::splat((ENEMY_SIZE / 24.0) * 0.7)),
         Sprite::from_atlas_image(
             texture,
             TextureAtlas {

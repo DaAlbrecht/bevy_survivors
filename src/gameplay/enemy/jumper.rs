@@ -14,6 +14,7 @@ use crate::{
             Meele, Owner, Size,
         },
         player::{Direction, Player},
+        simple_animation::AnimationIndices,
         spells::{Cooldown, Damage, Range, SpellDuration, SpellTick},
     },
     screens::Screen,
@@ -99,6 +100,7 @@ fn spawn_jumper(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     jumper_q: Query<&Jumper>,
     jumper_stats: Res<JumperStats>,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
@@ -117,19 +119,30 @@ fn spawn_jumper(
     let mut jumper_count = jumper_q.iter().count();
     jumper_count += 1;
 
+    let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 42, y: 40 }, 10, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layout.add(layout);
+    let animation_indices = AnimationIndices { first: 0, last: 9 };
+
     let jumper = commands
         .spawn((
             Name::new(format!("Jumper {jumper_count}")),
             Enemy,
             Jumper,
             CharacterController { speed: 30.0 },
-            Sprite {
-                image: asset_server.load(stats.sprite.clone()),
-                ..default()
-            },
-            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
-                .with_scale(Vec3::splat(ENEMY_SIZE / 32.0)),
+            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
             Visibility::Visible,
+            Sprite::from_atlas_image(
+                texture,
+                TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: animation_indices.first,
+                },
+            ),
+            // animation_indices,
+            // AnimationTimer {
+            //     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+            // },
             Health(stats.health),
             Damage(stats.damage),
             AbilityDamage(stats.ability_damage),
