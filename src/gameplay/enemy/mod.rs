@@ -76,6 +76,7 @@ pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component, Default, Reflect)]
 #[require(
+    IntendedDirection,
     LockedAxes::ROTATION_LOCKED,
     RigidBody::Dynamic,
     Collider = Collider::rectangle(32., 32.),
@@ -173,13 +174,17 @@ pub(crate) struct HazardousTerrain;
 #[derive(Component)]
 pub(crate) struct Size(pub f32);
 
+#[derive(Component, Default, Reflect)]
+pub(crate) struct IntendedDirection(pub Vec2);
+
 //BUG: Enemies with Halt get dragged by the player refactor collison handle and halt
 fn enemy_movement(
-    enemy_q: Query<
+    mut enemy_q: Query<
         (
             &CharacterController,
             &Transform,
             &mut LinearVelocity,
+            &mut IntendedDirection,
             Option<&Root>,
             Option<&Halt>,
             Option<&Charge>,
@@ -194,22 +199,36 @@ fn enemy_movement(
     };
     let player_pos = player_pos.translation.truncate();
 
-    for (controller, transform, mut linear_velocity, root, halt, charge, jump) in enemy_q {
+    for (
+        controller,
+        transform,
+        mut linear_velocity,
+        mut intended_direction,
+        root,
+        halt,
+        charge,
+        jump,
+    ) in &mut enemy_q
+    {
         if root.is_some() || halt.is_some() || charge.is_some() || jump.is_some() {
             //skip movement if enemy gets knockedback or is rooted
             linear_velocity.x = 0.;
             linear_velocity.y = 0.;
+            intended_direction.0 = Vec2::ZERO;
         } else {
             let enemy_pos = transform.translation.truncate();
             let to_player = player_pos - enemy_pos;
             if to_player.length_squared() <= 0.0001 {
                 linear_velocity.x = 0.;
                 linear_velocity.y = 0.;
+                intended_direction.0 = Vec2::ZERO;
                 continue;
             }
-            let velocity = to_player.normalize() * controller.speed;
+            let direction = to_player.normalize();
+            let velocity = direction * controller.speed;
             linear_velocity.x = velocity.x;
             linear_velocity.y = velocity.y;
+            intended_direction.0 = direction;
         }
     }
 }
@@ -240,9 +259,9 @@ fn move_enemy_projectile(
 
 ///
 /// Update the sprite direction and animation state (idling/walking).
-fn update_animation_movement(mut enemies_q: Query<(&LinearVelocity, &mut Sprite), With<Enemy>>) {
-    for (velocity, mut sprite) in &mut enemies_q {
-        let dx = velocity.x;
+fn update_animation_movement(mut enemies_q: Query<(&IntendedDirection, &mut Sprite), With<Enemy>>) {
+    for (intended_direction, mut sprite) in &mut enemies_q {
+        let dx = intended_direction.0.x;
         if dx != 0.0 {
             sprite.flip_x = dx < 0.0;
         }
