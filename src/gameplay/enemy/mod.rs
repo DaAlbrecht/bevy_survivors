@@ -84,7 +84,6 @@ pub(crate) struct DamageCooldown(pub Timer);
     GameLayer::Enemy,
     GameLayer::Player,
     GameLayer::Default,
-    GameLayer::PlayerProjectiles,
 ]))]
 pub(crate) struct Enemy;
 

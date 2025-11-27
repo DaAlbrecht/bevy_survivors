@@ -2,10 +2,12 @@ use crate::{
     audio::SfxPool,
     gameplay::{
         Health,
+        enemy::{Colliding, Enemy},
         healthbar::HealthBarMaterial,
         player::{Player, PlayerHitEvent},
     },
 };
+use avian2d::prelude::{CollisionEnd, CollisionStart};
 use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 
@@ -32,4 +34,34 @@ pub(crate) fn player_hit(
     material.percent = per;
 
     Ok(())
+}
+
+pub(crate) fn player_collision_start(
+    event: On<CollisionStart>,
+    enemy_q: Query<Entity, With<Enemy>>,
+    mut commands: Commands,
+) {
+    let Some(enemy) = [event.collider1, event.collider2]
+        .into_iter()
+        .find(|&e| enemy_q.contains(e))
+    else {
+        return;
+    };
+
+    commands.entity(enemy).insert((Colliding,));
+}
+
+pub(crate) fn player_collision_end(
+    event: On<CollisionEnd>,
+    enemy_q: Query<Entity, With<Enemy>>,
+    mut commands: Commands,
+) {
+    let Some(enemy) = [event.collider1, event.collider2]
+        .into_iter()
+        .find(|&e| enemy_q.contains(e))
+    else {
+        return;
+    };
+
+    commands.entity(enemy).remove::<Colliding>();
 }
