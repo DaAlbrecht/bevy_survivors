@@ -50,7 +50,6 @@ pub(crate) fn plugin(app: &mut App) {
             enemy_timer_handle,
             enemy_movement,
             projectile_hit_detection,
-            attack,
             enemy_range_keeper,
             terrain_manager,
             move_enemy_projectile,
@@ -263,20 +262,6 @@ fn update_animation_movement(mut enemies_q: Query<(&Direction, &mut Sprite), Wit
     }
 }
 
-//maybe refactor with timer handle later?
-//this is where the player get damaged form touching an enemy
-fn attack(
-    time: Res<Time>,
-    mut commands: Commands,
-    mut enemy_dmg_timer_q: Query<(&mut DamageCooldown, &Damage), (With<Enemy>, With<Colliding>)>,
-) {
-    for (mut timer, damage) in &mut enemy_dmg_timer_q {
-        if timer.0.tick(time.delta()).just_finished() {
-            commands.trigger(PlayerHitEvent { dmg: damage.0 });
-        }
-    }
-}
-
 fn enemy_take_dmg(
     trigger: On<EnemyDamageEvent>,
     mut damage_writer: MessageWriter<DamageMessage>,
@@ -309,39 +294,6 @@ fn enemy_take_dmg(
         }
     }
 }
-
-//fn enemy_get_pushed_from_hit(
-//    trigger: On<EnemyKnockbackEvent>,
-//    mut enemy_q: Query<
-//        (&mut LinearVelocity, Option<&Charge>),
-//        (With<Enemy>, Without<PlayerProjectile>),
-//    >,
-//    projectile_q: Query<&LinearVelocity, (With<PlayerProjectile>, Without<Enemy>)>,
-//) -> Result {
-//    let enemy_entity = trigger.entity_hit;
-//    let projectile_entity = trigger.spell_entity;
-//    let projectile_mc = projectile_q.get(projectile_entity)?;
-//
-//    projectile_mc.as_dvec2() * pro
-//
-//    let proj_world_vel = projectile_mc.velocity * projectile_mc.speed;
-//    if proj_world_vel.length_squared() <= 1e-6 {
-//        return Ok(());
-//    }
-//
-//    let dir = proj_world_vel.normalize();
-//
-//    if let Ok((mut enemy_move, charge)) = enemy_q.get_mut(enemy_entity) {
-//        if charge.is_some() {
-//            // Charging enemies cannot be knocked back
-//            return Ok(());
-//        }
-//
-//        enemy_move.apply_knockback_from_source(dir, projectile_mc);
-//    }
-//
-//    Ok(())
-//}
 
 fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut commands: Commands) {
     for enemy in &enemy_q {

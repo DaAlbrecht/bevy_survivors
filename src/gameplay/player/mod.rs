@@ -8,7 +8,6 @@ use bevy_seedling::sample::AudioSample;
 
 use crate::GameLayer;
 use crate::gameplay::character_controller::CharacterController;
-use crate::gameplay::player::hit::{player_collision_end, player_collision_start};
 use crate::{
     asset_tracking::LoadResource,
     gameplay::{
@@ -36,10 +35,9 @@ pub(super) fn plugin(app: &mut App) {
     app.register_ldtk_entity::<PlayerBundle>("Player");
     app.register_type::<XP>().register_type::<Level>();
 
-    app.add_observer(player_hit);
+    app.add_systems(FixedUpdate, player_hit);
+
     app.add_observer(setup_player);
-    app.add_observer(player_collision_start);
-    app.add_observer(player_collision_end);
 }
 
 #[derive(Default, Bundle, LdtkEntity)]
@@ -162,6 +160,7 @@ fn setup_player(
                 })
             )
         ],
+        CollidingEntities::default(),
     ));
 
     commands.trigger(crate::gameplay::PickUpSpell {
