@@ -7,6 +7,7 @@ pub enum DamageType {
     Physical,
     Fire,
     Lightning,
+    Heal,
 }
 
 impl DamageType {
@@ -15,6 +16,7 @@ impl DamageType {
             DamageType::Physical => None,
             DamageType::Fire => Some(assets.fire.clone()),
             DamageType::Lightning => Some(assets.lightning.clone()),
+            DamageType::Heal => Some(assets.heart.clone()),
         }
     }
 }
@@ -52,7 +54,12 @@ fn spawn_damage_numbers_from_messages(
     damage_assets: Res<DamageAssets>,
 ) {
     for msg in reader.read() {
-        let color = if msg.crit {
+        //TODO: Move this into a function for extensibility or better implement over DamageType
+        let is_heal = matches!(msg.damage_type, DamageType::Heal);
+
+        let color = if is_heal {
+            Color::srgb(0.2, 1.0, 0.3)
+        } else if msg.crit {
             Color::srgb(1.0, 0.9, 0.2)
         } else {
             Color::WHITE

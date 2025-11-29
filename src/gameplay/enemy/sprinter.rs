@@ -122,7 +122,10 @@ fn spawn_sprinter(
         },
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 48.0)),
-        CharacterController { speed: 30.0 },
+        CharacterController {
+            speed: 30.0,
+            ..default()
+        },
         Health(stats.health),
         Damage(stats.damage),
         AbilityDamage(stats.ability_damage),

@@ -144,7 +144,10 @@ fn spawn_shooter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        CharacterController { speed: 30.0 },
+        CharacterController {
+            speed: 30.0,
+            ..default()
+        },
         Health(stats.health),
         Damage(stats.damage),
         AbilityDamage(stats.ability_damage),
