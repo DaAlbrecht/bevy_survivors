@@ -45,6 +45,8 @@ fn spawn_level_up_menu(
                         let spell_index = rng.random_range(0..SpellType::ALL.len());
 
                         let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
+                            SpellType::Energy => asset_server.load("ui/icons/energy_item.png"),
+                            SpellType::Circles => asset_server.load("ui/icons/circle_item.png"),
                             SpellType::Scale => asset_server.load("fx/scale.png"),
                             SpellType::Fireball => asset_server.load("ui/icons/fireball_item.png"),
                             SpellType::Lightning => {
@@ -52,7 +54,7 @@ fn spawn_level_up_menu(
                             }
                             SpellType::Orb => asset_server.load("ui/icons/orbs_item.png"),
                             SpellType::Thorn => asset_server.load("fx/thorn_base.png"),
-                            SpellType::Icelance => asset_server.load("ui/icons/lightning_icon.png"),
+                            SpellType::Icelance => asset_server.load("ui/icons/icelance_item.png"),
                         };
                         parent
                             .spawn((

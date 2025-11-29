@@ -9,7 +9,9 @@ use crate::{
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{AddToInventory, Direction, Inventory, Player},
         spells::{
+            circles::{Circles, CirclesAttackEvent, upgrade_circles},
             dot::Bleed,
+            energy::{Energy, EnergyAttackEvent, upgrade_energy},
             fireball::{Fireball, FireballAttackEvent, upgrade_fireball},
             icelance::{Icelance, upgrade_icelance},
             lightning::{Lightning, LightningAttackEvent, upgrade_lightning},
@@ -21,7 +23,9 @@ use crate::{
     screens::Screen,
 };
 
+pub mod circles;
 pub mod dot;
+pub mod energy;
 pub mod fireball;
 pub mod icelance;
 pub mod lightning;
@@ -31,6 +35,8 @@ pub mod thorn;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
+        energy::plugin,
+        circles::plugin,
         scale::plugin,
         fireball::plugin,
         lightning::plugin,
@@ -100,6 +106,8 @@ pub(crate) struct Despawn;
 
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum SpellType {
+    Energy,
+    Circles,
     Scale,
     Icelance,
     Fireball,
@@ -109,7 +117,9 @@ pub(crate) enum SpellType {
 }
 
 impl SpellType {
-    pub const ALL: [SpellType; 6] = [
+    pub const ALL: [SpellType; 8] = [
+        SpellType::Energy,
+        SpellType::Circles,
         SpellType::Scale,
         SpellType::Fireball,
         SpellType::Icelance,
@@ -175,6 +185,14 @@ pub(crate) fn add_spell_to_inventory(
     let mut e = commands.spawn(AddToInventory(player));
 
     match trigger.spell_type {
+        SpellType::Energy => {
+            e.insert(Energy);
+            e.observe(upgrade_energy);
+        }
+        SpellType::Circles => {
+            e.insert(Circles);
+            e.observe(upgrade_circles);
+        }
         SpellType::Scale => {
             e.insert(Scale);
             e.observe(upgrade_scale);
@@ -219,6 +237,8 @@ fn attack(
 
         if cooldown.0.is_finished() {
             match spell_type {
+                SpellType::Energy => commands.trigger(EnergyAttackEvent),
+                SpellType::Circles => commands.trigger(CirclesAttackEvent),
                 SpellType::Scale => commands.trigger(ScaleAttackEvent),
                 SpellType::Fireball => commands.trigger(FireballAttackEvent),
                 SpellType::Icelance => commands.trigger(icelance::IcelanceAttackEvent),
