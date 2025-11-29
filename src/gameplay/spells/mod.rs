@@ -272,8 +272,8 @@ fn move_projectile(
     spells: Query<(Entity, &Speed), With<Spell>>,
     projectiles: Query<&SpellProjectiles>,
     mut projectile_q: Query<
-        (&mut LinearVelocity, &Direction),
-        (With<PlayerProjectile>, Without<Halt>),
+        (&mut LinearVelocity, &Direction, Option<&Halt>),
+        With<PlayerProjectile>,
     >,
 ) {
     // Loop over all types of spells
@@ -281,10 +281,17 @@ fn move_projectile(
         // Iterate over each projectile for this given spell type
 
         for projectile in projectiles.iter_descendants(spell) {
-            let Ok((mut linear_velocity, bullet_direction)) = projectile_q.get_mut(projectile)
+            let Ok((mut linear_velocity, bullet_direction, halt)) =
+                projectile_q.get_mut(projectile)
             else {
                 continue;
             };
+
+            if halt.is_some() {
+                linear_velocity.0.x = 0.0;
+                linear_velocity.0.y = 0.0;
+                continue;
+            }
 
             let movement = bullet_direction.0.normalize_or_zero() * speed.0;
             linear_velocity.0.x = movement.x;

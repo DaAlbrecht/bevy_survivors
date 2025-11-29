@@ -1,7 +1,8 @@
+use avian2d::prelude::{Collider, CollisionEventsEnabled, CollisionLayers, DebugRender};
 use bevy::prelude::*;
 
 use crate::{
-    PLAYER_SIZE, SPELL_SIZE,
+    GameLayer, PLAYER_SIZE,
     gameplay::{
         Speed,
         enemy::{DamageCooldown, Enemy},
@@ -14,12 +15,14 @@ use crate::{
     screens::Screen,
 };
 
+const THORN_LENGTH: f32 = 16.0;
+
 #[derive(Component)]
 #[require(
     Spell,
     SpellType::Thorn,
     Segmented,
-    Cooldown(Timer::from_seconds(1., TimerMode::Once)),
+    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Once)),
     Speed(600.),
     Damage(1.),
@@ -94,7 +97,7 @@ fn spawn_thorn_projectile(
 
     if let Some(enemy_pos) = clossest_enemy {
         let direction = (enemy_pos.translation.truncate() - player_pos).normalize();
-        let thorn_pos = player_pos + (direction * ((PLAYER_SIZE / 2.0) + (SPELL_SIZE / 2.0)));
+        let thorn_pos = player_pos + (direction * ((PLAYER_SIZE / 2.0) + THORN_LENGTH / 2.0));
         let angle = direction.y.atan2(direction.x);
         commands.spawn((
             Name::new("ThornTip"),
@@ -111,7 +114,7 @@ fn spawn_thorn_projectile(
             Direction(direction.extend(10.0)),
             StartPosition(Vec2::new(thorn_pos.x, thorn_pos.y)),
             ThornTip,
-            ThornSegments::default(),
+            ThornSegments(1),
             PlayerProjectile,
         ));
     }
@@ -124,7 +127,6 @@ fn thorn_range_keeper(
         (
             Entity,
             &Transform,
-            &Direction,
             Option<&Halt>,
             &StartPosition,
             &mut ThornSegments,
@@ -138,17 +140,12 @@ fn thorn_range_keeper(
         return;
     };
 
-    for (thorn_tip, transform, direction, halt, start_pos, mut segments_spawned) in &mut thorn_tip_q
-    {
+    for (thorn_tip, transform, halt, start_pos, mut segments_spawned) in &mut thorn_tip_q {
         let thorn_pos = transform.translation.truncate();
-        //Get the angle of the thorn_tip to player
-        let dir2 = direction.0.truncate();
-        let distance = (thorn_pos - start_pos.0).dot(dir2);
+        let distance = thorn_pos.distance(start_pos.0);
 
-        let offset = PLAYER_SIZE * 0.5 + SPELL_SIZE * 0.5;
-        let distance_after_offset = distance - offset;
-
-        if distance_after_offset >= segments_spawned.0 as f32 * SPELL_SIZE && halt.is_none() {
+        if distance >= segments_spawned.0 as f32 * THORN_LENGTH && halt.is_none() {
+            info!("distance is: {:?}", distance);
             let thorn_base = commands
                 .spawn((
                     Name::new("ThornBase"),
@@ -157,17 +154,20 @@ fn thorn_range_keeper(
                         ..default()
                     },
                     CastSpell(thorn),
-                    PlayerProjectile,
                     Tail,
                     Transform {
                         translation: Vec3::new(
-                            -SPELL_SIZE * (segments_spawned.0 + 1) as f32,
+                            -THORN_LENGTH * (segments_spawned.0) as f32,
                             0.0,
                             10.0,
                         ),
                         rotation: Quat::IDENTITY,
                         ..default()
                     },
+                    Collider::rectangle(16., 16.),
+                    DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
+                    CollisionEventsEnabled,
+                    CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
                 ))
                 .id();
 
@@ -175,7 +175,7 @@ fn thorn_range_keeper(
             segments_spawned.0 += 1;
         }
 
-        if distance >= thorn_count.0 * SPELL_SIZE && halt.is_none() {
+        if distance >= (thorn_count.0 - 1.0) * THORN_LENGTH && halt.is_none() {
             commands.entity(thorn_tip).insert(Halt);
 
             commands
@@ -196,7 +196,7 @@ fn thorn_lifetime(
 ) {
     for (thorn_tip, children, mut duration, mut segments) in &mut thorn_tip_q {
         if duration.0.is_finished() {
-            let index = (segments.0 - 1) as usize;
+            let index = (segments.0 - 2) as usize;
             if let Some(child) = children {
                 commands.entity(child[index]).despawn();
                 segments.0 -= 1;
