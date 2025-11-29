@@ -52,6 +52,7 @@ fn spawn_level_up_menu(
                             }
                             SpellType::Orb => asset_server.load("ui/icons/orbs_item.png"),
                             SpellType::Thorn => asset_server.load("fx/thorn_base.png"),
+                            SpellType::Icelance => asset_server.load("ui/icons/lightning_icon.png"),
                         };
                         parent
                             .spawn((

@@ -11,6 +11,7 @@ use crate::{
         spells::{
             dot::Bleed,
             fireball::{Fireball, FireballAttackEvent, upgrade_fireball},
+            icelance::{Icelance, upgrade_icelance},
             lightning::{Lightning, LightningAttackEvent, upgrade_lightning},
             orbs::{Orb, OrbAttackEvent, upgrade_orb},
             scale::{Scale, ScaleAttackEvent, upgrade_scale},
@@ -22,6 +23,7 @@ use crate::{
 
 pub mod dot;
 pub mod fireball;
+pub mod icelance;
 pub mod lightning;
 pub mod orbs;
 pub mod scale;
@@ -32,6 +34,7 @@ pub(crate) fn plugin(app: &mut App) {
         scale::plugin,
         fireball::plugin,
         lightning::plugin,
+        icelance::plugin,
         orbs::plugin,
         thorn::plugin,
         dot::plugin,
@@ -98,6 +101,7 @@ pub(crate) struct Despawn;
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum SpellType {
     Scale,
+    Icelance,
     Fireball,
     Lightning,
     Orb,
@@ -105,9 +109,10 @@ pub(crate) enum SpellType {
 }
 
 impl SpellType {
-    pub const ALL: [SpellType; 5] = [
+    pub const ALL: [SpellType; 6] = [
         SpellType::Scale,
         SpellType::Fireball,
+        SpellType::Icelance,
         SpellType::Lightning,
         SpellType::Orb,
         SpellType::Thorn,
@@ -178,6 +183,10 @@ pub(crate) fn add_spell_to_inventory(
             e.insert(Fireball);
             e.observe(upgrade_fireball);
         }
+        SpellType::Icelance => {
+            e.insert(Icelance);
+            e.observe(upgrade_icelance);
+        }
         SpellType::Lightning => {
             e.insert(Lightning);
             e.observe(upgrade_lightning);
@@ -212,6 +221,7 @@ fn attack(
             match spell_type {
                 SpellType::Scale => commands.trigger(ScaleAttackEvent),
                 SpellType::Fireball => commands.trigger(FireballAttackEvent),
+                SpellType::Icelance => commands.trigger(icelance::IcelanceAttackEvent),
                 SpellType::Lightning => commands.trigger(LightningAttackEvent),
                 SpellType::Orb => commands.trigger(OrbAttackEvent),
                 SpellType::Thorn => commands.trigger(ThornAttackEvent),

@@ -7,6 +7,7 @@ pub enum DamageType {
     Physical,
     Fire,
     Lightning,
+    Ice,
 }
 
 impl DamageType {
@@ -15,6 +16,7 @@ impl DamageType {
             DamageType::Physical => None,
             DamageType::Fire => Some(assets.fire.clone()),
             DamageType::Lightning => Some(assets.lightning.clone()),
+            DamageType::Ice => Some(assets.ice.clone()),
         }
     }
 }
@@ -158,6 +160,8 @@ pub(crate) struct DamageAssets {
     pub(crate) fire: Handle<Image>,
     #[dependency]
     pub(crate) lightning: Handle<Image>,
+    #[dependency]
+    pub(crate) ice: Handle<Image>,
 }
 
 impl FromWorld for DamageAssets {
@@ -169,6 +173,7 @@ impl FromWorld for DamageAssets {
             heart: assets.load("ui/icons/tag_life.png"),
             fire: assets.load("ui/icons/tag_fire.png"),
             lightning: assets.load("ui/icons/tag_lightning.png"),
+            ice: assets.load("ui/icons/tag_ice.png"),
         }
     }
 }

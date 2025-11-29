@@ -164,7 +164,7 @@ fn setup_player(
     ));
 
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Thorn,
+        spell_type: crate::gameplay::spells::SpellType::Icelance,
     });
 }
 
