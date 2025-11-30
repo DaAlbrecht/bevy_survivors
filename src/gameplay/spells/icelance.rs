@@ -1,3 +1,4 @@
+use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
@@ -12,6 +13,7 @@ use crate::gameplay::{
 };
 use avian2d::prelude::*;
 use bevy::prelude::*;
+use bevy_seedling::sample::SamplePlayer;
 
 #[derive(Component)]
 #[require(
@@ -108,11 +110,6 @@ fn spawn_icelance_projectile(
                 PlayerProjectile,
             ))
             .observe(on_icelance_hit);
-
-        // commands.spawn((
-        //     SamplePlayer::new(asset_server.load("demo/icelance_whoosh.wav")),
-        //     SfxPool,
-        // ));
     }
 
     Ok(())
@@ -200,10 +197,10 @@ fn spawn_visual_effect_at_hit_position(
         AnimationTimer::once_from_fps(24),
         Transform::from_xyz(hit_position.x, hit_position.y, 10.0).with_scale(Vec3::splat(2.0)),
     ));
-    // commands.spawn((
-    //     SamplePlayer::new(asset_server.load("demo/icelance_impact.wav")),
-    //     SfxPool,
-    // ));
+    commands.spawn((
+        SamplePlayer::new(asset_server.load("audio/sound_effects/ice_hit.wav")),
+        SfxPool,
+    ));
 
     Ok(())
 }

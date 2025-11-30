@@ -113,7 +113,7 @@ fn spawn_fireball_projectile(
             .observe(on_fireball_hit);
 
         commands.spawn((
-            SamplePlayer::new(asset_server.load("demo/fireball_whoosh.wav")),
+            SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_whoosh.wav")),
             SfxPool,
         ));
     }
@@ -205,7 +205,7 @@ fn spawn_visual_effect_at_hit_position(
         Transform::from_xyz(hit_position.x, hit_position.y, 10.0).with_scale(Vec3::splat(2.0)),
     ));
     commands.spawn((
-        SamplePlayer::new(asset_server.load("demo/fireball_impact.wav")),
+        SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_impact.wav")),
         SfxPool,
     ));
 

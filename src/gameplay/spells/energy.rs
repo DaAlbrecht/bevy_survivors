@@ -1,7 +1,9 @@
 use bevy::prelude::*;
+use bevy_seedling::sample::SamplePlayer;
 
 use crate::{
     PausableSystems,
+    audio::SfxPool,
     gameplay::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -127,6 +129,11 @@ fn spawn_energy_projectiles(
                     },
                 ))
                 .observe(on_energy_hit);
+
+            commands.spawn((
+                SamplePlayer::new(asset_server.load("audio/sound_effects/energy_cast.wav")),
+                SfxPool,
+            ));
         }
     }
 

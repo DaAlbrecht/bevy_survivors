@@ -1,9 +1,11 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
+use bevy_seedling::sample::SamplePlayer;
 use rand::Rng;
 
 use crate::{
     GameLayer, PausableSystems,
+    audio::SfxPool,
     gameplay::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent},
@@ -234,6 +236,7 @@ fn on_circle_hit(
         With<CircleProjectile>,
     >,
     spell_q: Query<&Damage, With<Circles>>,
+    asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) -> Result {
     let circle = event.collider1;
@@ -262,6 +265,11 @@ fn on_circle_hit(
             dmg: dmg.0,
             damage_type: DamageType::Physical,
         });
+
+        commands.spawn((
+            SamplePlayer::new(asset_server.load("audio/sound_effects/generic_crisp.wav")),
+            SfxPool,
+        ));
 
         hit_counter.hits += 1;
 
