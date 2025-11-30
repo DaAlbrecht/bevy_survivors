@@ -8,6 +8,7 @@ pub enum DamageType {
     Fire,
     Lightning,
     Ice,
+    Earth,
 }
 
 impl DamageType {
@@ -17,6 +18,7 @@ impl DamageType {
             DamageType::Fire => Some(assets.fire.clone()),
             DamageType::Lightning => Some(assets.lightning.clone()),
             DamageType::Ice => Some(assets.ice.clone()),
+            DamageType::Earth => None,
         }
     }
 }

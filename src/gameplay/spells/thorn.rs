@@ -1,15 +1,19 @@
-use avian2d::prelude::{Collider, CollisionEventsEnabled, CollisionLayers, DebugRender};
+use avian2d::prelude::{
+    Collider, CollisionEventsEnabled, CollisionLayers, CollisionStart, DebugRender, Sensor,
+};
 use bevy::prelude::*;
 
 use crate::{
     GameLayer, PLAYER_SIZE,
     gameplay::{
         Speed,
-        enemy::{DamageCooldown, Enemy},
+        damage_numbers::DamageType,
+        enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{Direction, Player},
         spells::{
-            CastSpell, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Segmented, Spell,
-            SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent, dot::DoT,
+            CastSpell, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root, Segmented,
+            Spell, SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent,
+            dot::{Bleed, DoT},
         },
     },
     screens::Screen,
@@ -99,24 +103,28 @@ fn spawn_thorn_projectile(
         let direction = (enemy_pos.translation.truncate() - player_pos).normalize();
         let thorn_pos = player_pos + (direction * ((PLAYER_SIZE / 2.0) + THORN_LENGTH / 2.0));
         let angle = direction.y.atan2(direction.x);
-        commands.spawn((
-            Name::new("ThornTip"),
-            Sprite {
-                image: asset_server.load("fx/thorn_tip.png"),
-                ..default()
-            },
-            CastSpell(thorn),
-            Transform {
-                translation: Vec3::new(thorn_pos.x, thorn_pos.y, 10.0),
-                rotation: Quat::from_rotation_z(angle),
-                ..default()
-            },
-            Direction(direction.extend(10.0)),
-            StartPosition(Vec2::new(thorn_pos.x, thorn_pos.y)),
-            ThornTip,
-            ThornSegments(1),
-            PlayerProjectile,
-        ));
+        let tip = commands
+            .spawn((
+                Name::new("ThornTip"),
+                Sprite {
+                    image: asset_server.load("fx/thorn_tip.png"),
+                    ..default()
+                },
+                CastSpell(thorn),
+                Transform {
+                    translation: Vec3::new(thorn_pos.x, thorn_pos.y, 10.0),
+                    rotation: Quat::from_rotation_z(angle),
+                    ..default()
+                },
+                Direction(direction.extend(10.0)),
+                StartPosition(Vec2::new(thorn_pos.x, thorn_pos.y)),
+                ThornTip,
+                ThornSegments(1),
+                PlayerProjectile,
+                Sensor,
+            ))
+            .observe(on_thorn_hit)
+            .id();
     }
     Ok(())
 }
@@ -168,7 +176,9 @@ fn thorn_range_keeper(
                     DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
                     CollisionEventsEnabled,
                     CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
+                    Sensor,
                 ))
+                .observe(on_thorn_hit)
                 .id();
 
             commands.entity(thorn_tip).add_child(thorn_base);
@@ -206,4 +216,40 @@ fn thorn_lifetime(
             }
         }
     }
+}
+
+fn on_thorn_hit(
+    event: On<CollisionStart>,
+    mut thorn_q: Query<(&Damage, &mut DamageCooldown, &DoT), With<Thorn>>,
+    enemy_q: Query<Entity, With<Enemy>>,
+    mut commands: Commands,
+) -> Result {
+    let enemy = event.collider2;
+
+    let Ok((damage, mut cooldown, dot)) = thorn_q.single_mut() else {
+        return Ok(());
+    };
+
+    if cooldown.0.is_finished() {
+        commands.trigger(EnemyDamageEvent {
+            entity_hit: enemy,
+            dmg: damage.0,
+            damage_type: DamageType::Earth,
+        });
+        cooldown.0.reset();
+    }
+
+    if enemy_q.get(enemy).is_ok() {
+        commands
+            .entity(enemy)
+            .insert_if_new(Root(Timer::from_seconds(0.5, TimerMode::Once)));
+
+        commands.entity(enemy).insert_if_new(Bleed {
+            duration: dot.duration.clone(),
+            tick: dot.tick.clone(),
+            dmg_per_tick: dot.dmg_per_tick,
+        });
+    }
+
+    Ok(())
 }
