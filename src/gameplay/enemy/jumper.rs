@@ -1,5 +1,6 @@
 use std::f32::consts::PI;
 
+use avian2d::prelude::ColliderDisabled;
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
@@ -14,7 +15,7 @@ use crate::{
             Meele, Owner, Size,
         },
         player::{Direction, Player},
-        simple_animation::AnimationIndices,
+        simple_animation::{AnimationIndices, AnimationTimer},
         spells::{Cooldown, Damage, Range, SpellDuration, SpellTick},
     },
     screens::Screen,
@@ -126,30 +127,36 @@ fn spawn_jumper(
 
     let jumper = commands
         .spawn((
-            Name::new(format!("Jumper {jumper_count}")),
-            Enemy,
-            Jumper,
-            CharacterController { speed: 30.0 },
-            Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
-            Visibility::Visible,
-            Sprite::from_atlas_image(
-                texture,
-                TextureAtlas {
-                    layout: texture_atlas_layout,
-                    index: animation_indices.first,
+            //Gameplay
+            (
+                Name::new(format!("Jumper {jumper_count}")),
+                Enemy,
+                Jumper,
+                CharacterController { speed: 30.0 },
+                Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
+                Visibility::Visible,
+                Health(stats.health),
+                Damage(stats.damage),
+                AbilityDamage(stats.ability_damage),
+                AbilitySpeed(stats.ability_speed),
+                Range(stats.range),
+                Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
+                Size(stats.size),
+            ),
+            //Sprite
+            (
+                Sprite::from_atlas_image(
+                    texture.clone(),
+                    TextureAtlas {
+                        layout: texture_atlas_layout.clone(),
+                        index: animation_indices.first,
+                    },
+                ),
+                animation_indices,
+                AnimationTimer {
+                    timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
             ),
-            // animation_indices,
-            // AnimationTimer {
-            //     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
-            // },
-            Health(stats.health),
-            Damage(stats.damage),
-            AbilityDamage(stats.ability_damage),
-            AbilitySpeed(stats.ability_speed),
-            Range(stats.range),
-            Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
-            Size(stats.size),
         ))
         .id();
 
@@ -166,14 +173,24 @@ fn spawn_jumper(
         ))
         .id();
 
+    //TODO: Whatever sprite sheet magic needs to happen
+    let attack_animation_indices = AnimationIndices { first: 0, last: 9 };
+
     let jumper_visual = commands
         .spawn((
             Name::new(format!("Jumper_Visual{jumper_count}")),
             AbilityVisual,
             JumperVisual,
-            Sprite {
-                image: asset_server.load("enemies/jumper.png"),
-                ..default()
+            Sprite::from_atlas_image(
+                texture,
+                TextureAtlas {
+                    layout: texture_atlas_layout,
+                    index: attack_animation_indices.first,
+                },
+            ),
+            attack_animation_indices,
+            AnimationTimer {
+                timer: Timer::from_seconds(0.1, TimerMode::Repeating),
             },
             Visibility::Hidden,
         ))
@@ -236,13 +253,15 @@ fn jumper_attack(
         target_pos,
     });
 
+    commands.entity(jumper).insert(ColliderDisabled);
+
     commands.spawn((
         Sprite {
             image: asset_server.load("enemies/jumper_aoe_indicator.png"),
             ..default()
         },
         Transform {
-            translation: target_pos.extend(-1.0),
+            translation: target_pos.extend(9.0),
             ..default()
         },
         JumperAttackIndicator,
@@ -346,6 +365,8 @@ fn spawn_jumper_aoe(
     asset_server: Res<AssetServer>,
 ) {
     let jumper = trigger.0;
+    commands.entity(jumper).remove::<ColliderDisabled>();
+
     let Ok((transform, damage, duration, ticker, size)) = jumper_q.get(jumper) else {
         return;
     };

@@ -9,7 +9,7 @@ use crate::{
         character_controller::CharacterController,
         damage_numbers::{DamageMessage, DamageType},
         enemy::{
-            jumper::JumperAttackEvent,
+            jumper::{JumperAttackEvent, JumperAttackIndicator},
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
             sprinter::SprinterAttackEvent,
         },
@@ -205,11 +205,13 @@ fn enemy_movement(
         jump,
     ) in &mut enemy_q
     {
-        if root.is_some() || halt.is_some() || charge.is_some() || jump.is_some() {
+        if root.is_some() || halt.is_some() {
             //skip movement if enemy gets knockedback or is rooted
             linear_velocity.x = 0.;
             linear_velocity.y = 0.;
             intended_direction.0 = Vec3::ZERO;
+        } else if jump.is_some() || charge.is_some() {
+            continue;
         } else {
             let enemy_pos = transform.translation;
             let to_player = player_pos - enemy_pos;
@@ -295,8 +297,19 @@ fn enemy_take_dmg(
     }
 }
 
-fn enemy_despawner(enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>, mut commands: Commands) {
+fn enemy_despawner(
+    enemy_q: Query<Entity, (With<Enemy>, With<Despawn>)>,
+    indicator_q: Query<(Entity, &Owner), With<JumperAttackIndicator>>,
+    mut commands: Commands,
+) {
     for enemy in &enemy_q {
+        //We can prop solve this better via relations
+        for (indicator, owner) in indicator_q {
+            if owner.0 == enemy {
+                commands.entity(indicator).despawn();
+            }
+        }
+        commands.entity(enemy).despawn_children();
         commands.entity(enemy).despawn();
     }
 }

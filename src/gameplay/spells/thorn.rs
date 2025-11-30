@@ -103,7 +103,7 @@ fn spawn_thorn_projectile(
         let direction = (enemy_pos.translation.truncate() - player_pos).normalize();
         let thorn_pos = player_pos + (direction * ((PLAYER_SIZE / 2.0) + THORN_LENGTH / 2.0));
         let angle = direction.y.atan2(direction.x);
-        let tip = commands
+        commands
             .spawn((
                 Name::new("ThornTip"),
                 Sprite {
@@ -123,8 +123,7 @@ fn spawn_thorn_projectile(
                 PlayerProjectile,
                 Sensor,
             ))
-            .observe(on_thorn_hit)
-            .id();
+            .observe(on_thorn_hit);
     }
     Ok(())
 }
