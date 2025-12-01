@@ -2,7 +2,12 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{Pause, gameplay::level::spawn_level, menus::Menu, screens::Screen};
+use crate::{
+    Pause,
+    gameplay::{level::spawn_level, overlays::Overlay},
+    menus::Menu,
+    screens::Screen,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_level);
@@ -23,6 +28,9 @@ pub(super) fn plugin(app: &mut App) {
             ),
         ),
     );
+    app.add_systems(OnEnter(Overlay::LevelUp), pause);
+    app.add_systems(OnExit(Overlay::LevelUp), (close_menu, unpause));
+
     app.add_systems(OnExit(Screen::Gameplay), (close_menu, unpause));
     app.add_systems(
         OnEnter(Menu::None),
