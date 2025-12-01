@@ -7,6 +7,9 @@ use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
 use crate::GameLayer;
+use crate::gameplay::abilities::dash::Dash;
+use crate::gameplay::abilities::heal::Heal;
+use crate::gameplay::abilities::{EAbility, QAbility, UseEAbility, UseQAbility};
 use crate::gameplay::character_controller::CharacterController;
 use crate::{
     asset_tracking::LoadResource,
@@ -19,7 +22,6 @@ use crate::{
         },
     },
 };
-
 pub(crate) mod animation;
 pub(crate) mod hit;
 pub(crate) mod movement;
@@ -48,6 +50,9 @@ struct PlayerBundle {
     #[grid_coords]
     grid_coords: GridCoords,
 }
+
+#[derive(Event)]
+pub struct PlayerSetupComplete;
 
 #[derive(Event, Reflect)]
 pub(crate) struct PlayerHitEvent {
@@ -107,7 +112,7 @@ impl FromWorld for PlayerAssets {
     XpCollectionRange(150.0),
     XP(0.),
     Level(1.),
-    CharacterController{speed: 100.},
+    CharacterController{speed: 100., ..default()},
     AccumulatedInput,
 )]
 pub(crate) struct Player;
@@ -121,8 +126,6 @@ fn setup_player(
 ) {
     commands.entity(add.entity).insert((
         player_input_actions(),
-        // A texture atlas is a way to split a single image into a grid of related images.
-        // You can learn more in this example: https://github.com/bevyengine/bevy/blob/latest/examples/2d/texture_atlas.rs
         PlayerAnimation::new(),
         LockedAxes::ROTATION_LOCKED,
         // Prevent the player from getting impacted by external forces.
@@ -166,6 +169,11 @@ fn setup_player(
     commands.trigger(crate::gameplay::PickUpSpell {
         spell_type: crate::gameplay::spells::SpellType::Fireball,
     });
+
+    commands.spawn((QAbility, Heal));
+    commands.spawn((EAbility, Dash));
+
+    commands.trigger(PlayerSetupComplete);
 }
 
 fn player_input_actions() -> impl Bundle {
@@ -177,5 +185,13 @@ fn player_input_actions() -> impl Bundle {
                 Axial::left_stick()
             )),
         ),
+        (
+            Action::<UseQAbility>::new(),
+            bindings![KeyCode::KeyQ]
+        ),
+        (
+            Action::<UseEAbility>::new(),
+            bindings![KeyCode::KeyE]
+        )
     ])
 }
