@@ -127,14 +127,17 @@ struct Pause(pub bool);
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct PausableSystems;
 
+const VIRTUAL_W: f32 = 1024.0;
+const VIRTUAL_H: f32 = 576.0;
+
 fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
         Camera2d,
         Projection::from(OrthographicProjection {
             scaling_mode: ScalingMode::Fixed {
-                width: 640.0,
-                height: 360.0,
+                width: VIRTUAL_W,
+                height: VIRTUAL_H,
             },
             viewport_origin: Vec2::ZERO,
             ..OrthographicProjection::default_2d()
