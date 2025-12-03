@@ -1,8 +1,11 @@
 use avian2d::prelude::PhysicsLayer;
 use bevy::{camera::ScalingMode, prelude::*};
 
+use crate::camera::zoom::{PixelViewport, PixelZoom};
+
 mod asset_tracking;
 mod audio;
+mod camera;
 #[cfg(feature = "dev")]
 mod dev_tools;
 mod fixed_update_inspection;
@@ -36,6 +39,7 @@ pub fn plugin(app: &mut App) {
         fixed_update_inspection::plugin,
         asset_tracking::plugin,
         audio::plugin,
+        camera::plugin,
         #[cfg(feature = "dev")]
         dev_tools::plugin,
         menus::plugin,
@@ -135,12 +139,13 @@ fn spawn_camera(mut commands: Commands) {
         Name::new("Camera"),
         Camera2d,
         Projection::from(OrthographicProjection {
-            scaling_mode: ScalingMode::Fixed {
-                width: VIRTUAL_W,
-                height: VIRTUAL_H,
-            },
             viewport_origin: Vec2::ZERO,
             ..OrthographicProjection::default_2d()
         }),
+        PixelZoom::FitSize {
+            width: 1024,
+            height: 576,
+        },
+        PixelViewport,
     ));
 }
