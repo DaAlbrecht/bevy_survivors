@@ -167,8 +167,8 @@ fn setup_player(
         CollidingEntities::default(),
     ));
 
-    commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Scale,
+    commands.trigger(crate::gameplay::PickUpWeapon {
+        weapon_type: crate::gameplay::weapons::WeaponType::Scale,
     });
 
     commands.spawn((QAbility, Heal));

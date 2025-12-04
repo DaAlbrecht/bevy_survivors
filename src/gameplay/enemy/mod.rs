@@ -3,7 +3,7 @@ use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 use rand::Rng;
 
 use crate::{
-    GameLayer, PLAYER_SIZE, PausableSystems, PostPhysicsAppSystems, SPELL_SIZE,
+    GameLayer, PLAYER_SIZE, PROJECTILE_SIZE, PausableSystems, PostPhysicsAppSystems,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
@@ -15,7 +15,7 @@ use crate::{
         },
         player::{Direction, PlayerHitEvent},
         simple_animation::HurtAnimationTimer,
-        spells::{Cooldown, Damage, Despawn, Halt, Range, Root, SpellDuration, SpellTick},
+        weapons::{Cooldown, Damage, Despawn, Halt, Range, Root, WeaponDuration, WeaponTick},
     },
     screens::Screen,
 };
@@ -100,7 +100,7 @@ pub(crate) struct EnemyDamageEvent {
 #[derive(Event, Reflect)]
 pub(crate) struct EnemyKnockbackEvent {
     pub entity_hit: Entity,
-    pub spell_entity: Entity,
+    pub projectile: Entity,
 }
 
 #[derive(Event, Reflect)]
@@ -424,7 +424,8 @@ fn projectile_hit_detection(
             let projectile_pos = projectile_q.get(projectile)?;
 
             //Check if player is hit by this projectile
-            if (player_pos.translation.distance(projectile_pos.translation) - (SPELL_SIZE / 2.0))
+            if (player_pos.translation.distance(projectile_pos.translation)
+                - (PROJECTILE_SIZE / 2.0))
                 <= (PLAYER_SIZE / 2.0)
             {
                 trigger_player_hit_event(enemy_type, projectile, enemy, &mut commands);
@@ -457,8 +458,8 @@ fn terrain_manager(
             Entity,
             &Transform,
             &Damage,
-            &mut SpellDuration,
-            &mut SpellTick,
+            &mut WeaponDuration,
+            &mut WeaponTick,
             &Size,
         ),
         With<HazardousTerrain>,

@@ -6,20 +6,21 @@ use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::spells::UpgradeSpellEvent;
+use crate::gameplay::weapons::UpgradeWeaponEvent;
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
     player::Player,
-    spells::{
-        CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
+    weapons::{
+        CastWeapon, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Weapon,
+        WeaponType,
     },
 };
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Fireball,
+    Weapon,
+    WeaponType::Fireball,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     Speed(600.),
     Knockback(100.),
@@ -38,7 +39,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_fireball(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut fireball_q: Query<&mut Damage, With<Fireball>>,
 ) -> Result {
     let mut damage = fireball_q.single_mut()?;
@@ -104,7 +105,7 @@ fn spawn_fireball_projectile(
                 AnimationTimer {
                     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
-                CastSpell(fireball),
+                CastWeapon(fireball),
                 Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
                     .with_rotation(towards_quaternion),
                 Direction(direction.extend(0.)),
@@ -127,12 +128,12 @@ fn on_fireball_hit(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    spell_q: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
+    weapon_q: Query<(&ExplosionRadius, &Damage), With<Fireball>>,
 ) -> Result {
-    let spell = event.collider1;
+    let projectile = event.collider1;
     let enemy = event.collider2;
 
-    let (explosion_radius, dmg) = spell_q.single()?;
+    let (explosion_radius, dmg) = weapon_q.single()?;
 
     if let Ok((enemy_transform, enemy)) = enemy_q.get(enemy) {
         let dmg = dmg.0;
@@ -172,10 +173,10 @@ fn on_fireball_hit(
         //Knockback
         commands.trigger(EnemyKnockbackEvent {
             entity_hit: enemy,
-            spell_entity: spell,
+            projectile,
         });
     }
-    commands.entity(spell).despawn();
+    commands.entity(projectile).despawn();
 
     Ok(())
 }

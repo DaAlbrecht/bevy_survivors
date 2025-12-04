@@ -71,7 +71,7 @@ pub fn plugin(app: &mut App) {
 
 const ENEMY_SIZE: f32 = 32.0;
 const PLAYER_SIZE: f32 = 32.0;
-const SPELL_SIZE: f32 = 8.0;
+const PROJECTILE_SIZE: f32 = 8.0;
 const XP_GAIN_GEM: f32 = 10.;
 
 const SPAWN_RADIUS: f32 = 200.0;

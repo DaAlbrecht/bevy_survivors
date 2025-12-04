@@ -9,9 +9,9 @@ use crate::{
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
-        spells::{
-            CastSpell, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Spell, SpellType,
-            UpgradeSpellEvent,
+        weapons::{
+            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount,
+            UpgradeWeaponEvent, Weapon, WeaponType,
         },
     },
     screens::Screen,
@@ -19,13 +19,13 @@ use crate::{
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Energy,
+    Weapon,
+    WeaponType::Energy,
     Cooldown(Timer::from_seconds(3., TimerMode::Once)),
     Damage(5.),
     ProjectileCount(1.),
     crate::gameplay::Speed(400.),
-    Name::new("Energy Spell")
+    Name::new("Energy Weapon")
 )]
 #[derive(Reflect)]
 pub(crate) struct Energy;
@@ -54,7 +54,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_energy(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut energy_q: Query<&mut ProjectileCount, With<Energy>>,
 ) -> Result {
     let mut count = energy_q.single_mut()?;
@@ -110,7 +110,7 @@ fn spawn_energy_projectiles(
                     AnimationTimer {
                         timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                     },
-                    CastSpell(energy),
+                    CastWeapon(energy),
                     Transform::from_xyz(
                         player_transform.translation.x,
                         player_transform.translation.y,
@@ -160,18 +160,18 @@ fn release_staggered_projectiles(
 fn on_energy_hit(
     event: On<avian2d::prelude::CollisionStart>,
     enemy_q: Query<Entity, With<Enemy>>,
-    projectile_q: Query<&CastSpell, With<EnergyProjectile>>,
-    spell_q: Query<&Damage, With<Energy>>,
+    projectile_q: Query<&CastWeapon, With<EnergyProjectile>>,
+    weapon_q: Query<&Damage, With<Energy>>,
     mut commands: Commands,
 ) -> Result {
     let projectile = event.collider1;
     let enemy = event.collider2;
 
-    let Ok(cast_spell) = projectile_q.get(projectile) else {
+    let Ok(cast_weapon) = projectile_q.get(projectile) else {
         return Ok(());
     };
 
-    let Ok(dmg) = spell_q.get(cast_spell.0) else {
+    let Ok(dmg) = weapon_q.get(cast_weapon.0) else {
         return Ok(());
     };
 
@@ -184,7 +184,7 @@ fn on_energy_hit(
 
         commands.trigger(EnemyKnockbackEvent {
             entity_hit: enemy,
-            spell_entity: projectile,
+            projectile,
         });
     }
 

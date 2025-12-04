@@ -4,11 +4,11 @@ use bevy::prelude::*;
 use crate::{
     GameLayer, PausableSystems,
     gameplay::{
-        PickUpSpell, Speed,
+        PickUpWeapon, Speed,
         damage_numbers::DamageType,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{AddToInventory, Direction, Inventory, Player},
-        spells::{
+        weapons::{
             circles::{Circles, CirclesAttackEvent, upgrade_circles},
             dot::Bleed,
             energy::{Energy, EnergyAttackEvent, upgrade_energy},
@@ -53,9 +53,9 @@ pub(crate) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 
-    app.add_observer(add_spell_to_inventory);
+    app.add_observer(add_weapon_to_inventory);
 
-    app.register_type::<SpellType>();
+    app.register_type::<WeaponType>();
 }
 
 #[derive(Component, Reflect)]
@@ -90,7 +90,7 @@ pub(crate) struct Range(pub f32);
 pub(crate) struct ExplosionRadius(pub f32);
 
 #[derive(Component, Reflect)]
-pub(crate) struct SpellDuration(pub Timer);
+pub(crate) struct WeaponDuration(pub Timer);
 
 #[derive(Component, Reflect)]
 pub(crate) struct ProjectileCount(pub f32);
@@ -105,7 +105,7 @@ pub(crate) struct StartPosition(Vec2);
 pub(crate) struct Despawn;
 
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
-pub(crate) enum SpellType {
+pub(crate) enum WeaponType {
     Energy,
     Circles,
     Scale,
@@ -116,31 +116,31 @@ pub(crate) enum SpellType {
     Thorn,
 }
 
-impl SpellType {
-    pub const ALL: [SpellType; 8] = [
-        SpellType::Energy,
-        SpellType::Circles,
-        SpellType::Scale,
-        SpellType::Fireball,
-        SpellType::Icelance,
-        SpellType::Lightning,
-        SpellType::Orb,
-        SpellType::Thorn,
+impl WeaponType {
+    pub const ALL: [WeaponType; 8] = [
+        WeaponType::Energy,
+        WeaponType::Circles,
+        WeaponType::Scale,
+        WeaponType::Fireball,
+        WeaponType::Icelance,
+        WeaponType::Lightning,
+        WeaponType::Orb,
+        WeaponType::Thorn,
     ];
 }
 
 #[derive(Component, Default, Reflect)]
-pub(crate) struct Spell;
+pub(crate) struct Weapon;
 
 #[derive(Component)]
-#[relationship(relationship_target = SpellProjectiles)]
+#[relationship(relationship_target = WeaponProjectiles)]
 #[derive(Reflect)]
-pub(crate) struct CastSpell(pub Entity);
+pub(crate) struct CastWeapon(pub Entity);
 
 #[derive(Component)]
-#[relationship_target(relationship = CastSpell, linked_spawn)]
+#[relationship_target(relationship = CastWeapon, linked_spawn)]
 #[derive(Reflect)]
-pub(crate) struct SpellProjectiles(Vec<Entity>);
+pub(crate) struct WeaponProjectiles(Vec<Entity>);
 
 #[derive(Component, Default, Reflect)]
 pub(crate) struct Segmented;
@@ -152,30 +152,30 @@ pub(crate) struct Root(pub Timer);
 pub(crate) struct Tail;
 
 #[derive(Component)]
-pub struct SpellTick(pub Timer);
+pub struct WeaponTick(pub Timer);
 
 #[derive(EntityEvent)]
-pub(crate) struct UpgradeSpellEvent {
+pub(crate) struct UpgradeWeaponEvent {
     pub entity: Entity,
 }
 
-pub(crate) fn add_spell_to_inventory(
-    trigger: On<PickUpSpell>,
+pub(crate) fn add_weapon_to_inventory(
+    trigger: On<PickUpWeapon>,
     mut commands: Commands,
-    player_q: Query<Entity, (With<Player>, Without<Spell>)>,
-    owned_spells: Query<(Entity, &SpellType), With<Spell>>,
+    player_q: Query<Entity, (With<Player>, Without<Weapon>)>,
+    owned_weapons: Query<(Entity, &WeaponType), With<Weapon>>,
 ) -> Result {
     let Ok(player) = player_q.single() else {
         return Ok(());
     };
     //
-    // Check if spell is already owned - if so, upgrade it
-    for (spell_entity, owned_spell) in &owned_spells {
-        if *owned_spell == trigger.spell_type {
-            info!("Upgrading spell: {:?}", owned_spell);
-            // Trigger upgrade event on the spell entity itself
-            commands.trigger(UpgradeSpellEvent {
-                entity: spell_entity,
+    // Check if weapon is already owned - if so, upgrade it
+    for (weapon_entity, owned_weapon) in &owned_weapons {
+        if *owned_weapon == trigger.weapon_type {
+            info!("Upgrading Weapon: {:?}", owned_weapon);
+            // Trigger upgrade event on the weapon entity itself
+            commands.trigger(UpgradeWeaponEvent {
+                entity: weapon_entity,
             });
             return Ok(());
         }
@@ -184,36 +184,36 @@ pub(crate) fn add_spell_to_inventory(
     //Get Inventory of Player
     let mut e = commands.spawn(AddToInventory(player));
 
-    match trigger.spell_type {
-        SpellType::Energy => {
+    match trigger.weapon_type {
+        WeaponType::Energy => {
             e.insert(Energy);
             e.observe(upgrade_energy);
         }
-        SpellType::Circles => {
+        WeaponType::Circles => {
             e.insert(Circles);
             e.observe(upgrade_circles);
         }
-        SpellType::Scale => {
+        WeaponType::Scale => {
             e.insert(Scale);
             e.observe(upgrade_scale);
         }
-        SpellType::Fireball => {
+        WeaponType::Fireball => {
             e.insert(Fireball);
             e.observe(upgrade_fireball);
         }
-        SpellType::Icelance => {
+        WeaponType::Icelance => {
             e.insert(Icelance);
             e.observe(upgrade_icelance);
         }
-        SpellType::Lightning => {
+        WeaponType::Lightning => {
             e.insert(Lightning);
             e.observe(upgrade_lightning);
         }
-        SpellType::Orb => {
+        WeaponType::Orb => {
             e.insert(Orb);
             e.observe(upgrade_orb);
         }
-        SpellType::Thorn => {
+        WeaponType::Thorn => {
             e.insert(Thorn);
             e.observe(upgrade_thorn);
         }
@@ -225,7 +225,7 @@ pub(crate) fn add_spell_to_inventory(
 fn attack(
     player_q: Query<Entity, With<Player>>,
     inventory: Query<&Inventory>,
-    mut spells: Query<(&mut Cooldown, &SpellType), With<Spell>>,
+    mut weapons: Query<(&mut Cooldown, &WeaponType), With<Weapon>>,
     mut commands: Commands,
 ) -> Result {
     let Ok(player) = player_q.single() else {
@@ -233,18 +233,18 @@ fn attack(
     };
 
     for inventory_slot in inventory.iter_descendants(player) {
-        let (mut cooldown, spell_type) = spells.get_mut(inventory_slot)?;
+        let (mut cooldown, weapon_type) = weapons.get_mut(inventory_slot)?;
 
         if cooldown.0.is_finished() {
-            match spell_type {
-                SpellType::Energy => commands.trigger(EnergyAttackEvent),
-                SpellType::Circles => commands.trigger(CirclesAttackEvent),
-                SpellType::Scale => commands.trigger(ScaleAttackEvent),
-                SpellType::Fireball => commands.trigger(FireballAttackEvent),
-                SpellType::Icelance => commands.trigger(icelance::IcelanceAttackEvent),
-                SpellType::Lightning => commands.trigger(LightningAttackEvent),
-                SpellType::Orb => commands.trigger(OrbAttackEvent),
-                SpellType::Thorn => commands.trigger(ThornAttackEvent),
+            match weapon_type {
+                WeaponType::Energy => commands.trigger(EnergyAttackEvent),
+                WeaponType::Circles => commands.trigger(CirclesAttackEvent),
+                WeaponType::Scale => commands.trigger(ScaleAttackEvent),
+                WeaponType::Fireball => commands.trigger(FireballAttackEvent),
+                WeaponType::Icelance => commands.trigger(icelance::IcelanceAttackEvent),
+                WeaponType::Lightning => commands.trigger(LightningAttackEvent),
+                WeaponType::Orb => commands.trigger(OrbAttackEvent),
+                WeaponType::Thorn => commands.trigger(ThornAttackEvent),
             }
             cooldown.0.reset();
         }
@@ -255,8 +255,8 @@ fn attack(
 
 fn handle_timers(
     time: Res<Time>,
-    mut cooldowns: Query<&mut Cooldown, With<Spell>>,
-    mut durations: Query<&mut SpellDuration, With<CastSpell>>,
+    mut cooldowns: Query<&mut Cooldown, With<Weapon>>,
+    mut durations: Query<&mut WeaponDuration, With<CastWeapon>>,
     mut thorn_dmg_timer: Query<&mut DamageCooldown, With<Thorn>>,
     mut root_timer: Query<(Entity, &mut Root), With<Enemy>>,
     mut bleed_timer: Query<(Entity, &mut Bleed), With<Enemy>>,
@@ -299,18 +299,18 @@ fn handle_timers(
 }
 
 fn move_projectile(
-    spells: Query<(Entity, &Speed), With<Spell>>,
-    projectiles: Query<&SpellProjectiles>,
+    weapons: Query<(Entity, &Speed), With<Weapon>>,
+    projectiles: Query<&WeaponProjectiles>,
     mut projectile_q: Query<
         (&mut LinearVelocity, &Direction, Option<&Halt>),
         With<PlayerProjectile>,
     >,
 ) {
-    // Loop over all types of spells
-    for (spell, speed) in &spells {
-        // Iterate over each projectile for this given spell type
+    // Loop over all types of weapons
+    for (weapon, speed) in &weapons {
+        // Iterate over each projectile for this given weapon type
 
-        for projectile in projectiles.iter_descendants(spell) {
+        for projectile in projectiles.iter_descendants(weapon) {
             let Ok((mut linear_velocity, bullet_direction, halt)) =
                 projectile_q.get_mut(projectile)
             else {

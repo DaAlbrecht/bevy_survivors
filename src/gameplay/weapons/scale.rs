@@ -4,12 +4,12 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::spells::UpgradeSpellEvent;
+use crate::gameplay::weapons::UpgradeWeaponEvent;
 use crate::gameplay::{
     Speed,
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
     player::{Direction, Player},
-    spells::{CastSpell, Damage, Knockback, PlayerProjectile, Spell, SpellType},
+    weapons::{CastWeapon, Damage, Knockback, PlayerProjectile, Weapon, WeaponType},
 };
 
 use super::Cooldown;
@@ -18,8 +18,8 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Scale,
+    Weapon,
+    WeaponType::Scale,
     Cooldown(Timer::from_seconds(1., TimerMode::Once)),
     Speed(50.),
     Knockback(1500.),
@@ -37,7 +37,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_scale(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut scale_q: Query<&mut Knockback, With<Scale>>,
 ) -> Result {
     let mut knockback = scale_q.single_mut()?;
@@ -71,7 +71,7 @@ fn spawn_scale_projectile(
                 image: asset_server.load("fx/scale.png"),
                 ..default()
             },
-            CastSpell(scale),
+            CastWeapon(scale),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.),
             Direction(direction),
             PlayerProjectile,
@@ -82,13 +82,12 @@ fn spawn_scale_projectile(
 }
 
 fn on_scale_hit(
-    // trigger: On<ScaleHitEvent>,
     event: On<CollisionStart>,
     mut commands: Commands,
     scale_dmg: Query<&Damage, With<Scale>>,
 ) -> Result {
     info!("hit detected");
-    let spell = event.collider1;
+    let projectile = event.collider1;
     let enemy = event.collider2;
 
     let dmg = scale_dmg.single()?.0;
@@ -101,9 +100,9 @@ fn on_scale_hit(
 
     commands.trigger(EnemyKnockbackEvent {
         entity_hit: enemy,
-        spell_entity: spell,
+        projectile,
     });
 
-    commands.entity(spell).despawn();
+    commands.entity(projectile).despawn();
     Ok(())
 }

@@ -5,7 +5,7 @@ use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    gameplay::{PickUpSpell, overlays::Overlay, spells::SpellType},
+    gameplay::{PickUpWeapon, overlays::Overlay, weapons::WeaponType},
     theme::widget,
 };
 
@@ -43,24 +43,24 @@ fn spawn_level_up_menu(
                 ))
                 .with_children(|parent| {
                     for _ in 0..NUMBER_OF_ITEM_CHOICES {
-                        let spell_index = rng.random_range(0..SpellType::ALL.len());
+                        let weapon_index = rng.random_range(0..WeaponType::ALL.len());
 
-                        let spell_image: Handle<Image> = match SpellType::ALL[spell_index] {
-                            SpellType::Energy => asset_server.load("ui/icons/energy_item.png"),
-                            SpellType::Circles => asset_server.load("ui/icons/circle_item.png"),
-                            SpellType::Scale => asset_server.load("fx/scale.png"),
-                            SpellType::Fireball => asset_server.load("ui/icons/fireball_item.png"),
-                            SpellType::Lightning => {
+                        let weapon_image: Handle<Image> = match WeaponType::ALL[weapon_index] {
+                            WeaponType::Energy => asset_server.load("ui/icons/energy_item.png"),
+                            WeaponType::Circles => asset_server.load("ui/icons/circle_item.png"),
+                            WeaponType::Scale => asset_server.load("fx/scale.png"),
+                            WeaponType::Fireball => asset_server.load("ui/icons/fireball_item.png"),
+                            WeaponType::Lightning => {
                                 asset_server.load("ui/icons/lightning_icon.png")
                             }
-                            SpellType::Orb => asset_server.load("ui/icons/orbs_item.png"),
-                            SpellType::Thorn => asset_server.load("fx/thorn_base.png"),
-                            SpellType::Icelance => asset_server.load("ui/icons/icelance_item.png"),
+                            WeaponType::Orb => asset_server.load("ui/icons/orbs_item.png"),
+                            WeaponType::Thorn => asset_server.load("fx/thorn_base.png"),
+                            WeaponType::Icelance => asset_server.load("ui/icons/icelance_item.png"),
                         };
                         parent
                             .spawn((
-                                item_choice_widget(border_image.clone(), spell_image, &font),
-                                SpellType::ALL[spell_index],
+                                item_choice_widget(border_image.clone(), weapon_image, &font),
+                                WeaponType::ALL[weapon_index],
                             ))
                             .observe(upgrade);
                     }
@@ -70,7 +70,7 @@ fn spawn_level_up_menu(
 
 fn item_choice_widget(
     border_image: Handle<Image>,
-    spell_image: Handle<Image>,
+    weapon_image: Handle<Image>,
     font: &Handle<Font>,
 ) -> impl Bundle {
     (
@@ -105,7 +105,7 @@ fn item_choice_widget(
                     height: Val::Px(128.),
                     ..Default::default()
                 },
-                ImageNode::new(spell_image),
+                ImageNode::new(weapon_image),
             )),
             Spawn(item_desc(font)),
             Spawn(item_txt(font)),
@@ -136,7 +136,7 @@ fn item_desc(font: &Handle<Font>) -> impl Bundle {
 }
 
 fn item_txt(font: &Handle<Font>) -> impl Bundle {
-    //TODO: Get this from spell rarity proc
+    //TODO: Get this from weapon rarity proc
     let colors = [basic::WHITE, basic::GREEN, basic::BLUE, basic::RED];
     let rng = &mut rand::rng();
     let color = colors[rng.random_range(0..colors.len())];
@@ -164,17 +164,17 @@ fn upgrade(
     trigger: On<Pointer<Click>>,
     mut commands: Commands,
     mut next_menu: ResMut<NextState<Overlay>>,
-    spell_types: Query<&SpellType>,
+    weapon_types: Query<&WeaponType>,
 ) {
-    let selected_spell = trigger.entity;
+    let selected_weapon = trigger.entity;
 
-    let pickup_event = PickUpSpell {
-        spell_type: *spell_types
-            .get(selected_spell)
-            .expect("We should always find the SpellType the player chose"),
+    let pickup_event = PickUpWeapon {
+        weapon_type: *weapon_types
+            .get(selected_weapon)
+            .expect("We should always find the WeaponType the player chose"),
     };
 
-    // Pickup spell
+    // Pickup weapon
     commands.trigger(pickup_event);
 
     // Transition back to the gameplay

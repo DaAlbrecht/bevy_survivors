@@ -16,7 +16,7 @@ use crate::{
         },
         level::{LevelWalls, find_valid_spawn_position},
         player::{Direction, Player, PlayerHitEvent},
-        spells::{Cooldown, Damage, Range},
+        weapons::{Cooldown, Damage, Range},
     },
 };
 

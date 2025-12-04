@@ -9,9 +9,9 @@ use crate::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Player},
-        spells::{
-            CastSpell, Cooldown, Damage, ProjectileCount, Range, Spell, SpellDuration, SpellType,
-            UpgradeSpellEvent,
+        weapons::{
+            CastWeapon, Cooldown, Damage, ProjectileCount, Range, UpgradeWeaponEvent, Weapon,
+            WeaponDuration, WeaponType,
         },
     },
     screens::Screen,
@@ -19,13 +19,13 @@ use crate::{
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Orb,
+    Weapon,
+    WeaponType::Orb,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     Range(75.),
     Damage(4.),
     ProjectileCount(3.),
-    Name::new("Orb Spell")
+    Name::new("Orb Weapon")
 )]
 #[derive(Reflect)]
 pub(crate) struct Orb;
@@ -54,7 +54,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_orb(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut orb_q: Query<&mut ProjectileCount, With<Orb>>,
 ) -> Result {
     let mut count = orb_q.single_mut()?;
@@ -99,9 +99,9 @@ fn spawn_orb_projectile(
                 CollisionEventsEnabled,
                 CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
                 OrbProjectile,
-                CastSpell(orb),
+                CastWeapon(orb),
                 Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
-                SpellDuration(Timer::from_seconds(4., TimerMode::Once)),
+                WeaponDuration(Timer::from_seconds(4., TimerMode::Once)),
                 OrbPhase(phase),
                 Direction(direction),
                 Range(radius.0),
@@ -116,12 +116,12 @@ fn on_orb_hit(
     event: On<CollisionStart>,
     enemy_q: Query<Entity, With<Enemy>>,
     mut commands: Commands,
-    spell_q: Query<&Damage, With<Orb>>,
+    weapon_q: Query<&Damage, With<Orb>>,
 ) -> Result {
-    let spell = event.collider1;
+    let projectile = event.collider1;
     let enemy = event.collider2;
 
-    let dmg = spell_q.single()?;
+    let dmg = weapon_q.single()?;
 
     if let Ok(enemy) = enemy_q.get(enemy) {
         let dmg = dmg.0;
@@ -135,7 +135,7 @@ fn on_orb_hit(
         //Knockback
         commands.trigger(EnemyKnockbackEvent {
             entity_hit: enemy,
-            spell_entity: spell,
+            projectile,
         });
     }
 
@@ -174,7 +174,7 @@ fn update_orb_movement(
 
 fn orb_lifetime(
     mut commands: Commands,
-    mut orb_q: Query<(Entity, &mut SpellDuration), With<OrbProjectile>>,
+    mut orb_q: Query<(Entity, &mut WeaponDuration), With<OrbProjectile>>,
 ) {
     for (orb, duration) in &mut orb_q {
         if duration.0.is_finished() {

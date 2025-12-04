@@ -7,7 +7,7 @@ use crate::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
-        spells::{Cooldown, Damage, Range, Spell, SpellType, UpgradeSpellEvent},
+        weapons::{Cooldown, Damage, Range, UpgradeWeaponEvent, Weapon, WeaponType},
     },
     screens::Screen,
 };
@@ -22,7 +22,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_lightning(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut lightning_q: Query<(&mut Cooldown, &mut Jumps), With<Lightning>>,
 ) -> Result {
     let (mut cooldown, mut jumps) = lightning_q.single_mut()?;
@@ -42,8 +42,8 @@ pub fn upgrade_lightning(
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Lightning,
+    Weapon,
+    WeaponType::Lightning,
     Damage(5.),
     Cooldown(Timer::from_seconds(3., TimerMode::Once,)),
     Jumps(3),

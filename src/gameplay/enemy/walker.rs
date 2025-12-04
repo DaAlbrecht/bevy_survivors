@@ -13,7 +13,7 @@ use crate::{
         level::{LevelWalls, find_valid_spawn_position},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
-        spells::Damage,
+        weapons::Damage,
     },
 };
 

@@ -10,9 +10,9 @@ use crate::{
         damage_numbers::DamageType,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{Direction, Player},
-        spells::{
-            CastSpell, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root, Segmented,
-            Spell, SpellDuration, SpellType, StartPosition, Tail, UpgradeSpellEvent,
+        weapons::{
+            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root, Segmented,
+            StartPosition, Tail, UpgradeWeaponEvent, Weapon, WeaponDuration, WeaponType,
             dot::{Bleed, DoT},
         },
     },
@@ -23,8 +23,8 @@ const THORN_LENGTH: f32 = 16.0;
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Thorn,
+    Weapon,
+    WeaponType::Thorn,
     Segmented,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Once)),
@@ -62,7 +62,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_thorn(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut thorn_q: Query<&mut ProjectileCount, With<Thorn>>,
 ) -> Result {
     let mut count = thorn_q.single_mut()?;
@@ -110,7 +110,7 @@ fn spawn_thorn_projectile(
                     image: asset_server.load("fx/thorn_tip.png"),
                     ..default()
                 },
-                CastSpell(thorn),
+                CastWeapon(thorn),
                 Transform {
                     translation: Vec3::new(thorn_pos.x, thorn_pos.y, 10.0),
                     rotation: Quat::from_rotation_z(angle),
@@ -160,7 +160,7 @@ fn thorn_range_keeper(
                         image: asset_server.load("fx/thorn_base.png"),
                         ..default()
                     },
-                    CastSpell(thorn),
+                    CastWeapon(thorn),
                     Tail,
                     Transform {
                         translation: Vec3::new(
@@ -189,7 +189,7 @@ fn thorn_range_keeper(
 
             commands
                 .entity(thorn_tip)
-                .insert(SpellDuration(Timer::from_seconds(0.2, TimerMode::Once)));
+                .insert(WeaponDuration(Timer::from_seconds(0.2, TimerMode::Once)));
         }
     }
 }
@@ -198,7 +198,7 @@ fn thorn_lifetime(
     mut thorn_tip_q: Query<(
         Entity,
         Option<&Children>,
-        &mut SpellDuration,
+        &mut WeaponDuration,
         &mut ThornSegments,
     )>,
     mut commands: Commands,

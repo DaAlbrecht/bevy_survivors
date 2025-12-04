@@ -5,7 +5,7 @@ use crate::{
         enemy::{DamageCooldown, Enemy},
         healthbar::HealthBarMaterial,
         player::Player,
-        spells::Damage,
+        weapons::Damage,
     },
 };
 use avian2d::prelude::CollidingEntities;

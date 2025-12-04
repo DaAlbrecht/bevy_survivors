@@ -2,13 +2,14 @@ use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::spells::UpgradeSpellEvent;
+use crate::gameplay::weapons::UpgradeWeaponEvent;
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
     player::Player,
-    spells::{
-        CastSpell, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Spell, SpellType,
+    weapons::{
+        CastWeapon, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Weapon,
+        WeaponType,
     },
 };
 use avian2d::prelude::*;
@@ -17,8 +18,8 @@ use bevy_seedling::sample::SamplePlayer;
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Icelance,
+    Weapon,
+    WeaponType::Icelance,
     Cooldown(Timer::from_seconds(0.5, TimerMode::Once)),
     Speed(400.),
     Knockback(100.),
@@ -37,7 +38,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_icelance(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut icelance_q: Query<&mut Damage, With<Icelance>>,
 ) -> Result {
     let mut damage = icelance_q.single_mut()?;
@@ -104,7 +105,7 @@ fn spawn_icelance_projectile(
                 AnimationTimer {
                     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
-                CastSpell(icelance),
+                CastWeapon(icelance),
                 Transform::from_translation(spawn_position),
                 Direction(Vec3::new(0.0, -1.0, 0.0)),
                 PlayerProjectile,
@@ -121,12 +122,12 @@ fn on_icelance_hit(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-    spell_q: Query<(&ExplosionRadius, &Damage), With<Icelance>>,
+    weapon_q: Query<(&ExplosionRadius, &Damage), With<Icelance>>,
 ) -> Result {
-    let spell = event.collider1;
+    let projectile = event.collider1;
     let enemy = event.collider2;
 
-    let (explosion_radius, dmg) = spell_q.single()?;
+    let (explosion_radius, dmg) = weapon_q.single()?;
 
     if let Ok((enemy_transform, enemy)) = enemy_q.get(enemy) {
         let dmg = dmg.0;
@@ -165,10 +166,10 @@ fn on_icelance_hit(
         //Knockback
         commands.trigger(EnemyKnockbackEvent {
             entity_hit: enemy,
-            spell_entity: spell,
+            projectile,
         });
     }
-    commands.entity(spell).despawn();
+    commands.entity(projectile).despawn();
 
     Ok(())
 }

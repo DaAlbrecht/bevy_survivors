@@ -16,7 +16,7 @@ use crate::{
         },
         player::{Direction, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
-        spells::{Cooldown, Damage, Range, SpellDuration, SpellTick},
+        weapons::{Cooldown, Damage, Range, WeaponDuration, WeaponTick},
     },
     screens::Screen,
 };
@@ -50,8 +50,8 @@ pub(crate) fn plugin(app: &mut App) {
     Speed(30.),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-    SpellTick(Timer::from_seconds(1.0, TimerMode::Once)),
-    SpellDuration(Timer::from_seconds(5.0, TimerMode::Once)),
+    WeaponTick(Timer::from_seconds(1.0, TimerMode::Once)),
+    WeaponDuration(Timer::from_seconds(5.0, TimerMode::Once)),
     Direction(Vec3::ZERO),
 
 )]
@@ -357,8 +357,8 @@ fn spawn_jumper_aoe(
         (
             &Transform,
             &AbilityDamage,
-            &SpellDuration,
-            &SpellTick,
+            &WeaponDuration,
+            &WeaponTick,
             &Size,
         ),
         With<Jumper>,
@@ -392,8 +392,8 @@ fn spawn_jumper_aoe(
         },
         HazardousTerrain,
         Damage(damage.0),
-        SpellDuration(duration.0.clone()),
-        SpellTick(ticker.0.clone()),
+        WeaponDuration(duration.0.clone()),
+        WeaponTick(ticker.0.clone()),
         Size(size.0),
     ));
 }

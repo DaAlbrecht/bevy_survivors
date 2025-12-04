@@ -13,9 +13,9 @@ use bevy_inspector_egui::{
 
 use crate::{
     gameplay::{
-        PickUpSpell,
+        PickUpWeapon,
         overlays::experience::LevelUpEvent,
-        spells::{Spell, SpellType},
+        weapons::{Weapon, WeaponType},
     },
     screens::Screen,
 };
@@ -23,7 +23,7 @@ use crate::{
 const TOGGLE_DEBUG_UI_KEY: KeyCode = KeyCode::Backquote;
 const TRIGGER_LEVEL_UP_KEY: KeyCode = KeyCode::F1;
 const TOGGLE_INSEPCTOR: KeyCode = KeyCode::F2;
-const ADD_ALL_SPELLS: KeyCode = KeyCode::F3;
+const ADD_ALL_WEAPONS: KeyCode = KeyCode::F3;
 const TOGGLE_COLLIDERS_KEY: KeyCode = KeyCode::F4;
 
 pub(super) fn plugin(app: &mut App) {
@@ -33,7 +33,7 @@ pub(super) fn plugin(app: &mut App) {
             toggle_debug_ui.run_if(input_just_pressed(TOGGLE_DEBUG_UI_KEY)),
             toggle_colliders.run_if(input_just_pressed(TOGGLE_COLLIDERS_KEY)),
             trigger_level_up.run_if(input_just_pressed(TRIGGER_LEVEL_UP_KEY)),
-            add_all_spells.run_if(input_just_pressed(ADD_ALL_SPELLS)),
+            add_all_weapons.run_if(input_just_pressed(ADD_ALL_WEAPONS)),
         ),
     );
 
@@ -77,21 +77,23 @@ fn trigger_level_up(mut commands: Commands) {
     commands.trigger(LevelUpEvent);
 }
 
-fn all_spells() -> &'static [SpellType] {
-    //This is kinda annoying since we have to remember to add each new spell..
+fn all_weapons() -> &'static [WeaponType] {
+    //This is kinda annoying since we have to remember to add each new weapon..
     &[
-        SpellType::Scale,
-        SpellType::Fireball,
-        SpellType::Orb,
-        SpellType::Lightning,
+        WeaponType::Scale,
+        WeaponType::Fireball,
+        WeaponType::Orb,
+        WeaponType::Lightning,
     ]
 }
 
-fn add_all_spells(mut commands: Commands, owned_spells: Query<&SpellType, With<Spell>>) {
-    let owned_spells = owned_spells.iter().copied().collect::<Vec<SpellType>>();
-    for spell in all_spells() {
-        if !owned_spells.contains(spell) {
-            commands.trigger(PickUpSpell { spell_type: *spell });
+fn add_all_weapons(mut commands: Commands, owned_weapons: Query<&WeaponType, With<Weapon>>) {
+    let owned_weapons = owned_weapons.iter().copied().collect::<Vec<WeaponType>>();
+    for weapon in all_weapons() {
+        if !owned_weapons.contains(weapon) {
+            commands.trigger(PickUpWeapon {
+                weapon_type: *weapon,
+            });
         }
     }
 }

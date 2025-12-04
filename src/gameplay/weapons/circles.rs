@@ -11,8 +11,8 @@ use crate::{
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
-        spells::{
-            CastSpell, Cooldown, Damage, ProjectileCount, Spell, SpellType, UpgradeSpellEvent,
+        weapons::{
+            CastWeapon, Cooldown, Damage, ProjectileCount, UpgradeWeaponEvent, Weapon, WeaponType,
         },
     },
     screens::Screen,
@@ -20,12 +20,12 @@ use crate::{
 
 #[derive(Component)]
 #[require(
-    Spell,
-    SpellType::Circles,
+    Weapon,
+    WeaponType::Circles,
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     Damage(3.),
     ProjectileCount(4.),
-    Name::new("Circles Spell")
+    Name::new("Circles Weapon")
 )]
 #[derive(Reflect)]
 pub(crate) struct Circles;
@@ -67,7 +67,7 @@ pub(crate) fn plugin(app: &mut App) {
 }
 
 pub fn upgrade_circles(
-    _trigger: On<UpgradeSpellEvent>,
+    _trigger: On<UpgradeWeaponEvent>,
     mut circles_q: Query<&mut ProjectileCount, With<Circles>>,
 ) -> Result {
     let mut count = circles_q.single_mut()?;
@@ -121,7 +121,7 @@ fn spawn_circles(
                 AnimationTimer {
                     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
-                CastSpell(circles),
+                CastWeapon(circles),
                 Transform::from_xyz(
                     player_transform.translation.x,
                     player_transform.translation.y,
@@ -228,14 +228,14 @@ fn on_circle_hit(
     enemy_q: Query<Entity, With<Enemy>>,
     mut circle_q: Query<
         (
-            &CastSpell,
+            &CastWeapon,
             &mut CircleHitCounter,
             &mut ZigZagMovement,
             &mut Sprite,
         ),
         With<CircleProjectile>,
     >,
-    spell_q: Query<&Damage, With<Circles>>,
+    weapon_q: Query<&Damage, With<Circles>>,
     asset_server: Res<AssetServer>,
     mut commands: Commands,
 ) -> Result {
@@ -251,11 +251,12 @@ fn on_circle_hit(
         Color::srgb(1.0, 0.3, 0.3),
     ];
 
-    let Ok((cast_spell, mut hit_counter, mut zigzag, mut sprite)) = circle_q.get_mut(circle) else {
+    let Ok((cast_weapon, mut hit_counter, mut zigzag, mut sprite)) = circle_q.get_mut(circle)
+    else {
         return Ok(());
     };
 
-    let Ok(dmg) = spell_q.get(cast_spell.0) else {
+    let Ok(dmg) = weapon_q.get(cast_weapon.0) else {
         return Ok(());
     };
 
