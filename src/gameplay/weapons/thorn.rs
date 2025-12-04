@@ -11,8 +11,8 @@ use crate::{
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{Direction, Player},
         weapons::{
-            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root, Segmented,
-            StartPosition, Tail, UpgradeWeaponEvent, Weapon, WeaponDuration, WeaponType,
+            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root,
+            UpgradeWeaponEvent, Weapon, WeaponDuration, WeaponType,
             dot::{Bleed, DoT},
         },
     },
@@ -45,7 +45,13 @@ pub(crate) struct Thorn;
 pub(crate) struct ThornTip;
 
 #[derive(Component, Default, Reflect)]
+pub(crate) struct Segmented;
+
+#[derive(Component, Default, Reflect)]
 pub(crate) struct ThornSegments(i32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct StartPosition(Vec2);
 
 #[derive(Event, Reflect)]
 pub(crate) struct ThornAttackEvent;
@@ -152,7 +158,6 @@ fn thorn_range_keeper(
         let distance = thorn_pos.distance(start_pos.0);
 
         if distance >= segments_spawned.0 as f32 * THORN_LENGTH && halt.is_none() {
-            info!("distance is: {:?}", distance);
             let thorn_base = commands
                 .spawn((
                     Name::new("ThornBase"),
@@ -161,7 +166,6 @@ fn thorn_range_keeper(
                         ..default()
                     },
                     CastWeapon(thorn),
-                    Tail,
                     Transform {
                         translation: Vec3::new(
                             -THORN_LENGTH * (segments_spawned.0) as f32,

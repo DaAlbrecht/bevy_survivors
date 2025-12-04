@@ -75,16 +75,20 @@ pub(crate) fn plugin(app: &mut App) {
 pub(crate) struct PlayerProjectile;
 
 #[derive(Component, Default, Reflect)]
-pub(crate) struct Cooldown(pub Timer);
+pub(crate) struct Weapon;
+
+#[derive(Component)]
+#[relationship(relationship_target = WeaponProjectiles)]
+#[derive(Reflect)]
+pub(crate) struct CastWeapon(pub Entity);
+
+#[derive(Component)]
+#[relationship_target(relationship = CastWeapon, linked_spawn)]
+#[derive(Reflect)]
+pub(crate) struct WeaponProjectiles(Vec<Entity>);
 
 #[derive(Component, Reflect)]
-pub(crate) struct Knockback(pub f32);
-
-#[derive(Component, Reflect)]
-pub(crate) struct Damage(pub f32);
-
-#[derive(Component, Reflect)]
-pub(crate) struct Range(pub f32);
+pub(crate) struct ProjectileCount(pub f32);
 
 #[derive(Component, Reflect)]
 pub(crate) struct ExplosionRadius(pub f32);
@@ -93,16 +97,29 @@ pub(crate) struct ExplosionRadius(pub f32);
 pub(crate) struct WeaponDuration(pub Timer);
 
 #[derive(Component, Reflect)]
-pub(crate) struct ProjectileCount(pub f32);
+pub(crate) struct Knockback(pub f32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct Root(pub Timer);
+
+//Generic Components used widely
+//****************************************************************
+#[derive(Component, Reflect)]
+pub(crate) struct Damage(pub f32);
+
+#[derive(Component, Default, Reflect)]
+pub(crate) struct Cooldown(pub Timer);
+
+#[derive(Component, Reflect)]
+pub(crate) struct Range(pub f32);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Halt;
 
 #[derive(Component, Reflect)]
-pub(crate) struct StartPosition(Vec2);
-
-#[derive(Component, Reflect)]
 pub(crate) struct Despawn;
+
+//****************************************************************
 
 #[derive(Component, Clone, Copy, PartialEq, Debug, Reflect)]
 pub(crate) enum WeaponType {
@@ -129,31 +146,6 @@ impl WeaponType {
     ];
 }
 
-#[derive(Component, Default, Reflect)]
-pub(crate) struct Weapon;
-
-#[derive(Component)]
-#[relationship(relationship_target = WeaponProjectiles)]
-#[derive(Reflect)]
-pub(crate) struct CastWeapon(pub Entity);
-
-#[derive(Component)]
-#[relationship_target(relationship = CastWeapon, linked_spawn)]
-#[derive(Reflect)]
-pub(crate) struct WeaponProjectiles(Vec<Entity>);
-
-#[derive(Component, Default, Reflect)]
-pub(crate) struct Segmented;
-
-#[derive(Component, Reflect)]
-pub(crate) struct Root(pub Timer);
-
-#[derive(Component, Reflect)]
-pub(crate) struct Tail;
-
-#[derive(Component)]
-pub struct WeaponTick(pub Timer);
-
 #[derive(EntityEvent)]
 pub(crate) struct UpgradeWeaponEvent {
     pub entity: Entity,
@@ -168,7 +160,7 @@ pub(crate) fn add_weapon_to_inventory(
     let Ok(player) = player_q.single() else {
         return Ok(());
     };
-    //
+
     // Check if weapon is already owned - if so, upgrade it
     for (weapon_entity, owned_weapon) in &owned_weapons {
         if *owned_weapon == trigger.weapon_type {
@@ -181,41 +173,40 @@ pub(crate) fn add_weapon_to_inventory(
         }
     }
 
-    //Get Inventory of Player
-    let mut e = commands.spawn(AddToInventory(player));
+    let mut inventory_entry = commands.spawn(AddToInventory(player));
 
     match trigger.weapon_type {
         WeaponType::Energy => {
-            e.insert(Energy);
-            e.observe(upgrade_energy);
+            inventory_entry.insert(Energy);
+            inventory_entry.observe(upgrade_energy);
         }
         WeaponType::Circles => {
-            e.insert(Circles);
-            e.observe(upgrade_circles);
+            inventory_entry.insert(Circles);
+            inventory_entry.observe(upgrade_circles);
         }
         WeaponType::Scale => {
-            e.insert(Scale);
-            e.observe(upgrade_scale);
+            inventory_entry.insert(Scale);
+            inventory_entry.observe(upgrade_scale);
         }
         WeaponType::Fireball => {
-            e.insert(Fireball);
-            e.observe(upgrade_fireball);
+            inventory_entry.insert(Fireball);
+            inventory_entry.observe(upgrade_fireball);
         }
         WeaponType::Icelance => {
-            e.insert(Icelance);
-            e.observe(upgrade_icelance);
+            inventory_entry.insert(Icelance);
+            inventory_entry.observe(upgrade_icelance);
         }
         WeaponType::Lightning => {
-            e.insert(Lightning);
-            e.observe(upgrade_lightning);
+            inventory_entry.insert(Lightning);
+            inventory_entry.observe(upgrade_lightning);
         }
         WeaponType::Orb => {
-            e.insert(Orb);
-            e.observe(upgrade_orb);
+            inventory_entry.insert(Orb);
+            inventory_entry.observe(upgrade_orb);
         }
         WeaponType::Thorn => {
-            e.insert(Thorn);
-            e.observe(upgrade_thorn);
+            inventory_entry.insert(Thorn);
+            inventory_entry.observe(upgrade_thorn);
         }
     }
 

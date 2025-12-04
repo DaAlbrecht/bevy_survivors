@@ -15,7 +15,7 @@ use crate::{
         },
         player::{Direction, PlayerHitEvent},
         simple_animation::HurtAnimationTimer,
-        weapons::{Cooldown, Damage, Despawn, Halt, Range, Root, WeaponDuration, WeaponTick},
+        weapons::{Cooldown, Damage, Despawn, Halt, Range, Root},
     },
     screens::Screen,
 };
@@ -144,6 +144,12 @@ pub(crate) struct AbilityDamage(pub f32);
 
 #[derive(Component)]
 pub(crate) struct AbilitySpeed(pub f32);
+
+#[derive(Component)]
+pub(crate) struct AbilityDuration(pub Timer);
+
+#[derive(Component)]
+pub(crate) struct AbilityTick(pub Timer);
 
 #[derive(Component)]
 #[allow(dead_code)]
@@ -458,8 +464,8 @@ fn terrain_manager(
             Entity,
             &Transform,
             &Damage,
-            &mut WeaponDuration,
-            &mut WeaponTick,
+            &mut AbilityDuration,
+            &mut AbilityTick,
             &Size,
         ),
         With<HazardousTerrain>,

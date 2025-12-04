@@ -11,10 +11,7 @@ use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
     player::Player,
-    weapons::{
-        CastWeapon, Cooldown, Damage, ExplosionRadius, Knockback, PlayerProjectile, Weapon,
-        WeaponType,
-    },
+    weapons::{CastWeapon, Cooldown, Damage, Knockback, PlayerProjectile, Weapon, WeaponType},
 };
 
 #[derive(Component)]
@@ -30,6 +27,9 @@ use crate::gameplay::{
 )]
 #[derive(Reflect)]
 pub(crate) struct Fireball;
+
+#[derive(Component, Reflect)]
+pub(crate) struct ExplosionRadius(pub f32);
 
 #[derive(Event, Reflect)]
 pub(crate) struct FireballAttackEvent;

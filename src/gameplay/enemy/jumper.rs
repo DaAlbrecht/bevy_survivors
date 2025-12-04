@@ -11,12 +11,12 @@ use crate::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
-            AbilityDamage, AbilitySpeed, DamageCooldown, Enemy, EnemyType, HazardousTerrain, Jump,
-            Meele, Owner, Size,
+            AbilityDamage, AbilityDuration, AbilitySpeed, AbilityTick, DamageCooldown, Enemy,
+            EnemyType, HazardousTerrain, Jump, Meele, Owner, Size,
         },
         player::{Direction, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
-        weapons::{Cooldown, Damage, Range, WeaponDuration, WeaponTick},
+        weapons::{Cooldown, Damage, Range},
     },
     screens::Screen,
 };
@@ -50,8 +50,8 @@ pub(crate) fn plugin(app: &mut App) {
     Speed(30.),
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
-    WeaponTick(Timer::from_seconds(1.0, TimerMode::Once)),
-    WeaponDuration(Timer::from_seconds(5.0, TimerMode::Once)),
+    AbilityTick(Timer::from_seconds(1.0, TimerMode::Once)),
+    AbilityDuration(Timer::from_seconds(5.0, TimerMode::Once)),
     Direction(Vec3::ZERO),
 
 )]
@@ -357,8 +357,8 @@ fn spawn_jumper_aoe(
         (
             &Transform,
             &AbilityDamage,
-            &WeaponDuration,
-            &WeaponTick,
+            &AbilityDuration,
+            &AbilityTick,
             &Size,
         ),
         With<Jumper>,
@@ -392,8 +392,8 @@ fn spawn_jumper_aoe(
         },
         HazardousTerrain,
         Damage(damage.0),
-        WeaponDuration(duration.0.clone()),
-        WeaponTick(ticker.0.clone()),
+        AbilityDuration(duration.0.clone()),
+        AbilityTick(ticker.0.clone()),
         Size(size.0),
     ));
 }
