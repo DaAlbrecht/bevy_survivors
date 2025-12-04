@@ -130,7 +130,8 @@ fn setup_player(
         LockedAxes::ROTATION_LOCKED,
         // Prevent the player from getting impacted by external forces.
         RigidBody::Kinematic,
-        Collider::rectangle(32., 32.),
+        Collider::circle(16.),
+        Friction::ZERO,
         CollisionLayers::new(
             GameLayer::Player,
             [
@@ -167,7 +168,7 @@ fn setup_player(
     ));
 
     commands.trigger(crate::gameplay::PickUpSpell {
-        spell_type: crate::gameplay::spells::SpellType::Fireball,
+        spell_type: crate::gameplay::spells::SpellType::Scale,
     });
 
     commands.spawn((QAbility, Heal));

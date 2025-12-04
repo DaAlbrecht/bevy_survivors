@@ -78,7 +78,8 @@ pub(crate) struct DamageCooldown(pub Timer);
     Direction,
     LockedAxes::ROTATION_LOCKED,
     RigidBody::Dynamic,
-    Collider = Collider::rectangle(32., 32.),
+    Collider = Collider::circle(16.),
+    Friction = Friction::ZERO,
     CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
     GameLayer::Enemy,
     GameLayer::Player,
