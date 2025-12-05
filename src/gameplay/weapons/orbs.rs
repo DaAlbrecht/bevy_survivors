@@ -11,7 +11,7 @@ use crate::{
         player::{Direction, Player},
         weapons::{
             CastWeapon, Cooldown, Damage, ProjectileCount, Range, UpgradeWeaponEvent, Weapon,
-            WeaponDuration, WeaponType,
+            WeaponAttackEvent, WeaponDuration, WeaponType,
         },
     },
     screens::Screen,
@@ -49,8 +49,6 @@ pub(crate) fn plugin(app: &mut App) {
             .in_set(PausableSystems)
             .run_if(in_state(Screen::Gameplay)),
     );
-
-    app.add_observer(spawn_orb_projectile);
 }
 
 pub fn upgrade_orb(
@@ -64,8 +62,8 @@ pub fn upgrade_orb(
     Ok(())
 }
 
-fn spawn_orb_projectile(
-    _trigger: On<OrbAttackEvent>,
+pub fn spawn_orb_projectile(
+    _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
     mut commands: Commands,

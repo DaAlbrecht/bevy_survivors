@@ -11,7 +11,7 @@ use crate::{
         simple_animation::{AnimationIndices, AnimationTimer},
         weapons::{
             CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount,
-            UpgradeWeaponEvent, Weapon, WeaponType,
+            UpgradeWeaponEvent, Weapon, WeaponAttackEvent, WeaponType,
         },
     },
     screens::Screen,
@@ -48,9 +48,6 @@ pub(crate) fn plugin(app: &mut App) {
             .in_set(PausableSystems)
             .run_if(in_state(Screen::Gameplay)),
     );
-
-    app.add_observer(spawn_energy_projectiles);
-    app.add_observer(on_energy_hit);
 }
 
 pub fn upgrade_energy(
@@ -64,8 +61,8 @@ pub fn upgrade_energy(
     Ok(())
 }
 
-fn spawn_energy_projectiles(
-    _trigger: On<EnergyAttackEvent>,
+pub fn spawn_energy_projectiles(
+    _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     energy_q: Query<(Entity, &ProjectileCount), With<Energy>>,
     mut commands: Commands,

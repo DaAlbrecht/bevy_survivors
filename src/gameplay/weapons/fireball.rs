@@ -4,9 +4,9 @@ use bevy_seedling::sample::SamplePlayer;
 
 use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::player::Direction;
+use crate::gameplay::player::{Direction, Level};
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::weapons::UpgradeWeaponEvent;
+use crate::gameplay::weapons::{ExplosionRadius, Range, UpgradeWeaponEvent, WeaponAttackEvent};
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -18,39 +18,38 @@ use crate::gameplay::{
 #[require(
     Weapon,
     WeaponType::Fireball,
+    Level(1.0),
     Cooldown(Timer::from_seconds(5., TimerMode::Once)),
     Speed(600.),
     Knockback(100.),
     Damage(5.),
     ExplosionRadius(100.),
+    Range(200.),
     Name::new("Fireball")
 )]
 #[derive(Reflect)]
 pub(crate) struct Fireball;
 
-#[derive(Component, Reflect)]
-pub(crate) struct ExplosionRadius(pub f32);
-
 #[derive(Event, Reflect)]
 pub(crate) struct FireballAttackEvent;
 
-pub(crate) fn plugin(app: &mut App) {
-    app.add_observer(spawn_fireball_projectile);
-}
+// pub(crate) fn plugin(app: &mut App) {}
 
 pub fn upgrade_fireball(
     _trigger: On<UpgradeWeaponEvent>,
-    mut fireball_q: Query<&mut Damage, With<Fireball>>,
+    mut fireball_q: Query<(&mut Level, &mut Damage), With<Fireball>>,
 ) -> Result {
-    let mut damage = fireball_q.single_mut()?;
-    damage.0 += 5.0;
+    let (mut level, mut damage) = fireball_q.single_mut()?;
+
+    level.0 += 1.0;
+    damage.0 = level.0 * 5.0;
     info!("Fireball damage upgraded to: {}", damage.0);
 
     Ok(())
 }
 
-fn spawn_fireball_projectile(
-    _trigger: On<FireballAttackEvent>,
+pub fn spawn_fireball_projectile(
+    _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     fireball: Query<Entity, With<Fireball>>,
     enemy_q: Query<&Transform, With<Enemy>>,

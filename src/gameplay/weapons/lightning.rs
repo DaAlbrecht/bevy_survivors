@@ -7,7 +7,9 @@ use crate::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent},
         player::Player,
-        weapons::{Cooldown, Damage, Range, UpgradeWeaponEvent, Weapon, WeaponType},
+        weapons::{
+            Cooldown, Damage, Range, UpgradeWeaponEvent, Weapon, WeaponAttackEvent, WeaponType,
+        },
     },
     screens::Screen,
 };
@@ -17,7 +19,7 @@ pub(crate) fn plugin(app: &mut App) {
         FixedUpdate,
         cleanup_lightning_bolt.run_if(in_state(Screen::Gameplay)),
     );
-    app.add_observer(spawn_lightning_bolt);
+
     app.add_observer(lightning_hit);
 }
 
@@ -66,8 +68,8 @@ pub(crate) struct LightningHitEvent {
 #[derive(Component, Reflect)]
 pub(crate) struct Jumps(pub u32);
 
-fn spawn_lightning_bolt(
-    _trigger: On<LightningAttackEvent>,
+pub fn spawn_lightning_bolt(
+    _trigger: On<WeaponAttackEvent>,
     mut commands: Commands,
     player_q: Query<(&Transform, Entity), (With<Player>, Without<Enemy>)>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<Player>)>,

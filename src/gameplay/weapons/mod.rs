@@ -9,15 +9,15 @@ use crate::{
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{AddToInventory, Direction, Inventory, Player},
         weapons::{
-            circles::{Circles, CirclesAttackEvent, upgrade_circles},
+            circles::{Circles, spawn_circles, upgrade_circles},
             dot::Bleed,
-            energy::{Energy, EnergyAttackEvent, upgrade_energy},
-            fireball::{Fireball, FireballAttackEvent, upgrade_fireball},
-            icelance::{Icelance, upgrade_icelance},
-            lightning::{Lightning, LightningAttackEvent, upgrade_lightning},
-            orbs::{Orb, OrbAttackEvent, upgrade_orb},
-            scale::{Scale, ScaleAttackEvent, upgrade_scale},
-            thorn::{Thorn, ThornAttackEvent, upgrade_thorn},
+            energy::{Energy, spawn_energy_projectiles, upgrade_energy},
+            fireball::{Fireball, spawn_fireball_projectile, upgrade_fireball},
+            icelance::{Icelance, spawn_icelance_projectile, upgrade_icelance},
+            lightning::{Lightning, spawn_lightning_bolt, upgrade_lightning},
+            orbs::{Orb, spawn_orb_projectile, upgrade_orb},
+            scale::{Scale, spawn_scale_projectile, upgrade_scale},
+            thorn::{Thorn, spawn_thorn_projectile, upgrade_thorn},
         },
     },
     screens::Screen,
@@ -37,10 +37,10 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
         energy::plugin,
         circles::plugin,
-        scale::plugin,
-        fireball::plugin,
+        // scale::plugin,
+        // fireball::plugin,
         lightning::plugin,
-        icelance::plugin,
+        // icelance::plugin,
         orbs::plugin,
         thorn::plugin,
         dot::plugin,
@@ -151,6 +151,11 @@ pub(crate) struct UpgradeWeaponEvent {
     pub entity: Entity,
 }
 
+#[derive(EntityEvent)]
+pub(crate) struct WeaponAttackEvent {
+    pub entity: Entity,
+}
+
 pub(crate) fn add_weapon_to_inventory(
     trigger: On<PickUpWeapon>,
     mut commands: Commands,
@@ -179,34 +184,42 @@ pub(crate) fn add_weapon_to_inventory(
         WeaponType::Energy => {
             inventory_entry.insert(Energy);
             inventory_entry.observe(upgrade_energy);
+            inventory_entry.observe(spawn_energy_projectiles);
         }
         WeaponType::Circles => {
             inventory_entry.insert(Circles);
             inventory_entry.observe(upgrade_circles);
+            inventory_entry.observe(spawn_circles);
         }
         WeaponType::Scale => {
             inventory_entry.insert(Scale);
             inventory_entry.observe(upgrade_scale);
+            inventory_entry.observe(spawn_scale_projectile);
         }
         WeaponType::Fireball => {
             inventory_entry.insert(Fireball);
             inventory_entry.observe(upgrade_fireball);
+            inventory_entry.observe(spawn_fireball_projectile);
         }
         WeaponType::Icelance => {
             inventory_entry.insert(Icelance);
             inventory_entry.observe(upgrade_icelance);
+            inventory_entry.observe(spawn_icelance_projectile);
         }
         WeaponType::Lightning => {
             inventory_entry.insert(Lightning);
             inventory_entry.observe(upgrade_lightning);
+            inventory_entry.observe(spawn_lightning_bolt);
         }
         WeaponType::Orb => {
             inventory_entry.insert(Orb);
             inventory_entry.observe(upgrade_orb);
+            inventory_entry.observe(spawn_orb_projectile);
         }
         WeaponType::Thorn => {
             inventory_entry.insert(Thorn);
             inventory_entry.observe(upgrade_thorn);
+            inventory_entry.observe(spawn_thorn_projectile);
         }
     }
 
@@ -216,7 +229,7 @@ pub(crate) fn add_weapon_to_inventory(
 fn attack(
     player_q: Query<Entity, With<Player>>,
     inventory: Query<&Inventory>,
-    mut weapons: Query<(&mut Cooldown, &WeaponType), With<Weapon>>,
+    mut weapons: Query<(Entity, &mut Cooldown), With<Weapon>>,
     mut commands: Commands,
 ) -> Result {
     let Ok(player) = player_q.single() else {
@@ -224,19 +237,10 @@ fn attack(
     };
 
     for inventory_slot in inventory.iter_descendants(player) {
-        let (mut cooldown, weapon_type) = weapons.get_mut(inventory_slot)?;
+        let (weapon, mut cooldown) = weapons.get_mut(inventory_slot)?;
 
         if cooldown.0.is_finished() {
-            match weapon_type {
-                WeaponType::Energy => commands.trigger(EnergyAttackEvent),
-                WeaponType::Circles => commands.trigger(CirclesAttackEvent),
-                WeaponType::Scale => commands.trigger(ScaleAttackEvent),
-                WeaponType::Fireball => commands.trigger(FireballAttackEvent),
-                WeaponType::Icelance => commands.trigger(icelance::IcelanceAttackEvent),
-                WeaponType::Lightning => commands.trigger(LightningAttackEvent),
-                WeaponType::Orb => commands.trigger(OrbAttackEvent),
-                WeaponType::Thorn => commands.trigger(ThornAttackEvent),
-            }
+            commands.trigger(WeaponAttackEvent { entity: weapon });
             cooldown.0.reset();
         }
     }

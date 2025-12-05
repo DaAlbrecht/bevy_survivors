@@ -12,7 +12,8 @@ use crate::{
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
         weapons::{
-            CastWeapon, Cooldown, Damage, ProjectileCount, UpgradeWeaponEvent, Weapon, WeaponType,
+            CastWeapon, Cooldown, Damage, ProjectileCount, UpgradeWeaponEvent, Weapon,
+            WeaponAttackEvent, WeaponType,
         },
     },
     screens::Screen,
@@ -61,9 +62,6 @@ pub(crate) fn plugin(app: &mut App) {
             .in_set(PausableSystems)
             .run_if(in_state(Screen::Gameplay)),
     );
-
-    app.add_observer(spawn_circles);
-    app.add_observer(on_circle_hit);
 }
 
 pub fn upgrade_circles(
@@ -77,8 +75,8 @@ pub fn upgrade_circles(
     Ok(())
 }
 
-fn spawn_circles(
-    _trigger: On<CirclesAttackEvent>,
+pub fn spawn_circles(
+    _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     circles_q: Query<(Entity, &ProjectileCount), With<Circles>>,
     mut commands: Commands,

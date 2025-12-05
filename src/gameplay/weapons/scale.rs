@@ -4,7 +4,7 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::weapons::UpgradeWeaponEvent;
+use crate::gameplay::weapons::{UpgradeWeaponEvent, WeaponAttackEvent};
 use crate::gameplay::{
     Speed,
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
@@ -32,9 +32,7 @@ pub(crate) struct Scale;
 #[derive(Event, Reflect)]
 pub(crate) struct ScaleAttackEvent;
 
-pub(crate) fn plugin(app: &mut App) {
-    app.add_observer(spawn_scale_projectile);
-}
+// pub(crate) fn plugin(app: &mut App) {}
 
 pub fn upgrade_scale(
     _trigger: On<UpgradeWeaponEvent>,
@@ -47,8 +45,8 @@ pub fn upgrade_scale(
     Ok(())
 }
 
-fn spawn_scale_projectile(
-    _trigger: On<ScaleAttackEvent>,
+pub fn spawn_scale_projectile(
+    _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     scale: Query<Entity, With<Scale>>,
     mut commands: Commands,

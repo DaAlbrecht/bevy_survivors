@@ -2,7 +2,7 @@ use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::player::Direction;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::weapons::UpgradeWeaponEvent;
+use crate::gameplay::weapons::{UpgradeWeaponEvent, WeaponAttackEvent};
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -33,9 +33,7 @@ pub(crate) struct Icelance;
 #[derive(Event, Reflect)]
 pub(crate) struct IcelanceAttackEvent;
 
-pub(crate) fn plugin(app: &mut App) {
-    app.add_observer(spawn_icelance_projectile);
-}
+// pub(crate) fn plugin(app: &mut App) {}
 
 pub fn upgrade_icelance(
     _trigger: On<UpgradeWeaponEvent>,
@@ -48,8 +46,8 @@ pub fn upgrade_icelance(
     Ok(())
 }
 
-fn spawn_icelance_projectile(
-    _trigger: On<IcelanceAttackEvent>,
+pub fn spawn_icelance_projectile(
+    _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
     icelance: Query<Entity, With<Icelance>>,
     enemy_q: Query<&Transform, With<Enemy>>,

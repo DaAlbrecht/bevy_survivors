@@ -12,7 +12,7 @@ use crate::{
         player::{Direction, Player},
         weapons::{
             CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root,
-            UpgradeWeaponEvent, Weapon, WeaponDuration, WeaponType,
+            UpgradeWeaponEvent, Weapon, WeaponAttackEvent, WeaponDuration, WeaponType,
             dot::{Bleed, DoT},
         },
     },
@@ -64,7 +64,6 @@ pub(crate) fn plugin(app: &mut App) {
             thorn_lifetime.run_if(in_state(Screen::Gameplay)),
         ),
     );
-    app.add_observer(spawn_thorn_projectile);
 }
 
 pub fn upgrade_thorn(
@@ -78,8 +77,8 @@ pub fn upgrade_thorn(
     Ok(())
 }
 
-fn spawn_thorn_projectile(
-    _trigger: On<ThornAttackEvent>,
+pub fn spawn_thorn_projectile(
+    _trigger: On<WeaponAttackEvent>,
     player_pos_q: Query<&Transform, With<Player>>,
     thorn_q: Query<Entity, With<Thorn>>,
     enemy_pos_q: Query<&Transform, With<Enemy>>,

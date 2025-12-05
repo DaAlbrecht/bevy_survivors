@@ -168,7 +168,7 @@ fn setup_player(
     ));
 
     commands.trigger(crate::gameplay::PickUpWeapon {
-        weapon_type: crate::gameplay::weapons::WeaponType::Thorn,
+        weapon_type: crate::gameplay::weapons::WeaponType::Lightning,
     });
 
     commands.spawn((QAbility, Heal));
