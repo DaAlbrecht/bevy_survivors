@@ -11,6 +11,7 @@ use bevy::{
 /// Note: when this component is present, a plugin system will automatically
 /// update the `ScalingMode` of the camera bundle.
 #[derive(Component, Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum PixelZoom {
     /// Manually specify the camera zoom, i.e. the number of screen pixels
     /// (logical pixels) used to display one virtual pixel (world unit).
@@ -63,39 +64,38 @@ pub(crate) fn pixel_zoom_system(
         .collect();
 
     for (mut camera, pixel_zoom, pixel_viewport, mut projection) in &mut cameras {
-        if let Some(normalized_target) = camera.target.normalize(primary_window) {
-            if is_changed(
+        if let Some(normalized_target) = camera.target.normalize(primary_window)
+            && (is_changed(
                 &normalized_target,
                 &changed_window_ids,
                 &changed_image_handles,
             ) || camera.is_added()
-                || projection.is_changed()
-            {
-                let logical_size = match camera.logical_target_size() {
-                    Some(size) => size,
-                    None => continue,
-                };
+                || projection.is_changed())
+        {
+            let logical_size = match camera.logical_target_size() {
+                Some(size) => size,
+                None => continue,
+            };
 
-                let physical_size = match camera.physical_target_size() {
-                    Some(size) => size,
-                    None => continue,
-                };
+            let physical_size = match camera.physical_target_size() {
+                Some(size) => size,
+                None => continue,
+            };
 
-                let zoom = auto_zoom(pixel_zoom, logical_size) as f32;
-                let scale = 1.0 / zoom;
+            let zoom = auto_zoom(pixel_zoom, logical_size) as f32;
+            let scale = 1.0 / zoom;
 
-                match projection.as_mut() {
-                    Projection::Orthographic(projection) => {
-                        if scale != projection.scale {
-                            projection.scale = scale;
-                        }
+            match projection.as_mut() {
+                Projection::Orthographic(projection) => {
+                    if scale != projection.scale {
+                        projection.scale = scale;
                     }
-                    _ => continue,
                 }
+                _ => continue,
+            }
 
-                if pixel_viewport.is_some() {
-                    set_viewport(&mut camera, pixel_zoom, zoom, physical_size, logical_size);
-                }
+            if pixel_viewport.is_some() {
+                set_viewport(&mut camera, pixel_zoom, zoom, physical_size, logical_size);
             }
         }
     }
