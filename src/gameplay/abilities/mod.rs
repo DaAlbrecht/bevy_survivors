@@ -4,9 +4,10 @@ use bevy_enhanced_input::prelude::{InputAction, Start};
 
 pub mod dash;
 pub mod heal;
+pub mod summon;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_plugins((dash::plugin, heal::plugin));
+    app.add_plugins((dash::plugin, heal::plugin, summon::plugin));
 
     app.add_systems(
         FixedUpdate,

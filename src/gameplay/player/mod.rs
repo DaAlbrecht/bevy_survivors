@@ -9,7 +9,10 @@ use bevy_seedling::sample::AudioSample;
 use crate::GameLayer;
 use crate::gameplay::abilities::dash::Dash;
 use crate::gameplay::abilities::heal::Heal;
-use crate::gameplay::abilities::{EAbility, QAbility, UseEAbility, UseQAbility};
+use crate::gameplay::abilities::summon::Summon;
+use crate::gameplay::abilities::{
+    EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
+};
 use crate::gameplay::character_controller::CharacterController;
 use crate::{
     asset_tracking::LoadResource,
@@ -168,11 +171,12 @@ fn setup_player(
     ));
 
     commands.trigger(crate::gameplay::PickUpWeapon {
-        weapon_type: crate::gameplay::weapons::WeaponType::Lightning,
+        weapon_type: crate::gameplay::weapons::WeaponType::Fireball,
     });
 
     commands.spawn((QAbility, Heal));
     commands.spawn((EAbility, Dash));
+    commands.spawn((RAbility, Summon));
 
     commands.trigger(PlayerSetupComplete);
 }
@@ -193,6 +197,10 @@ fn player_input_actions() -> impl Bundle {
         (
             Action::<UseEAbility>::new(),
             bindings![KeyCode::KeyE]
+        ),
+        (
+            Action::<UseRAbility>::new(),
+            bindings![KeyCode::KeyR]
         )
     ])
 }
