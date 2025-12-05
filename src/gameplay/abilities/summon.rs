@@ -29,9 +29,6 @@ pub(crate) struct Minion {
 #[derive(Component, Default, Reflect)]
 pub(crate) struct MinionAttackCooldown(pub Timer);
 
-#[derive(Component)]
-pub(crate) struct MinionProjectile;
-
 #[derive(Component, Default, Reflect)]
 pub(crate) struct MinionLifetime(pub Timer);
 
@@ -46,17 +43,13 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_observer(init_ability_assets::<Summon>("ui/icons/summon_spell.png"));
     app.add_systems(
         Update,
-        (
-            despawn_far_projectiles,
-            update_minion_animation.in_set(PostPhysicsAppSystems::PlayAnimations),
-        )
+        (update_minion_animation.in_set(PostPhysicsAppSystems::PlayAnimations),)
             .in_set(PausableSystems),
     );
     app.add_systems(
         FixedUpdate,
         (
             minion_follow_player,
-            minion_attack_enemies,
             minion_lifetime_system,
             move_seeking_minions,
         )
@@ -127,11 +120,10 @@ fn on_use_summon(
                 Health(50.0),
                 Speed(80.0),
                 CharacterController {
-                    speed: 80.0,
+                    speed: 110.0,
                     ability_velocity: Vec2::ZERO,
                 },
-                MinionAttackCooldown(Timer::from_seconds(2.0, TimerMode::Repeating)),
-                MinionLifetime(Timer::from_seconds(10.0, TimerMode::Once)),
+                MinionLifetime(Timer::from_seconds(6.0, TimerMode::Once)),
                 LockedAxes::ROTATION_LOCKED,
                 RigidBody::Dynamic,
                 Collider::circle(12.),
@@ -199,104 +191,6 @@ fn minion_follow_player(
     }
 }
 
-fn minion_attack_enemies(
-    mut minion_q: Query<(Entity, &Transform, &mut MinionAttackCooldown), With<Minion>>,
-    enemy_q: Query<&Transform, With<Enemy>>,
-    time: Res<Time>,
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
-) {
-    for (_minion_entity, minion_transform, mut attack_cooldown) in &mut minion_q {
-        attack_cooldown.0.tick(time.delta());
-
-        if !attack_cooldown.0.is_finished() {
-            continue;
-        }
-
-        let minion_pos = minion_transform.translation;
-
-        let attack_range = 150.0;
-        let mut min_distance = f32::MAX;
-        let mut closest_enemy: Option<&Transform> = None;
-
-        for enemy_transform in &enemy_q {
-            let distance = minion_pos.distance(enemy_transform.translation);
-
-            if distance <= attack_range && distance < min_distance {
-                min_distance = distance;
-                closest_enemy = Some(enemy_transform);
-            }
-        }
-
-        if let Some(enemy_transform) = closest_enemy {
-            let direction = (enemy_transform.translation - minion_pos)
-                .truncate()
-                .normalize();
-
-            let texture = asset_server.load("fx/fireball.png");
-            let layout = TextureAtlasLayout::from_grid(UVec2::splat(16), 4, 1, None, None);
-            let texture_atlas_layout_handle = texture_atlas_layout.add(layout);
-            let animation_indices = AnimationIndices { first: 0, last: 3 };
-
-            let towards_quaternion =
-                Quat::from_rotation_arc(Vec3::Y, direction.extend(0.).normalize());
-
-            commands
-                .spawn((
-                    Name::new("minion projectile"),
-                    MinionProjectile,
-                    Direction(direction.extend(0.)),
-                    Speed(300.0),
-                    LinearVelocity(direction * 300.0),
-                    LockedAxes::ROTATION_LOCKED,
-                    RigidBody::Kinematic,
-                    Collider::circle(8.),
-                    CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy]),
-                    CollisionEventsEnabled,
-                    Sprite {
-                        image: texture,
-                        texture_atlas: Some(TextureAtlas {
-                            layout: texture_atlas_layout_handle,
-                            index: animation_indices.first,
-                        }),
-                        color: Color::srgb(0.0, 1.0, 0.3),
-                        ..default()
-                    },
-                    animation_indices,
-                    AnimationTimer {
-                        timer: Timer::from_seconds(0.1, TimerMode::Repeating),
-                    },
-                    Transform::from_xyz(minion_pos.x, minion_pos.y, 10.0)
-                        .with_rotation(towards_quaternion),
-                ))
-                .observe(on_minion_projectile_hit);
-
-            attack_cooldown.0.reset();
-        }
-    }
-}
-
-fn on_minion_projectile_hit(
-    event: On<CollisionStart>,
-    enemy_q: Query<Entity, With<Enemy>>,
-    projectile_q: Query<&MinionProjectile>,
-    mut commands: Commands,
-) {
-    let projectile = event.collider1;
-    let enemy = event.collider2;
-
-    if enemy_q.get(enemy).is_ok() && projectile_q.get(projectile).is_ok() {
-        commands.trigger(EnemyDamageEvent {
-            entity_hit: enemy,
-            dmg: 2.0,
-            damage_type: crate::gameplay::damage_numbers::DamageType::Physical,
-        });
-
-        commands.entity(projectile).despawn();
-    }
-}
-
 fn minion_lifetime_system(
     mut minion_q: Query<
         (Entity, &Minion, &Transform, &mut MinionLifetime),
@@ -339,7 +233,6 @@ fn minion_lifetime_system(
             };
 
             commands.entity(entity).remove::<MinionLifetime>();
-            commands.entity(entity).remove::<MinionAttackCooldown>();
             commands.entity(entity).insert(SeekingExplosion {
                 target_position,
                 speed: 150.0,
@@ -386,7 +279,7 @@ fn spawn_minion_death_effect(
     enemy_q: &Query<(Entity, &Transform), (With<Enemy>, Without<Minion>)>,
 ) {
     let explosion_radius = 100.0;
-    let explosion_damage = 10.0;
+    let explosion_damage = 10000.0;
 
     for (enemy_entity, enemy_transform) in enemy_q.iter() {
         let distance = position.distance(enemy_transform.translation);
@@ -448,26 +341,6 @@ fn update_minion_animation(mut minion_q: Query<(&Direction, &mut Sprite), With<M
         let dx = direction.0.x;
         if dx != 0.0 {
             sprite.flip_x = dx < 0.0;
-        }
-    }
-}
-
-fn despawn_far_projectiles(
-    projectile_q: Query<(Entity, &Transform), With<MinionProjectile>>,
-    player_q: Query<&Transform, With<Player>>,
-    mut commands: Commands,
-) {
-    let Ok(player_transform) = player_q.single() else {
-        return;
-    };
-
-    let player_pos = player_transform.translation;
-
-    for (entity, projectile_transform) in &projectile_q {
-        let distance = player_pos.distance(projectile_transform.translation);
-
-        if distance > 500.0 {
-            commands.entity(entity).despawn();
         }
     }
 }

@@ -82,7 +82,7 @@ fn spawn_damage_numbers_from_messages(
                     float_distance: 20.0,
                 },
                 Transform::from_translation(snapped),
-                Text2d::new(msg.amount.to_string()),
+                Text2d::new(format_damage_number(msg.amount)),
                 TextFont {
                     font: damage_assets.font.clone(),
                     font_size,
@@ -156,6 +156,28 @@ fn update_damage_numbers(
         if dmg.timer.is_finished() {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+fn format_damage_number(amount: i32) -> String {
+    let sign = if amount < 0 { "-" } else { "" };
+    let n = amount.abs() as f64;
+
+    fn fmt_1_decimal_trim(x: f64) -> String {
+        let s = format!("{x:.1}");
+        s.strip_suffix(".0").unwrap_or(&s).to_string()
+    }
+
+    match n {
+        x if x >= 1_000_000.0 => {
+            let val = fmt_1_decimal_trim(x / 1_000_000.0);
+            format!("{sign}{val}M")
+        }
+        x if x >= 1_000.0 => {
+            let val = fmt_1_decimal_trim(x / 1_000.0);
+            format!("{sign}{val}k")
+        }
+        _ => format!("{sign}{}", n as i32),
     }
 }
 
