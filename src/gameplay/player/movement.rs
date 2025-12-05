@@ -8,6 +8,7 @@ use bevy_enhanced_input::{EnhancedInputSystems, action::Action, prelude::InputAc
 
 use crate::{
     CAMERA_DECAY_RATE, GameplaySystems, PausableSystems, PostPhysicsAppSystems,
+    camera::zoom::PixelZoom,
     fixed_update_inspection::did_fixed_update_happen,
     gameplay::{character_controller::CharacterController, player::Player},
 };
@@ -62,20 +63,20 @@ fn record_player_directional_input(
 // Sync the camera's position with the player's interpolated position
 fn translate_camera(
     time: Res<Time>,
-    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    mut camera_query: Query<(&mut Transform, &PixelZoom), (With<Camera>, Without<Player>)>,
     level_query: Query<(&Transform, &LevelIid), (Without<Player>, Without<Camera>)>,
     ldtk_projects: Query<&LdtkProjectHandle>,
     level_selection: Res<LevelSelection>,
     ldtk_project_assets: Res<Assets<LdtkProject>>,
     player: Single<&Transform, (With<Player>, Without<Camera>)>,
-    window: Single<&Window, With<PrimaryWindow>>,
 ) -> Result {
     let Vec3 { x, y, .. } = player.translation;
-    let mut camera_transform = camera_query.single_mut()?;
-    let viewport_height = 504.;
+    let (mut camera_transform, zoom) = camera_query.single_mut()?;
 
-    let aspect_ratio = window.width() / window.height();
-    let viewport_width = viewport_height * aspect_ratio;
+    let (viewport_width, viewport_height) = match *zoom {
+        PixelZoom::FitSize { width, height } => (width as f32, height as f32),
+        _ => (1024.0, 576.0),
+    };
 
     for (level_transform, level_iid) in &level_query {
         let ldtk_project = ldtk_project_assets

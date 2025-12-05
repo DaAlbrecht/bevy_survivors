@@ -131,10 +131,15 @@ struct Pause(pub bool);
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct PausableSystems;
 
-const VIRTUAL_W: f32 = 1024.0;
-const VIRTUAL_H: f32 = 576.0;
+const TILE: i32 = 32;
 
-fn spawn_camera(mut commands: Commands) {
+// Pick a vertical FOV in tiles. 22 tiles tall = 704 virtual pixels.
+// Great default for survivors-likes and 1440p screens.
+const VIRT_TILES_Y: i32 = 22;
+
+fn spawn_camera(mut commands: Commands, window: Single<&Window>) {
+    // Compute an initial FitSize based on current window so it’s correct on first frame.
+    let (vw, vh) = compute_virtual_size(window.width(), window.height());
     commands.spawn((
         Name::new("Camera"),
         Camera2d,
@@ -143,9 +148,22 @@ fn spawn_camera(mut commands: Commands) {
             ..OrthographicProjection::default_2d()
         }),
         PixelZoom::FitSize {
-            width: 1024,
-            height: 576,
+            width: vw,
+            height: vh,
         },
         PixelViewport,
     ));
+}
+
+/// Given a window size in logical pixels, compute a tile-aligned virtual resolution.
+fn compute_virtual_size(win_w: f32, win_h: f32) -> (i32, i32) {
+    let aspect = win_w / win_h;
+
+    let vh = VIRT_TILES_Y * TILE; // fixed virtual height in pixels
+    let mut vw = (vh as f32 * aspect).round() as i32;
+
+    // snap width to tile grid
+    vw = (vw / TILE).max(1) * TILE;
+
+    (vw, vh)
 }
