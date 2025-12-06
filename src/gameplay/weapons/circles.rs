@@ -9,25 +9,18 @@ use crate::{
     gameplay::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent},
-        player::Player,
+        player::{Level, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
         weapons::{
-            CastWeapon, Cooldown, Damage, ProjectileCount, UpgradeWeaponEvent, Weapon,
-            WeaponAttackEvent, WeaponType,
+            CastWeapon, Cooldown, Damage, Duration, Lifetime, MaxHitCount, ProjectileCount, Weapon,
+            WeaponAttackEvent, WeaponPatchEvent, WeaponType, weaponstats::CirclesLevels,
         },
     },
     screens::Screen,
 };
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Circles,
-    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
-    Damage(3.),
-    ProjectileCount(4.),
-    Name::new("Circles Weapon")
-)]
+#[require(Weapon, WeaponType::Circles, Name::new("Circles Weapon"))]
 #[derive(Reflect)]
 pub(crate) struct Circles;
 
@@ -52,9 +45,6 @@ struct CircleHitCounter {
     max_hits: usize,
 }
 
-#[derive(Component)]
-struct CircleLifetime(Timer);
-
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
@@ -64,13 +54,31 @@ pub(crate) fn plugin(app: &mut App) {
     );
 }
 
-pub fn upgrade_circles(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut circles_q: Query<&mut ProjectileCount, With<Circles>>,
+pub fn patch_circles(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Circles>>,
+    mut weapon_levels: ResMut<CirclesLevels>,
 ) -> Result {
-    let mut count = circles_q.single_mut()?;
-    count.0 += 2.0;
-    info!("Circles count upgraded to: {}", count.0);
+    let weapon = weapon_q.single()?;
+
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(ProjectileCount(stats.projectile_count))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )))
+        .insert(Lifetime(stats.lifetime))
+        .insert(MaxHitCount(stats.max_hits));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }
@@ -78,7 +86,7 @@ pub fn upgrade_circles(
 pub fn spawn_circles(
     _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
-    circles_q: Query<(Entity, &ProjectileCount), With<Circles>>,
+    circles_q: Query<(Entity, &ProjectileCount, &Lifetime, &MaxHitCount), With<Circles>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
@@ -87,7 +95,7 @@ pub fn spawn_circles(
         return Ok(());
     };
 
-    let (circles, projectile_count) = circles_q.single()?;
+    let (circles, projectile_count, lifetime, max_hits) = circles_q.single()?;
 
     let texture = asset_server.load("fx/area.png");
     let layout = TextureAtlasLayout::from_grid(UVec2::new(29, 26), 10, 1, None, None);
@@ -145,9 +153,9 @@ pub fn spawn_circles(
                 },
                 CircleHitCounter {
                     hits: 0,
-                    max_hits: 5,
+                    max_hits: max_hits.0,
                 },
-                CircleLifetime(Timer::from_seconds(10.0, TimerMode::Once)),
+                Duration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
             ))
             .observe(on_circle_hit);
     }
@@ -208,14 +216,14 @@ fn update_zigzag_movement(
 }
 
 fn update_circle_lifetime(
-    mut circle_q: Query<(Entity, &mut CircleLifetime), With<CircleProjectile>>,
+    mut circle_q: Query<(Entity, &mut Duration), With<CircleProjectile>>,
     time: Res<Time<Fixed>>,
     mut commands: Commands,
 ) {
-    for (entity, mut lifetime) in &mut circle_q {
-        lifetime.0.tick(time.delta());
+    for (entity, mut duration) in &mut circle_q {
+        duration.0.tick(time.delta());
 
-        if lifetime.0.just_finished() {
+        if duration.0.just_finished() {
             commands.entity(entity).try_despawn();
         }
     }

@@ -5,28 +5,21 @@ use crate::{
     PausableSystems,
     audio::SfxPool,
     gameplay::{
+        Speed,
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
-        player::{Direction, Player},
+        player::{Direction, Level, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
         weapons::{
-            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount,
-            UpgradeWeaponEvent, Weapon, WeaponAttackEvent, WeaponType,
+            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Weapon,
+            WeaponAttackEvent, WeaponPatchEvent, WeaponType, weaponstats::EnergyLevels,
         },
     },
     screens::Screen,
 };
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Energy,
-    Cooldown(Timer::from_seconds(3., TimerMode::Once)),
-    Damage(5.),
-    ProjectileCount(1.),
-    crate::gameplay::Speed(400.),
-    Name::new("Energy Weapon")
-)]
+#[require(Weapon, WeaponType::Energy, Name::new("Energy Weapon"))]
 #[derive(Reflect)]
 pub(crate) struct Energy;
 
@@ -50,13 +43,30 @@ pub(crate) fn plugin(app: &mut App) {
     );
 }
 
-pub fn upgrade_energy(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut energy_q: Query<&mut ProjectileCount, With<Energy>>,
+pub fn patch_energy(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Energy>>,
+    mut weapon_levels: ResMut<EnergyLevels>,
 ) -> Result {
-    let mut count = energy_q.single_mut()?;
-    count.0 += 1.0;
-    info!("Energy wave count upgraded to: {}", count.0);
+    let weapon = weapon_q.single()?;
+
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Speed(stats.speed))
+        .insert(ProjectileCount(stats.projectile_count))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }

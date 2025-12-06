@@ -4,7 +4,9 @@ use rand::Rng;
 use std::f32::consts::PI;
 
 use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::weapons::{UpgradeWeaponEvent, WeaponAttackEvent};
+use crate::gameplay::player::Level;
+use crate::gameplay::weapons::weaponstats::ScaleLevels;
+use crate::gameplay::weapons::{WeaponAttackEvent, WeaponPatchEvent};
 use crate::gameplay::{
     Speed,
     enemy::{EnemyDamageEvent, EnemyKnockbackEvent},
@@ -17,15 +19,7 @@ use super::Cooldown;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Scale,
-    Cooldown(Timer::from_seconds(1., TimerMode::Once)),
-    Speed(50.),
-    Knockback(1500.),
-    Damage(5.),
-    Name::new("Scale")
-)]
+#[require(Weapon, WeaponType::Scale, Name::new("Scale"))]
 #[derive(Reflect)]
 pub(crate) struct Scale;
 
@@ -34,13 +28,30 @@ pub(crate) struct ScaleAttackEvent;
 
 // pub(crate) fn plugin(app: &mut App) {}
 
-pub fn upgrade_scale(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut scale_q: Query<&mut Knockback, With<Scale>>,
+pub fn patch_scale(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Scale>>,
+    mut weapon_levels: ResMut<ScaleLevels>,
 ) -> Result {
-    let mut knockback = scale_q.single_mut()?;
-    knockback.0 += 100.0;
-    info!("Scale knockback upgraded to: {}", knockback.0);
+    let weapon = weapon_q.single()?;
+
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Speed(stats.speed))
+        .insert(Knockback(stats.knockback))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }

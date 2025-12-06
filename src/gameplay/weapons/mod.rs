@@ -9,15 +9,20 @@ use crate::{
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{AddToInventory, Direction, Inventory, Player},
         weapons::{
-            circles::{Circles, spawn_circles, upgrade_circles},
+            circles::{Circles, patch_circles, spawn_circles},
             dot::Bleed,
-            energy::{Energy, spawn_energy_projectiles, upgrade_energy},
-            fireball::{Fireball, spawn_fireball_projectile, upgrade_fireball},
-            icelance::{Icelance, spawn_icelance_projectile, upgrade_icelance},
-            lightning::{Lightning, spawn_lightning_bolt, upgrade_lightning},
-            orbs::{Orb, spawn_orb_projectile, upgrade_orb},
-            scale::{Scale, spawn_scale_projectile, upgrade_scale},
-            thorn::{Thorn, spawn_thorn_projectile, upgrade_thorn},
+            energy::{Energy, patch_energy, spawn_energy_projectiles},
+            fireball::{Fireball, patch_fireball, spawn_fireball_projectile},
+            icelance::{Icelance, patch_icelance, spawn_icelance_projectile},
+            lightning::{Lightning, patch_lightning, spawn_lightning_bolt},
+            orbs::{Orb, patch_orb, spawn_orb_projectile},
+            scale::{Scale, patch_scale, spawn_scale_projectile},
+            thorn::{Thorn, patch_thorn, spawn_thorn_projectile},
+            weaponstats::{
+                make_circles_levels, make_energy_levels, make_fireball_levels,
+                make_icelance_levels, make_lightning_levels, make_orb_levels, make_scale_levels,
+                make_thorn_levels,
+            },
         },
     },
     screens::Screen,
@@ -32,6 +37,7 @@ pub mod lightning;
 pub mod orbs;
 pub mod scale;
 pub mod thorn;
+pub mod weaponstats;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -94,13 +100,19 @@ pub(crate) struct ProjectileCount(pub f32);
 pub(crate) struct ExplosionRadius(pub f32);
 
 #[derive(Component, Reflect)]
-pub(crate) struct WeaponDuration(pub Timer);
+pub(crate) struct Duration(pub Timer);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Knockback(pub f32);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Root(pub Timer);
+
+#[derive(Component, Reflect)]
+pub(crate) struct Lifetime(pub f32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct MaxHitCount(pub usize);
 
 //Generic Components used widely
 //****************************************************************
@@ -147,7 +159,7 @@ impl WeaponType {
 }
 
 #[derive(EntityEvent)]
-pub(crate) struct UpgradeWeaponEvent {
+pub(crate) struct WeaponPatchEvent {
     pub entity: Entity,
 }
 
@@ -171,7 +183,7 @@ pub(crate) fn add_weapon_to_inventory(
         if *owned_weapon == trigger.weapon_type {
             info!("Upgrading Weapon: {:?}", owned_weapon);
             // Trigger upgrade event on the weapon entity itself
-            commands.trigger(UpgradeWeaponEvent {
+            commands.trigger(WeaponPatchEvent {
                 entity: weapon_entity,
             });
             return Ok(());
@@ -183,43 +195,67 @@ pub(crate) fn add_weapon_to_inventory(
     match trigger.weapon_type {
         WeaponType::Energy => {
             inventory_entry.insert(Energy);
-            inventory_entry.observe(upgrade_energy);
+            inventory_entry.observe(patch_energy);
             inventory_entry.observe(spawn_energy_projectiles);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_energy_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Circles => {
             inventory_entry.insert(Circles);
-            inventory_entry.observe(upgrade_circles);
+            inventory_entry.observe(patch_circles);
             inventory_entry.observe(spawn_circles);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_circles_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Scale => {
             inventory_entry.insert(Scale);
-            inventory_entry.observe(upgrade_scale);
+            inventory_entry.observe(patch_scale);
             inventory_entry.observe(spawn_scale_projectile);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_scale_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Fireball => {
             inventory_entry.insert(Fireball);
-            inventory_entry.observe(upgrade_fireball);
+            inventory_entry.observe(patch_fireball);
             inventory_entry.observe(spawn_fireball_projectile);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_fireball_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Icelance => {
             inventory_entry.insert(Icelance);
-            inventory_entry.observe(upgrade_icelance);
+            inventory_entry.observe(patch_icelance);
             inventory_entry.observe(spawn_icelance_projectile);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_icelance_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Lightning => {
             inventory_entry.insert(Lightning);
-            inventory_entry.observe(upgrade_lightning);
+            inventory_entry.observe(patch_lightning);
             inventory_entry.observe(spawn_lightning_bolt);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_lightning_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Orb => {
             inventory_entry.insert(Orb);
-            inventory_entry.observe(upgrade_orb);
+            inventory_entry.observe(patch_orb);
             inventory_entry.observe(spawn_orb_projectile);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_orb_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
         WeaponType::Thorn => {
             inventory_entry.insert(Thorn);
-            inventory_entry.observe(upgrade_thorn);
+            inventory_entry.observe(patch_thorn);
             inventory_entry.observe(spawn_thorn_projectile);
+            let entity = inventory_entry.id();
+            commands.insert_resource(make_thorn_levels());
+            commands.trigger(WeaponPatchEvent { entity });
         }
     }
 
@@ -251,7 +287,7 @@ fn attack(
 fn handle_timers(
     time: Res<Time>,
     mut cooldowns: Query<&mut Cooldown, With<Weapon>>,
-    mut durations: Query<&mut WeaponDuration, With<CastWeapon>>,
+    mut durations: Query<&mut Duration, With<CastWeapon>>,
     mut thorn_dmg_timer: Query<&mut DamageCooldown, With<Thorn>>,
     mut root_timer: Query<(Entity, &mut Root), With<Enemy>>,
     mut bleed_timer: Query<(Entity, &mut Bleed), With<Enemy>>,

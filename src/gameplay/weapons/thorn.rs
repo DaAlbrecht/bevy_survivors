@@ -9,11 +9,12 @@ use crate::{
         Speed,
         damage_numbers::DamageType,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
-        player::{Direction, Player},
+        player::{Direction, Level, Player},
         weapons::{
-            CastWeapon, Cooldown, Damage, Halt, PlayerProjectile, ProjectileCount, Root,
-            UpgradeWeaponEvent, Weapon, WeaponAttackEvent, WeaponDuration, WeaponType,
+            CastWeapon, Cooldown, Damage, Duration, Halt, PlayerProjectile, ProjectileCount, Root,
+            Weapon, WeaponAttackEvent, WeaponPatchEvent, WeaponType,
             dot::{Bleed, DoT},
+            weaponstats::ThornLevels,
         },
     },
     screens::Screen,
@@ -22,22 +23,7 @@ use crate::{
 const THORN_LENGTH: f32 = 16.0;
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Thorn,
-    Segmented,
-    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
-    DamageCooldown(Timer::from_seconds(0.5, TimerMode::Once)),
-    Speed(600.),
-    Damage(1.),
-    DoT{
-        duration: Timer::from_seconds(5.0, TimerMode::Once),
-        tick: Timer::from_seconds(1.0, TimerMode::Once),
-        dmg_per_tick: 1.0,
-    },
-    ProjectileCount(5.0),
-    Name::new("Thorn")
-)]
+#[require(Weapon, WeaponType::Thorn, Segmented, Name::new("Thorn"))]
 #[derive(Reflect)]
 pub(crate) struct Thorn;
 
@@ -66,13 +52,38 @@ pub(crate) fn plugin(app: &mut App) {
     );
 }
 
-pub fn upgrade_thorn(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut thorn_q: Query<&mut ProjectileCount, With<Thorn>>,
+pub fn patch_thorn(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Thorn>>,
+    mut weapon_levels: ResMut<ThornLevels>,
 ) -> Result {
-    let mut count = thorn_q.single_mut()?;
-    count.0 += 1.0;
-    info!("Thorn projectile count upgraded to: {}", count.0);
+    let weapon = weapon_q.single()?;
+
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Speed(stats.speed))
+        .insert(DamageCooldown(Timer::from_seconds(
+            stats.damage_cooldown,
+            TimerMode::Once,
+        )))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )))
+        .insert(DoT {
+            duration: Timer::from_seconds(stats.dot.duration, TimerMode::Once),
+            tick: Timer::from_seconds(stats.dot.tick, TimerMode::Once),
+            dmg_per_tick: stats.dot.damage,
+        });
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }
@@ -192,18 +203,13 @@ fn thorn_range_keeper(
 
             commands
                 .entity(thorn_tip)
-                .insert(WeaponDuration(Timer::from_seconds(0.2, TimerMode::Once)));
+                .insert(Duration(Timer::from_seconds(0.2, TimerMode::Once)));
         }
     }
 }
 
 fn thorn_lifetime(
-    mut thorn_tip_q: Query<(
-        Entity,
-        Option<&Children>,
-        &mut WeaponDuration,
-        &mut ThornSegments,
-    )>,
+    mut thorn_tip_q: Query<(Entity, Option<&Children>, &mut Duration, &mut ThornSegments)>,
     mut commands: Commands,
 ) {
     for (thorn_tip, children, mut duration, mut segments) in &mut thorn_tip_q {

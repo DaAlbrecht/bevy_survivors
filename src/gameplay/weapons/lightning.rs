@@ -6,9 +6,10 @@ use crate::{
     gameplay::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent},
-        player::Player,
+        player::{Level, Player},
         weapons::{
-            Cooldown, Damage, Range, UpgradeWeaponEvent, Weapon, WeaponAttackEvent, WeaponType,
+            Cooldown, Damage, MaxHitCount, Range, Weapon, WeaponAttackEvent, WeaponPatchEvent,
+            WeaponType, weaponstats::LightningLevels,
         },
     },
     screens::Screen,
@@ -23,34 +24,36 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_observer(lightning_hit);
 }
 
-pub fn upgrade_lightning(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut lightning_q: Query<(&mut Cooldown, &mut Jumps), With<Lightning>>,
+pub fn patch_lightning(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Lightning>>,
+    mut weapon_levels: ResMut<LightningLevels>,
 ) -> Result {
-    let (mut cooldown, mut jumps) = lightning_q.single_mut()?;
+    let weapon = weapon_q.single()?;
 
-    let current_duration = cooldown.0.duration().as_secs_f32();
-    let new_duration = (current_duration * 0.9).max(0.5); // Reduce by 10%, min 0.5s
-    cooldown
-        .0
-        .set_duration(std::time::Duration::from_secs_f32(new_duration));
-    info!("Lightning cooldown upgraded to: {}s", new_duration);
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
 
-    jumps.0 += 1;
-    info!("Lightning jumps upgraded to: {}", jumps.0);
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Range(stats.range))
+        .insert(MaxHitCount(stats.max_hits))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Lightning,
-    Damage(5.),
-    Cooldown(Timer::from_seconds(3., TimerMode::Once,)),
-    Jumps(3),
-    Range(300.)
-)]
+#[require(Weapon, WeaponType::Lightning, Name::new("Lightning"))]
 #[derive(Reflect)]
 pub(crate) struct Lightning;
 
@@ -65,15 +68,12 @@ pub(crate) struct LightningHitEvent {
     pub enemy: Entity,
 }
 
-#[derive(Component, Reflect)]
-pub(crate) struct Jumps(pub u32);
-
 pub fn spawn_lightning_bolt(
     _trigger: On<WeaponAttackEvent>,
     mut commands: Commands,
     player_q: Query<(&Transform, Entity), (With<Player>, Without<Enemy>)>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<Player>)>,
-    lightning_q: Query<(&Jumps, &Range), With<Lightning>>,
+    lightning_q: Query<(&MaxHitCount, &Range), With<Lightning>>,
     asset_server: Res<AssetServer>,
 ) -> Result {
     let Ok((player_pos, player_entity)) = player_q.single() else {
