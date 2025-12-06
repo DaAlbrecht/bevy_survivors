@@ -13,22 +13,26 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
 }
 
-fn spawn_main_menu(mut commands: Commands) {
+fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         widget::ui_root("Main Menu"),
         BackgroundColor(SCREEN_BACKGROUND),
         GlobalZIndex(2),
         DespawnOnExit(Menu::Main),
-        #[cfg(not(target_family = "wasm"))]
         children![
+            (
+                Name::new("Splash image"),
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: percent(100),
+                    height: percent(100),
+                    ..default()
+                },
+                ImageNode::new(asset_server.load("splash_bs.png",)),
+            ),
             widget::button("Play", enter_loading_or_gameplay_screen),
             widget::button("Settings", open_settings_menu),
             widget::button("Exit", exit_app),
-        ],
-        #[cfg(target_family = "wasm")]
-        children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
-            widget::button("Settings", open_settings_menu),
         ],
     ));
 }

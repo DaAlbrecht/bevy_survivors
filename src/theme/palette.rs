@@ -1,14 +1,14 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
 /// Used for inputs
-pub(crate) const LABEL_TEXT: Srgba = tailwind::GREEN_300;
+pub(crate) const LABEL_TEXT: Srgba = tailwind::SLATE_50;
 
 /// Menu titles etc
-pub(crate) const HEADER_TEXT: Srgba = tailwind::AMBER_300;
+pub(crate) const HEADER_TEXT: Srgba = tailwind::SLATE_50;
 
-pub(crate) const BUTTON_TEXT: Srgba = tailwind::AMBER_300;
+pub(crate) const BUTTON_TEXT: Srgba = tailwind::SLATE_50;
 
-pub(crate) const BUTTON_BACKGROUND: Srgba = tailwind::SLATE_900;
+pub(crate) const BUTTON_BACKGROUND: Srgba = tailwind::SLATE_400;
 
 pub(crate) const BUTTON_HOVERED_BACKGROUND: Srgba = tailwind::SLATE_700;
 
