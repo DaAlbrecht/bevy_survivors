@@ -1,8 +1,9 @@
 use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::player::Direction;
+use crate::gameplay::player::{Direction, Level};
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::weapons::{UpgradeWeaponEvent, WeaponAttackEvent};
+use crate::gameplay::weapons::weaponstats::IcelanceLevels;
+use crate::gameplay::weapons::{WeaponAttackEvent, WeaponPatchEvent};
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -17,16 +18,7 @@ use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Icelance,
-    Cooldown(Timer::from_seconds(0.5, TimerMode::Once)),
-    Speed(400.),
-    Knockback(100.),
-    Damage(1.),
-    ExplosionRadius(100.),
-    Name::new("Icelance")
-)]
+#[require(Weapon, WeaponType::Icelance, Name::new("Icelance"))]
 #[derive(Reflect)]
 pub(crate) struct Icelance;
 
@@ -35,13 +27,31 @@ pub(crate) struct IcelanceAttackEvent;
 
 // pub(crate) fn plugin(app: &mut App) {}
 
-pub fn upgrade_icelance(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut icelance_q: Query<&mut Damage, With<Icelance>>,
+pub fn patch_icelance(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Icelance>>,
+    mut weapon_levels: ResMut<IcelanceLevels>,
 ) -> Result {
-    let mut damage = icelance_q.single_mut()?;
-    damage.0 += 5.0;
-    info!("Icelance damage upgraded to: {}", damage.0);
+    let weapon = weapon_q.single()?;
+
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Speed(stats.speed))
+        .insert(ExplosionRadius(stats.explosion_radius))
+        .insert(Knockback(stats.knockback))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }

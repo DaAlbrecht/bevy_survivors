@@ -6,7 +6,8 @@ use crate::audio::SfxPool;
 use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::player::{Direction, Level};
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::weapons::{ExplosionRadius, Range, UpgradeWeaponEvent, WeaponAttackEvent};
+use crate::gameplay::weapons::weaponstats::FireBallLevels;
+use crate::gameplay::weapons::{ExplosionRadius, Range, WeaponAttackEvent, WeaponPatchEvent};
 use crate::gameplay::{
     Speed,
     enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
@@ -15,18 +16,7 @@ use crate::gameplay::{
 };
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Fireball,
-    Level(1.0),
-    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
-    Speed(600.),
-    Knockback(100.),
-    Damage(5.),
-    ExplosionRadius(100.),
-    Range(200.),
-    Name::new("Fireball")
-)]
+#[require(Weapon, WeaponType::Fireball, Name::new("Fireball"))]
 #[derive(Reflect)]
 pub(crate) struct Fireball;
 
@@ -35,15 +25,32 @@ pub(crate) struct FireballAttackEvent;
 
 // pub(crate) fn plugin(app: &mut App) {}
 
-pub fn upgrade_fireball(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut fireball_q: Query<(&mut Level, &mut Damage), With<Fireball>>,
+pub fn patch_fireball(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Fireball>>,
+    mut weapon_levels: ResMut<FireBallLevels>,
 ) -> Result {
-    let (mut level, mut damage) = fireball_q.single_mut()?;
+    let weapon = weapon_q.single()?;
 
-    level.0 += 1.0;
-    damage.0 = level.0 * 5.0;
-    info!("Fireball damage upgraded to: {}", damage.0);
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Speed(stats.speed))
+        .insert(Range(stats.range))
+        .insert(ExplosionRadius(stats.explosion_radius))
+        .insert(Knockback(stats.knockback))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }

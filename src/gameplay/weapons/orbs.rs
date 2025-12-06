@@ -8,25 +8,17 @@ use crate::{
     gameplay::{
         damage_numbers::DamageType,
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
-        player::{Direction, Player},
+        player::{Direction, Level, Player},
         weapons::{
-            CastWeapon, Cooldown, Damage, ProjectileCount, Range, UpgradeWeaponEvent, Weapon,
-            WeaponAttackEvent, WeaponDuration, WeaponType,
+            CastWeapon, Cooldown, Damage, Duration, Lifetime, ProjectileCount, Range, Weapon,
+            WeaponAttackEvent, WeaponPatchEvent, WeaponType, weaponstats::OrbLevels,
         },
     },
     screens::Screen,
 };
 
 #[derive(Component)]
-#[require(
-    Weapon,
-    WeaponType::Orb,
-    Cooldown(Timer::from_seconds(5., TimerMode::Once)),
-    Range(75.),
-    Damage(4.),
-    ProjectileCount(3.),
-    Name::new("Orb Weapon")
-)]
+#[require(Weapon, WeaponType::Orb, Name::new("Orb"))]
 #[derive(Reflect)]
 pub(crate) struct Orb;
 
@@ -51,13 +43,31 @@ pub(crate) fn plugin(app: &mut App) {
     );
 }
 
-pub fn upgrade_orb(
-    _trigger: On<UpgradeWeaponEvent>,
-    mut orb_q: Query<&mut ProjectileCount, With<Orb>>,
+pub fn patch_orb(
+    _trigger: On<WeaponPatchEvent>,
+    mut commands: Commands,
+    weapon_q: Query<Entity, With<Orb>>,
+    mut weapon_levels: ResMut<OrbLevels>,
 ) -> Result {
-    let mut count = orb_q.single_mut()?;
-    count.0 *= 2.0;
-    info!("Orb projectile count upgraded to: {}", count.0);
+    let weapon = weapon_q.single()?;
+
+    let Some(stats) = weapon_levels.levels.pop_front() else {
+        return Ok(());
+    };
+
+    commands
+        .entity(weapon)
+        .insert(Level(stats.level))
+        .insert(Damage(stats.damage))
+        .insert(Range(stats.range))
+        .insert(ProjectileCount(stats.projectile_count))
+        .insert(Lifetime(stats.lifetime))
+        .insert(Cooldown(Timer::from_seconds(
+            stats.cooldown,
+            TimerMode::Once,
+        )));
+
+    info!("{:} Level Up", weapon);
 
     Ok(())
 }
@@ -65,7 +75,7 @@ pub fn upgrade_orb(
 pub fn spawn_orb_projectile(
     _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
-    orb_q: Query<(Entity, &Range, &ProjectileCount), With<Orb>>,
+    orb_q: Query<(Entity, &Range, &ProjectileCount, &Lifetime), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
@@ -73,7 +83,7 @@ pub fn spawn_orb_projectile(
         return Ok(());
     };
 
-    let (orb, radius, projectile_count) = orb_q.single()?;
+    let (orb, radius, projectile_count, duration) = orb_q.single()?;
 
     for n in 1..=projectile_count.0 as usize {
         // Compute starting phase for each orb (even spacing)
@@ -99,7 +109,7 @@ pub fn spawn_orb_projectile(
                 OrbProjectile,
                 CastWeapon(orb),
                 Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
-                WeaponDuration(Timer::from_seconds(4., TimerMode::Once)),
+                Duration(Timer::from_seconds(duration.0, TimerMode::Once)),
                 OrbPhase(phase),
                 Direction(direction),
                 Range(radius.0),
@@ -172,7 +182,7 @@ fn update_orb_movement(
 
 fn orb_lifetime(
     mut commands: Commands,
-    mut orb_q: Query<(Entity, &mut WeaponDuration), With<OrbProjectile>>,
+    mut orb_q: Query<(Entity, &mut Duration), With<OrbProjectile>>,
 ) {
     for (orb, duration) in &mut orb_q {
         if duration.0.is_finished() {
