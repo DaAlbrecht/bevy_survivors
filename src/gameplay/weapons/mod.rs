@@ -263,19 +263,30 @@ pub(crate) fn add_weapon_to_inventory(
 }
 
 fn attack(
-    player_q: Query<Entity, With<Player>>,
+    player_q: Query<(Entity, &Transform), With<Player>>,
     inventory: Query<&Inventory>,
-    mut weapons: Query<(Entity, &mut Cooldown), With<Weapon>>,
+    mut weapons: Query<(Entity, &mut Cooldown, Option<&Range>), With<Weapon>>,
+    enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
-    let Ok(player) = player_q.single() else {
+    let Ok((player, player_transform)) = player_q.single() else {
         return Ok(());
     };
 
     for inventory_slot in inventory.iter_descendants(player) {
-        let (weapon, mut cooldown) = weapons.get_mut(inventory_slot)?;
+        let (weapon, mut cooldown, range) = weapons.get_mut(inventory_slot)?;
+        let mut in_range = true;
+        if let Some(range) = range {
+            for enemy_transform in &enemy_q {
+                let distance = enemy_transform
+                    .translation
+                    .truncate()
+                    .distance(player_transform.translation.truncate());
+                in_range = range.0 >= distance;
+            }
+        }
 
-        if cooldown.0.is_finished() {
+        if cooldown.0.is_finished() && in_range {
             commands.trigger(WeaponAttackEvent { entity: weapon });
             cooldown.0.reset();
         }

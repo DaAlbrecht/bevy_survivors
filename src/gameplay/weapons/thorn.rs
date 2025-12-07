@@ -11,8 +11,8 @@ use crate::{
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
         player::{Direction, Level, Player},
         weapons::{
-            CastWeapon, Cooldown, Damage, Duration, Halt, PlayerProjectile, ProjectileCount, Root,
-            Weapon, WeaponAttackEvent, WeaponPatchEvent, WeaponType,
+            CastWeapon, Cooldown, Damage, Duration, Halt, PlayerProjectile, ProjectileCount, Range,
+            Root, Weapon, WeaponAttackEvent, WeaponPatchEvent, WeaponType,
             dot::{Bleed, DoT},
             weaponstats::ThornLevels,
         },
@@ -69,6 +69,8 @@ pub fn patch_thorn(
         .insert(Level(stats.level))
         .insert(Damage(stats.damage))
         .insert(Speed(stats.speed))
+        .insert(ProjectileCount(stats.projectile_count))
+        .insert(Range((stats.projectile_count + 1.0) * THORN_LENGTH))
         .insert(DamageCooldown(Timer::from_seconds(
             stats.damage_cooldown,
             TimerMode::Once,

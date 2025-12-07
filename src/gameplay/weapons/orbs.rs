@@ -10,7 +10,7 @@ use crate::{
         enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent},
         player::{Direction, Level, Player},
         weapons::{
-            CastWeapon, Cooldown, Damage, Duration, Lifetime, ProjectileCount, Range, Weapon,
+            CastWeapon, Cooldown, Damage, Duration, Lifetime, ProjectileCount, Weapon,
             WeaponAttackEvent, WeaponPatchEvent, WeaponType, weaponstats::OrbLevels,
         },
     },
@@ -30,6 +30,9 @@ pub(crate) struct OrbAttackEvent;
 
 #[derive(Component, Reflect)]
 struct OrbPhase(pub f32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct Radius(pub f32);
 
 // orbital angular speed (radians/sec). Tweak for orbit period.
 const ORB_ANGULAR_SPEED: f32 = std::f32::consts::TAU * 0.25; // one orbit per 4s
@@ -59,7 +62,7 @@ pub fn patch_orb(
         .entity(weapon)
         .insert(Level(stats.level))
         .insert(Damage(stats.damage))
-        .insert(Range(stats.range))
+        .insert(Radius(stats.radius))
         .insert(ProjectileCount(stats.projectile_count))
         .insert(Lifetime(stats.lifetime))
         .insert(Cooldown(Timer::from_seconds(
@@ -75,7 +78,7 @@ pub fn patch_orb(
 pub fn spawn_orb_projectile(
     _trigger: On<WeaponAttackEvent>,
     player_q: Query<&Transform, With<Player>>,
-    orb_q: Query<(Entity, &Range, &ProjectileCount, &Lifetime), With<Orb>>,
+    orb_q: Query<(Entity, &Radius, &ProjectileCount, &Lifetime), With<Orb>>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) -> Result {
@@ -112,7 +115,7 @@ pub fn spawn_orb_projectile(
                 Duration(Timer::from_seconds(duration.0, TimerMode::Once)),
                 OrbPhase(phase),
                 Direction(direction),
-                Range(radius.0),
+                Radius(radius.0),
             ))
             .observe(on_orb_hit);
     }
@@ -154,7 +157,7 @@ fn on_orb_hit(
 fn update_orb_movement(
     player_q: Query<&Transform, (With<Player>, Without<OrbProjectile>)>,
     mut orb_q: Query<
-        (&mut Transform, &mut OrbPhase, &Range),
+        (&mut Transform, &mut OrbPhase, &Radius),
         (With<OrbProjectile>, Without<Player>),
     >,
     time: Res<Time<Fixed>>,
