@@ -8,6 +8,7 @@ pub(crate) struct WeaponStats {
     pub damage: f32,
     pub speed: f32,
     pub range: f32,
+    pub radius: f32,
     pub explosion_radius: f32,
     pub knockback: f32,
     pub projectile_count: f32,
@@ -450,7 +451,7 @@ pub(crate) fn make_orb_levels() -> OrbLevels {
             WeaponStats {
                 level: 1.,
                 damage: 5.,
-                range: 75.,
+                radius: 75.,
                 projectile_count: 3.,
                 cooldown: 5.,
                 lifetime: 4.,
@@ -459,7 +460,7 @@ pub(crate) fn make_orb_levels() -> OrbLevels {
             WeaponStats {
                 level: 2.,
                 damage: 10.,
-                range: 75.,
+                radius: 75.,
                 projectile_count: 4.,
                 cooldown: 5.,
                 lifetime: 4.,
@@ -468,7 +469,7 @@ pub(crate) fn make_orb_levels() -> OrbLevels {
             WeaponStats {
                 level: 3.,
                 damage: 15.,
-                range: 100.,
+                radius: 100.,
                 projectile_count: 5.,
                 cooldown: 5.,
                 lifetime: 4.,
@@ -477,7 +478,7 @@ pub(crate) fn make_orb_levels() -> OrbLevels {
             WeaponStats {
                 level: 4.,
                 damage: 20.,
-                range: 100.,
+                radius: 100.,
                 projectile_count: 6.,
                 cooldown: 5.,
                 lifetime: 4.,
@@ -486,7 +487,7 @@ pub(crate) fn make_orb_levels() -> OrbLevels {
             WeaponStats {
                 level: 5.,
                 damage: 30.,
-                range: 150.,
+                radius: 150.,
                 projectile_count: 7.,
                 cooldown: 5.,
                 lifetime: 4.,
