@@ -10,7 +10,6 @@ use crate::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{DamageCooldown, Enemy, EnemyType, Meele},
-        level::{LevelWalls, find_valid_spawn_position},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
         weapons::Damage,
@@ -54,7 +53,6 @@ fn spawn_walker(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     walker_stats: Res<WalkerStats>,
-    level_walls: Res<LevelWalls>,
 ) {
     let Ok(player_pos) = player_q.single() else {
         return;
@@ -72,11 +70,8 @@ fn spawn_walker(
         player_pos.translation.y + offset_y,
     );
 
-    // tile size, search radius
-    let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
-
-    let enemy_pos_x = adjusted_pos.x;
-    let enemy_pos_y = adjusted_pos.y;
+    let enemy_pos_x = desired.x;
+    let enemy_pos_y = desired.y;
 
     let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
     let layout = TextureAtlasLayout::from_grid(UVec2 { x: 58, y: 24 }, 11, 1, None, None);
@@ -89,7 +84,7 @@ fn spawn_walker(
         Damage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0)
             .with_scale(Vec3::splat((ENEMY_SIZE / 24.0) * 0.7)),
         Sprite::from_atlas_image(
             texture,

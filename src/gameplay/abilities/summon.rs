@@ -311,7 +311,7 @@ fn spawn_minion_death_effect(
         },
         animation_indices,
         AnimationTimer::once_from_fps(24),
-        Transform::from_xyz(position.x, position.y, 10.0).with_scale(Vec3::splat(3.0)),
+        Transform::from_xyz(position.x, position.y, 0.0).with_scale(Vec3::splat(3.0)),
     ));
 
     let flash_texture = asset_server.load("fx/fireball_hit.png");

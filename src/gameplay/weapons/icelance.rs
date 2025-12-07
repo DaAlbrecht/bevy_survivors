@@ -194,7 +194,7 @@ fn spawn_visual_effect_at_hit_position(
         ),
         animation_indices,
         AnimationTimer::once_from_fps(24),
-        Transform::from_xyz(hit_position.x, hit_position.y, 10.0).with_scale(Vec3::splat(2.0)),
+        Transform::from_xyz(hit_position.x, hit_position.y, 0.0).with_scale(Vec3::splat(2.0)),
     ));
     commands.spawn((
         SamplePlayer::new(asset_server.load("audio/sound_effects/ice_hit.wav")),

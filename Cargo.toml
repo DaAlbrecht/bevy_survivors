@@ -5,48 +5,48 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.17", default-features = false, features = [
-    "animation",
-    "bevy_asset",
-    "bevy_color",
-    "bevy_core_pipeline",
-    "bevy_gilrs",
-    "bevy_gizmos",
-    "bevy_mesh_picking_backend",
-    "bevy_pbr",
-    "bevy_picking",
-    "bevy_render",
-    "bevy_scene",
-    "bevy_sprite",
-    "bevy_sprite_picking_backend",
-    "bevy_state",
-    "bevy_text",
-    "bevy_ui",
-    "bevy_ui_picking_backend",
-    "bevy_ui_render",
-    "bevy_sprite_render",
-    "bevy_window",
-    "bevy_winit",
-    "custom_cursor",
-    "default_font",
-    "hdr",
-    "multi_threaded",
-    "png",
-    "smaa_luts",
-    "sysinfo_plugin",
-    "tonemapping_luts",
-    "webgl2",
-    "reflect_auto_register",
-    "wayland",
+  "animation",
+  "bevy_asset",
+  "bevy_color",
+  "bevy_core_pipeline",
+  "bevy_gilrs",
+  "bevy_gizmos",
+  "bevy_mesh_picking_backend",
+  "bevy_pbr",
+  "bevy_picking",
+  "bevy_render",
+  "bevy_scene",
+  "bevy_sprite",
+  "bevy_sprite_picking_backend",
+  "bevy_state",
+  "bevy_text",
+  "bevy_ui",
+  "bevy_ui_picking_backend",
+  "bevy_ui_render",
+  "bevy_sprite_render",
+  "bevy_window",
+  "bevy_winit",
+  "custom_cursor",
+  "default_font",
+  "hdr",
+  "multi_threaded",
+  "png",
+  "smaa_luts",
+  "sysinfo_plugin",
+  "tonemapping_luts",
+  "webgl2",
+  "reflect_auto_register",
+  "wayland",
 ] }
 
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
 log = { version = "0.4", features = [
-    "max_level_debug",
-    "release_max_level_warn",
+  "max_level_debug",
+  "release_max_level_warn",
 ] }
 tracing = { version = "0.1", features = [
-    "max_level_debug",
-    "release_max_level_warn",
+  "max_level_debug",
+  "release_max_level_warn",
 ] }
 
 # Rand
@@ -60,19 +60,18 @@ bevy-inspector-egui = "0.35"
 bevy_enhanced_input = "0.20"
 # Sound
 bevy_seedling = { version = "0.6.0", default-features = false, features = [
-    "ogg",
-    "mp3",
-    "wav",
+  "ogg",
+  "mp3",
+  "wav",
 ] }
-# ldtk integration.
-bevy_ecs_ldtk = { version = "0.13.0", features = ["atlas"] }
+bevy_ecs_tiled = { version = "0.10", features = ["avian"] }
 # Physics engine 
 avian2d = { version = "0.4", default-features = false, features = [
-    "2d",
-    "f32",
-    "default-collider",
-    "parry-f32",
-    "debug-plugin",
+  "2d",
+  "f32",
+  "default-collider",
+  "parry-f32",
+  "debug-plugin",
 ] }
 
 # Latest version that works with bevy_seedling
@@ -81,10 +80,10 @@ wasm-bindgen = { version = "=0.2.101", optional = true, default-features = false
 [features]
 default = ["dev_native"]
 dev = [
-    "bevy/dynamic_linking",
-    "bevy/bevy_dev_tools",
-    "bevy/bevy_ui_debug",
-    "bevy/track_location",
+  "bevy/dynamic_linking",
+  "bevy/bevy_dev_tools",
+  "bevy/bevy_ui_debug",
+  "bevy/track_location",
 ]
 dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 

@@ -134,6 +134,7 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
         Camera2d,
+        Transform::from_xyz(100.0, 100.0, 0.0),
         Projection::from(OrthographicProjection {
             scaling_mode: ScalingMode::Fixed {
                 width: VIRTUAL_W,
