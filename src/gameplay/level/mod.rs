@@ -33,7 +33,8 @@ pub fn spawn_level(mut commands: Commands, level_assets: Res<LevelAssets>) {
             },
         )
         .observe(|_: On<TiledEvent<MapCreated>>, mut commands: Commands| {
-            commands.spawn((Player, Transform::from_xyz(100.0, 100.0, 0.0)));
+            //TODO: Use custom property in tiled and set level specific spawn
+            commands.spawn((Player, Transform::from_xyz(300.0, 300.0, 0.0)));
         });
 }
 
