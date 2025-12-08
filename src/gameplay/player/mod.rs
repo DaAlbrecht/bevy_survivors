@@ -104,6 +104,9 @@ impl FromWorld for PlayerAssets {
 /// This component will mark the player and be used to set the spawn in tiled
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component, Default)]
+pub(crate) struct PlayerSpawnPoint;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[require(
     Health(100.),
     XpCollectionRange(150.0),
@@ -115,8 +118,9 @@ impl FromWorld for PlayerAssets {
 pub(crate) struct Player;
 
 fn setup_player(
-    add: On<Add, Player>,
+    add: On<Add, PlayerSpawnPoint>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    player_spawn_query: Query<&Transform, With<PlayerSpawnPoint>>,
     player_assets: If<Res<PlayerAssets>>,
     mut mesh: ResMut<Assets<Mesh>>,
     mut commands: Commands,
@@ -125,12 +129,17 @@ fn setup_player(
     let layout = TextureAtlasLayout::from_grid(UVec2 { x: 64, y: 64 }, 11, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
 
-    commands.entity(add.entity).insert((
+    let spawn_transform = *player_spawn_query.get(add.event().entity).unwrap();
+
+    commands.spawn((
+        Player,
         player_input_actions(),
         PlayerAnimation::new(),
         LockedAxes::ROTATION_LOCKED,
         Collider::circle(16.),
+        LinearDamping(10.0),
         Friction::ZERO,
+        spawn_transform,
         Sprite::from_atlas_image(
             player_assets.sprite.clone(),
             TextureAtlas {
