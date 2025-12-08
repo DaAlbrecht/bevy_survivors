@@ -36,6 +36,7 @@ pub(super) fn plugin(app: &mut App) {
     app.load_resource::<PlayerAssets>();
 
     app.register_type::<XP>().register_type::<Level>();
+    app.register_type::<Player>();
 
     app.add_systems(FixedUpdate, player_hit);
 
@@ -100,7 +101,9 @@ impl FromWorld for PlayerAssets {
     }
 }
 
+/// This component will mark the player and be used to set the spawn in tiled
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component, Default)]
 #[require(
     Health(100.),
     XpCollectionRange(150.0),

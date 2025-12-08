@@ -84,6 +84,8 @@ dev = [
   "bevy/bevy_dev_tools",
   "bevy/bevy_ui_debug",
   "bevy/track_location",
+  "bevy_ecs_tiled/user_properties",
+  "bevy_ecs_tiled/debug",
 ]
 dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 

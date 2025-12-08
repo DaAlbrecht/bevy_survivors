@@ -1,12 +1,9 @@
 use avian2d::prelude::{CollisionLayers, RigidBody};
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::{ColliderCreated, MapCreated, TiledEvent, TiledMap, TiledMapAsset};
+use bevy_ecs_tiled::prelude::{ColliderCreated, TiledEvent, TiledMap, TiledMapAsset};
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
 
-use crate::{
-    GameLayer, asset_tracking::LoadResource, audio::MusicPool, gameplay::player::Player,
-    screens::Screen,
-};
+use crate::{GameLayer, asset_tracking::LoadResource, audio::MusicPool, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.load_resource::<LevelAssets>();
@@ -31,11 +28,7 @@ pub fn spawn_level(mut commands: Commands, level_assets: Res<LevelAssets>) {
                     CollisionLayers::new(GameLayer::Default, [GameLayer::Player, GameLayer::Enemy]),
                 ));
             },
-        )
-        .observe(|_: On<TiledEvent<MapCreated>>, mut commands: Commands| {
-            //TODO: Use custom property in tiled and set level specific spawn
-            commands.spawn((Player, Transform::from_xyz(300.0, 300.0, 0.0)));
-        });
+        );
 }
 
 /// A [`Resource`] that contains all the assets needed to spawn the level.
