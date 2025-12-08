@@ -185,6 +185,7 @@ fn player_input_actions() -> impl Bundle {
     actions!(Player[
         (
             Action::<Move>::new(),
+            DeadZone::default(),
             Bindings::spawn((
                 Cardinal::wasd_keys(),
                 Axial::left_stick()
@@ -192,15 +193,15 @@ fn player_input_actions() -> impl Bundle {
         ),
         (
             Action::<UseQAbility>::new(),
-            bindings![KeyCode::KeyQ]
+            bindings![KeyCode::KeyQ, GamepadButton::LeftTrigger]
         ),
         (
             Action::<UseEAbility>::new(),
-            bindings![KeyCode::KeyE]
+            bindings![KeyCode::KeyE, GamepadButton::LeftTrigger2]
         ),
         (
             Action::<UseRAbility>::new(),
-            bindings![KeyCode::KeyR]
+            bindings![KeyCode::KeyR, GamepadButton::RightTrigger]
         )
     ])
 }
