@@ -53,7 +53,6 @@ fn open_settings_menu(_: On<Pointer<Click>>, mut next_menu: ResMut<NextState<Men
     next_menu.set(Menu::Settings);
 }
 
-#[cfg(not(target_family = "wasm"))]
 fn exit_app(_: On<Pointer<Click>>, mut app_exit: MessageWriter<AppExit>) {
     app_exit.write(AppExit::Success);
 }
