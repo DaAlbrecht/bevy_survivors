@@ -66,7 +66,7 @@ fn on_use_summon(
     asset_server: Res<AssetServer>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    if !try_use_ability::<Summon>(trigger.ability_entity, &mut summon_q) {
+    if !try_use_ability(trigger.ability_entity, &mut summon_q) {
         return;
     }
 

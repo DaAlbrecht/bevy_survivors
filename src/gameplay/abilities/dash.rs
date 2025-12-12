@@ -39,7 +39,7 @@ fn on_use_dash(
     mut velocity_q: Query<&mut DashVelocity, With<Dash>>,
     player_q: Query<&LinearVelocity, With<Player>>,
 ) {
-    if !try_use_ability::<Dash>(trigger.ability_entity, &mut cooldown_q) {
+    if !try_use_ability(trigger.ability_entity, &mut cooldown_q) {
         return;
     }
 
@@ -54,10 +54,10 @@ fn on_use_dash(
     let current_velocity = linear_velocity.0;
     let dash_direction = current_velocity.normalize_or_zero();
 
-    if dash_direction != Vec2::ZERO {
-        dash_velocity.0 = dash_direction * 500.0;
-    } else {
+    if dash_direction == Vec2::ZERO {
         dash_velocity.0 = Vec2::Y * 500.0;
+    } else {
+        dash_velocity.0 = dash_direction * 500.0;
     }
 }
 
