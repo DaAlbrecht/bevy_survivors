@@ -118,11 +118,11 @@ pub enum PlayerAnimationState {
 
 impl PlayerAnimation {
     /// The number of idle frames.
-    const IDLE_FRAMES: usize = 6;
+    const IDLE_FRAMES: usize = 5;
     /// The duration of each idle frame.
-    const IDLE_INTERVAL: Duration = Duration::from_millis(500);
+    const IDLE_INTERVAL: Duration = Duration::from_millis(200);
     /// The number of walking frames.
-    const WALKING_FRAMES: usize = 5;
+    const WALKING_FRAMES: usize = 6;
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(120);
 
@@ -177,8 +177,8 @@ impl PlayerAnimation {
     /// Return sprite index in the atlas.
     pub fn get_atlas_index(&self) -> usize {
         match self.state {
-            PlayerAnimationState::Idling => self.frame,
-            PlayerAnimationState::Walking => 6 + self.frame,
+            PlayerAnimationState::Walking => self.frame,
+            PlayerAnimationState::Idling => 6 + self.frame,
         }
     }
 }
