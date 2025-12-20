@@ -1,12 +1,12 @@
 use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
+use bevy_asset_loader::prelude::*;
 use bevy_ecs_ldtk::GridCoords;
 use bevy_ecs_ldtk::{LdtkEntity, app::LdtkEntityAppExt};
 use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
-use crate::GameLayer;
 use crate::gameplay::abilities::dash::Dash;
 use crate::gameplay::abilities::heal::Heal;
 use crate::gameplay::abilities::summon::Summon;
@@ -14,17 +14,15 @@ use crate::gameplay::abilities::{
     EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
 };
 use crate::gameplay::character_controller::CharacterController;
-use crate::{
-    asset_tracking::LoadResource,
-    gameplay::{
-        Health,
-        healthbar::HealthBarMaterial,
-        player::{
-            hit::player_hit,
-            movement::{AccumulatedInput, Move},
-        },
+use crate::gameplay::{
+    Health,
+    healthbar::HealthBarMaterial,
+    player::{
+        hit::player_hit,
+        movement::{AccumulatedInput, Move},
     },
 };
+use crate::{AssetStates, GameLayer};
 pub(crate) mod animation;
 pub(crate) mod hit;
 pub(crate) mod movement;
@@ -32,10 +30,11 @@ use animation::PlayerAnimation;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_input_context::<Player>();
+    app.configure_loading_state(
+        LoadingStateConfig::new(AssetStates::AssetLoading).load_collection::<PlayerAssets>(),
+    );
 
     app.add_plugins((animation::plugin, movement::plugin));
-
-    app.load_resource::<PlayerAssets>();
 
     app.register_ldtk_entity::<PlayerBundle>("Player");
     app.register_type::<XP>().register_type::<Level>();
@@ -84,29 +83,22 @@ pub(crate) struct Inventory(Vec<Entity>);
 #[derive(Reflect)]
 pub(crate) struct AddToInventory(pub Entity);
 
-#[derive(Resource, Asset, Clone, Reflect)]
+#[derive(AssetCollection, Resource, Reflect)]
 #[reflect(Resource)]
 pub struct PlayerAssets {
-    #[dependency]
+    #[asset(
+        paths(
+            "audio/sound_effects/stone_run_1.ogg",
+            "audio/sound_effects/stone_run_2.ogg",
+            "audio/sound_effects/stone_run_3.ogg",
+            "audio/sound_effects/stone_run_4.ogg",
+            "audio/sound_effects/stone_run_5.ogg",
+        ),
+        collection(typed)
+    )]
     pub steps: Vec<Handle<AudioSample>>,
-    #[dependency]
+    #[asset(path = "fx/shadow.png")]
     pub shadow: Handle<Image>,
-}
-
-impl FromWorld for PlayerAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-        Self {
-            steps: vec![
-                assets.load("audio/sound_effects/stone_run_1.ogg"),
-                assets.load("audio/sound_effects/stone_run_2.ogg"),
-                assets.load("audio/sound_effects/stone_run_3.ogg"),
-                assets.load("audio/sound_effects/stone_run_4.ogg"),
-                assets.load("audio/sound_effects/stone_run_5.ogg"),
-            ],
-            shadow: assets.load("fx/shadow.png"),
-        }
-    }
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]

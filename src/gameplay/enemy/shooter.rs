@@ -14,7 +14,6 @@ use crate::{
         enemy::{
             AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
         },
-        level::{LevelWalls, find_valid_spawn_position},
         player::{Direction, Player, PlayerHitEvent},
         weapons::{Cooldown, Damage, Range},
     },
@@ -80,7 +79,6 @@ fn spawn_shooter(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     shooter_q: Query<&Shooter>,
     shooter_stats: Res<ShooterStats>,
-    level_walls: Res<LevelWalls>,
 ) {
     let Ok(player_pos) = player_q.single() else {
         return;
@@ -98,10 +96,9 @@ fn spawn_shooter(
         player_pos.translation.x + offset_x,
         player_pos.translation.y + offset_y,
     );
-    let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
 
-    let enemy_pos_x = adjusted_pos.x;
-    let enemy_pos_y = adjusted_pos.y;
+    let enemy_pos_x = desired.x;
+    let enemy_pos_y = desired.y;
 
     let mut shooter_count = shooter_q.iter().count();
     shooter_count += 1;

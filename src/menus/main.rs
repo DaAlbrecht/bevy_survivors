@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    asset_tracking::ResourceHandles,
+    AssetStates,
     menus::Menu,
     screens::Screen,
     theme::{palette::SCREEN_BACKGROUND, widget},
@@ -30,22 +30,21 @@ fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ImageNode::new(asset_server.load("splash_bs.png",)),
             ),
-            widget::button("Play", enter_loading_or_gameplay_screen),
+            widget::button("Play", start),
             widget::button("Settings", open_settings_menu),
             widget::button("Exit", exit_app),
         ],
     ));
 }
 
-fn enter_loading_or_gameplay_screen(
+fn start(
     _: On<Pointer<Click>>,
-    resource_handles: Res<ResourceHandles>,
+    asset_state: Res<State<AssetStates>>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
-    if resource_handles.is_all_done() {
-        next_screen.set(Screen::Gameplay);
-    } else {
-        next_screen.set(Screen::Loading);
+    match asset_state.get() {
+        AssetStates::AssetLoading => next_screen.set(Screen::Loading),
+        AssetStates::Next => next_screen.set(Screen::Gameplay),
     }
 }
 
