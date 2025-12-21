@@ -1,11 +1,16 @@
 //! The level up menu.
-
 use bevy::{color::palettes::basic, prelude::*, text::FontSmoothing};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
-    gameplay::{PickUpWeapon, overlays::Overlay, weapons::WeaponType},
+    gameplay::{
+        overlays::Overlay,
+        ws::{
+            assets::WeaponAssets,
+            prelude::{PickUpWeaponEvent, WeaponKind, WeaponSpec},
+        },
+    },
     theme::widget,
 };
 
@@ -18,6 +23,8 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_level_up_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    weapons: Res<WeaponAssets>,
+    specs: Res<Assets<WeaponSpec>>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
     let border_image = asset_server.load("kenny/panel-border-011.png");
@@ -43,24 +50,18 @@ fn spawn_level_up_menu(
                 ))
                 .with_children(|parent| {
                     for _ in 0..NUMBER_OF_ITEM_CHOICES {
-                        let weapon_index = rng.random_range(0..WeaponType::ALL.len());
+                        let weapon_index = rng.random_range(0..WeaponKind::count());
+                        let kind = WeaponKind::ALL[weapon_index];
+                        let spec_handle = weapons
+                            .spec_handle_for_kind(kind)
+                            .expect("expect spec handle for kind");
 
-                        let weapon_image: Handle<Image> = match WeaponType::ALL[weapon_index] {
-                            WeaponType::Energy => asset_server.load("ui/icons/energy_item.png"),
-                            WeaponType::Circles => asset_server.load("ui/icons/circle_item.png"),
-                            WeaponType::Scale => asset_server.load("fx/scale.png"),
-                            WeaponType::Fireball => asset_server.load("ui/icons/fireball_item.png"),
-                            WeaponType::Lightning => {
-                                asset_server.load("ui/icons/lightning_icon.png")
-                            }
-                            WeaponType::Orb => asset_server.load("ui/icons/orbs_item.png"),
-                            WeaponType::Thorn => asset_server.load("fx/thorn_base.png"),
-                            WeaponType::Icelance => asset_server.load("ui/icons/icelance_item.png"),
-                        };
+                        let icon = specs.get(spec_handle).map(|s| s.icon.clone()).unwrap();
+
                         parent
                             .spawn((
-                                item_choice_widget(border_image.clone(), weapon_image, &font),
-                                WeaponType::ALL[weapon_index],
+                                item_choice_widget(border_image.clone(), icon, &font),
+                                WeaponKind::ALL[weapon_index],
                             ))
                             .observe(upgrade);
                     }
@@ -164,12 +165,12 @@ fn upgrade(
     trigger: On<Pointer<Click>>,
     mut commands: Commands,
     mut next_menu: ResMut<NextState<Overlay>>,
-    weapon_types: Query<&WeaponType>,
+    weapon_types: Query<&WeaponKind>,
 ) {
     let selected_weapon = trigger.entity;
 
-    let pickup_event = PickUpWeapon {
-        weapon_type: *weapon_types
+    let pickup_event = PickUpWeaponEvent {
+        kind: *weapon_types
             .get(selected_weapon)
             .expect("We should always find the WeaponType the player chose"),
     };

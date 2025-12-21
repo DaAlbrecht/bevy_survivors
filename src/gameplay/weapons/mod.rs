@@ -7,7 +7,7 @@ use crate::{
         PickUpWeapon, Speed,
         damage_numbers::DamageType,
         enemy::{DamageCooldown, Enemy, EnemyDamageEvent},
-        player::{AddToInventory, Direction, Inventory, Player},
+        player::{InInventoryOf, Direction, Inventory, Player},
         weapons::{
             circles::{Circles, patch_circles, spawn_circles},
             dot::Bleed,
@@ -190,7 +190,7 @@ pub(crate) fn add_weapon_to_inventory(
         }
     }
 
-    let mut inventory_entry = commands.spawn(AddToInventory(player));
+    let mut inventory_entry = commands.spawn(InInventoryOf(player));
 
     match trigger.weapon_type {
         WeaponType::Energy => {

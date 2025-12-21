@@ -1,3 +1,4 @@
+use crate::gameplay::ws::prelude::*;
 use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
 use bevy_asset_loader::prelude::*;
@@ -74,14 +75,14 @@ pub(crate) struct XP(pub f32);
 pub(crate) struct Level(pub f32);
 
 #[derive(Component)]
-#[relationship_target(relationship = AddToInventory)]
+#[relationship_target(relationship = InInventoryOf)]
 #[derive(Reflect)]
 pub(crate) struct Inventory(Vec<Entity>);
 
 #[derive(Component)]
 #[relationship(relationship_target = Inventory)]
 #[derive(Reflect)]
-pub(crate) struct AddToInventory(pub Entity);
+pub(crate) struct InInventoryOf(pub Entity);
 
 #[derive(AssetCollection, Resource, Reflect)]
 #[reflect(Resource)]
@@ -162,8 +163,8 @@ fn setup_player(
         CollidingEntities::default(),
     ));
 
-    commands.trigger(crate::gameplay::PickUpWeapon {
-        weapon_type: crate::gameplay::weapons::WeaponType::Thorn,
+    commands.trigger(PickUpWeaponEvent {
+        kind: WeaponKind::Fireball,
     });
 
     commands.spawn((QAbility, Heal));

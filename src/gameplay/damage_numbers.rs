@@ -1,9 +1,10 @@
 use bevy::{prelude::*, sprite::Text2dShadow, text::FontSmoothing};
 use bevy_asset_loader::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{AssetStates, screens::Screen};
 
-#[derive(Copy, Clone, Reflect)]
+#[derive(Copy, Clone, Reflect, Deserialize, Serialize, Debug)]
 pub enum DamageType {
     Physical,
     Fire,

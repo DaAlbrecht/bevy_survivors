@@ -11,11 +11,11 @@ use crate::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
-            AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType, Meele,
-            RANGE_BUFFER,
+            AbilityDamage, AbilitySpeed, Charge, Cooldown, DamageCooldown, Enemy, EnemyType,
+            HitDamage, Meele, RANGE_BUFFER, Range,
         },
         player::{Direction, Player, PlayerHitEvent},
-        weapons::{Cooldown, Damage, Halt, Range},
+        ws::prelude::Halt,
     },
     screens::Screen,
 };
@@ -124,7 +124,7 @@ fn spawn_sprinter(
             ..default()
         },
         Health(stats.health),
-        Damage(stats.damage),
+        HitDamage(stats.damage),
         AbilityDamage(stats.ability_damage),
         AbilitySpeed(stats.ability_speed),
         Range(stats.range),

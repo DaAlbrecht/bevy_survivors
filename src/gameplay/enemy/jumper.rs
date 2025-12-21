@@ -11,12 +11,11 @@ use crate::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
-            AbilityDamage, AbilityDuration, AbilitySpeed, AbilityTick, DamageCooldown, Enemy,
-            EnemyType, HazardousTerrain, Jump, Meele, Owner, Size,
+            AbilityDamage, AbilityDuration, AbilitySpeed, AbilityTick, Cooldown, DamageCooldown,
+            Enemy, EnemyType, HazardousTerrain, HitDamage, Jump, Meele, Owner, Range, Size,
         },
         player::{Direction, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
-        weapons::{Cooldown, Damage, Range},
     },
     screens::Screen,
 };
@@ -139,7 +138,7 @@ fn spawn_jumper(
                 Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
                 Visibility::Visible,
                 Health(stats.health),
-                Damage(stats.damage),
+                HitDamage(stats.damage),
                 AbilityDamage(stats.ability_damage),
                 AbilitySpeed(stats.ability_speed),
                 Range(stats.range),
@@ -391,7 +390,7 @@ fn spawn_jumper_aoe(
             ..default()
         },
         HazardousTerrain,
-        Damage(damage.0),
+        HitDamage(damage.0),
         AbilityDuration(duration.0.clone()),
         AbilityTick(ticker.0.clone()),
         Size(size.0),

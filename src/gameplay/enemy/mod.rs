@@ -1,3 +1,4 @@
+use crate::gameplay::ws::prelude::*;
 use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 use rand::Rng;
@@ -5,7 +6,7 @@ use rand::Rng;
 use crate::{
     GameLayer, PLAYER_SIZE, PROJECTILE_SIZE, PausableSystems, PostPhysicsAppSystems,
     gameplay::{
-        Health, Speed,
+        Despawn, Health, Speed,
         character_controller::CharacterController,
         damage_numbers::{DamageMessage, DamageType},
         enemy::{
@@ -15,7 +16,6 @@ use crate::{
         },
         player::{Direction, PlayerHitEvent},
         simple_animation::HurtAnimationTimer,
-        weapons::{Cooldown, Damage, Despawn, Halt, Range, Root},
     },
     screens::Screen,
 };
@@ -138,6 +138,15 @@ pub(crate) enum EnemyType {
     Jumper,
     None,
 }
+
+#[derive(Component, Default, Reflect)]
+pub(crate) struct Cooldown(pub Timer);
+
+#[derive(Component, Reflect)]
+pub(crate) struct Range(pub f32);
+
+#[derive(Component)]
+pub(crate) struct HitDamage(pub f32);
 
 #[derive(Component)]
 pub(crate) struct AbilityDamage(pub f32);
@@ -463,7 +472,7 @@ fn terrain_manager(
         (
             Entity,
             &Transform,
-            &Damage,
+            &HitDamage,
             &mut AbilityDuration,
             &mut AbilityTick,
             &Size,

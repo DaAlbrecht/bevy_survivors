@@ -9,6 +9,13 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, hurt_flash.run_if(in_state(Screen::Gameplay)));
 }
 
+#[derive(Component, Clone, Copy, Default)]
+pub enum AnimationPlayback {
+    #[default]
+    Loop,
+    OnceDespawn,
+}
+
 #[derive(Component)]
 pub(crate) struct AnimationIndices {
     pub first: usize,
@@ -16,11 +23,20 @@ pub(crate) struct AnimationIndices {
 }
 
 #[derive(Component, Deref, DerefMut)]
+#[require(AnimationPlayback)]
 pub(crate) struct AnimationTimer {
     pub timer: Timer,
 }
 
 impl AnimationTimer {
+    pub fn from_fps(fps: u8) -> Self {
+        Self {
+            timer: Timer::new(
+                Duration::from_secs_f32(1.0 / (fps as f32)),
+                TimerMode::Repeating,
+            ),
+        }
+    }
     pub fn once_from_fps(fps: u8) -> Self {
         Self {
             timer: Timer::new(Duration::from_secs_f32(1.0 / (fps as f32)), TimerMode::Once),
@@ -61,26 +77,28 @@ fn hurt_flash(
 fn animate_sprite(
     time: Res<Time>,
     mut commands: Commands,
-    mut query: Query<(Entity, &AnimationIndices, &mut AnimationTimer, &mut Sprite)>,
+    mut query: Query<(
+        Entity,
+        &AnimationIndices,
+        &mut AnimationTimer,
+        &mut Sprite,
+        &AnimationPlayback,
+    )>,
 ) {
-    for (entity, indices, mut timer, mut sprite) in &mut query {
+    for (entity, indices, mut timer, mut sprite, playback) in &mut query {
         timer.tick(time.delta());
 
         if timer.just_finished()
             && let Some(atlas) = &mut sprite.texture_atlas
         {
-            if atlas.index == indices.last {
-                atlas.index = indices.first;
-                if timer.mode() == TimerMode::Once {
-                    info!("Despawning animated entity {:?}", entity);
-                    commands.entity(entity).despawn();
+            if atlas.index >= indices.last {
+                match *playback {
+                    AnimationPlayback::Loop => atlas.index = indices.first,
+                    AnimationPlayback::OnceDespawn => commands.entity(entity).despawn(),
                 }
             } else {
                 atlas.index += 1;
-                if timer.mode() == TimerMode::Once {
-                    timer.reset();
-                }
-            };
+            }
         }
     }
 }

@@ -9,10 +9,9 @@ use crate::{
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
-        enemy::{DamageCooldown, Enemy, EnemyType, Meele},
+        enemy::{DamageCooldown, Enemy, EnemyType, HitDamage, Meele},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
-        weapons::Damage,
     },
 };
 
@@ -81,7 +80,7 @@ fn spawn_walker(
     commands.spawn((
         Name::new("Walker"),
         Walker,
-        Damage(stats.damage),
+        HitDamage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
         Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)

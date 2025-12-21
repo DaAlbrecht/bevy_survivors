@@ -1652,7 +1652,6 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_asset_loader",
- "bevy_common_assets",
  "bevy_ecs_ldtk",
  "bevy_enhanced_input",
  "bevy_rand",
@@ -1660,6 +1659,9 @@ dependencies = [
  "log",
  "rand",
  "rand_core",
+ "ron 0.12.0",
+ "serde",
+ "thiserror 2.0.17",
  "tracing",
  "wasm-bindgen",
 ]
@@ -5058,6 +5060,20 @@ dependencies = [
  "bitflags 2.10.0",
  "serde",
  "serde_derive",
+ "unicode-ident",
+]
+
+[[package]]
+name = "ron"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd490c5b18261893f14449cbd28cb9c0b637aebf161cd77900bfdedaff21ec32"
+dependencies = [
+ "bitflags 2.10.0",
+ "once_cell",
+ "serde",
+ "serde_derive",
+ "typeid",
  "unicode-ident",
 ]
 

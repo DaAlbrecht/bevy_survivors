@@ -51,7 +51,9 @@ tracing = { version = "0.1", features = [
 
 # Assets
 bevy_asset_loader = { version = "0.24", features = ["standard_dynamic_assets"] }
-bevy_common_assets = {version = "0.14.0", features = ["ron"]}
+serde = { version = "1.0" }
+serde_ron = { version = "0.12", package = "ron"}
+thiserror = "2.0"
 
 # Rand
 bevy_rand = { version = "0.12", features = ["wyrand"] }
