@@ -25,9 +25,12 @@ use crate::{
         },
     },
 };
+
 pub(crate) mod animation;
+pub(crate) mod characters;
 pub(crate) mod hit;
 pub(crate) mod movement;
+
 use animation::PlayerAnimation;
 
 pub(super) fn plugin(app: &mut App) {
