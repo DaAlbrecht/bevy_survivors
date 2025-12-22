@@ -7,15 +7,15 @@ impl ApplySpec for AttackSpec {
             AttackSpec::Orbiters(s) => s.apply(commands, entity),
             AttackSpec::ChainLightning(s) => s.apply(commands, entity),
             AttackSpec::Shot(s) => s.apply(commands, entity),
+            AttackSpec::Nova(s) => s.apply(commands, entity),
+            AttackSpec::Homing(s) => s.apply(commands, entity),
+            AttackSpec::Falling(s) => s.apply(commands, entity),
         }
     }
 }
 
-#[derive(Component, Clone)]
-pub struct WeaponHit(pub HitSpec);
-
 impl ApplySpec for HitSpec {
     fn apply(&self, commands: &mut Commands, entity: Entity) {
-        commands.entity(entity).insert(WeaponHit(self.clone()));
+        commands.entity(entity).insert(self.clone());
     }
 }

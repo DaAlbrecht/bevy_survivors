@@ -1,24 +1,23 @@
-use crate::gameplay::{enemy::EnemyKnockbackEvent, ws::prelude::*};
-use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::gameplay::{enemy::Enemy, player::Player};
+use crate::gameplay::{enemy::Enemy, player::Player, ws::prelude::*};
 
-pub fn on_projectile_attack(
+pub fn on_falling_attack(
     trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<(&ProjectileSpeed, &WeaponProjectileVisuals), With<super::ShotAttack>>,
+    weapon_q: Query<(&super::SpawnHeight, &WeaponProjectileVisuals), With<super::FallingAttack>>,
     player_q: Query<&Transform, With<Player>>,
     enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
     let weapon = trigger.event().entity;
 
-    let Ok((_speed, projectile_visuals)) = weapon_q.get(weapon) else {
+    let Ok((spawn_height, projectile_visuals)) = weapon_q.get(weapon) else {
         return Ok(());
     };
 
     let player_pos = player_q.single()?;
 
+    // Find closest enemy to player
     let mut min_distance = f32::MAX;
     let mut closest_enemy: Option<&Transform> = None;
 
@@ -35,35 +34,36 @@ pub fn on_projectile_attack(
     }
 
     if let Some(enemy_pos) = closest_enemy {
-        let direction = (enemy_pos.translation - player_pos.translation)
-            .truncate()
-            .normalize();
+        // Spawn projectile ABOVE the enemy position
+        let spawn_position = Vec3::new(
+            enemy_pos.translation.x,
+            enemy_pos.translation.y + spawn_height.0,
+            10.0,
+        );
 
-        let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.extend(0.).normalize());
+        // Falls straight down
+        let fall_direction = Vec3::new(0.0, -1.0, 0.0);
 
         let mut proj = commands.spawn((
-            Name::new("Projectile"),
+            Name::new("Falling Projectile"),
             CastWeapon(weapon),
-            Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
-                .with_rotation(towards_quaternion),
-            ProjectileDirection(direction.extend(0.)),
-            Mass(0.1),
+            Transform::from_xyz(spawn_position.x, spawn_position.y, 10.0),
+            ProjectileDirection(fall_direction),
             PlayerProjectile,
         ));
 
         projectile_visuals.0.apply_ec(&mut proj);
 
-        proj.observe(on_shot_hit);
+        proj.observe(on_falling_hit);
     }
 
     Ok(())
 }
 
-fn on_shot_hit(
-    event: On<CollisionStart>,
+fn on_falling_hit(
+    event: On<avian2d::prelude::CollisionStart>,
     enemy_q: Query<(&Transform, Entity), With<Enemy>>,
     cast_q: Query<&CastWeapon>,
-    proj_tf_q: Query<&Transform, With<PlayerProjectile>>,
     weapon_hit_q: Query<&HitSpec>,
     weapon_stats_q: Query<(&BaseDamage, Option<&ExplosionRadius>)>,
     mut commands: Commands,
@@ -80,19 +80,6 @@ fn on_shot_hit(
 
     let hit = weapon_hit_q.get(weapon)?;
     let (dmg, explosion_radius) = weapon_stats_q.get(weapon)?;
-
-    if let Ok(proj_tf) = proj_tf_q.get(projectile) {
-        let dir = (enemy_tf.0.translation - proj_tf.translation)
-            .normalize_or_zero()
-            .truncate();
-        if dir.length_squared() > 0.0 && hit.knockback_strength > 0.0 {
-            commands.trigger(EnemyKnockbackEvent {
-                entity_hit: target,
-                dir,
-                strength: hit.knockback_strength,
-            });
-        }
-    }
 
     commands.trigger(WeaponHitEvent {
         entity: weapon,

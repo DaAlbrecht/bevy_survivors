@@ -6,10 +6,7 @@ use rand::Rng;
 use crate::{
     gameplay::{
         overlays::Overlay,
-        ws::{
-            assets::WeaponAssets,
-            prelude::{PickUpWeaponEvent, WeaponKind, WeaponSpec},
-        },
+        ws::{assets::WeaponMap, prelude::{PickUpWeaponEvent, WeaponKind}},
     },
     theme::widget,
 };
@@ -23,8 +20,7 @@ pub(super) fn plugin(app: &mut App) {
 fn spawn_level_up_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    weapons: Res<WeaponAssets>,
-    specs: Res<Assets<WeaponSpec>>,
+    weapons: Res<WeaponMap>,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) {
     let border_image = asset_server.load("kenny/panel-border-011.png");
@@ -50,13 +46,13 @@ fn spawn_level_up_menu(
                 ))
                 .with_children(|parent| {
                     for _ in 0..NUMBER_OF_ITEM_CHOICES {
-                        let weapon_index = rng.random_range(0..WeaponKind::count());
+                        let weapon_index = rng.random_range(0..WeaponKind::ALL.len());
                         let kind = WeaponKind::ALL[weapon_index];
-                        let spec_handle = weapons
-                            .spec_handle_for_kind(kind)
-                            .expect("expect spec handle for kind");
+                        let spec = weapons
+                            .get(&kind)
+                            .expect("expect spec for kind");
 
-                        let icon = specs.get(spec_handle).map(|s| s.icon.clone()).unwrap();
+                        let icon = spec.icon.clone();
 
                         parent
                             .spawn((

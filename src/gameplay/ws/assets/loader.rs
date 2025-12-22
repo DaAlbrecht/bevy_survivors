@@ -1,7 +1,6 @@
 use bevy::asset::io::Reader;
 use bevy::asset::{AssetLoader, LoadContext};
 use bevy::prelude::*;
-use bevy_seedling::sample::AudioSample;
 use serde::Deserialize;
 use serde_ron::de::from_bytes;
 use thiserror::Error;
@@ -11,7 +10,7 @@ use crate::gameplay::ws::prelude::*;
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct WeaponSpecRaw {
-    pub name: String,
+    pub kind: WeaponKind,
     pub base_damage: f32,
     pub cooldown: f32,
     pub attack: AttackSpec,
@@ -27,16 +26,14 @@ struct WeaponSpecRaw {
 struct VisualRaw {
     pub image: String,
     pub size: Vec2,
-    pub z: f32,
     pub atlas: Option<AtlasAnimRaw>,
 }
 
 impl VisualRaw {
-    fn into_visual_spec(self, load_context: &mut LoadContext<'_>) -> VisualSpec {
-        let image: Handle<Image> = load_context.load(self.image);
+    fn load(self, load_context: &mut LoadContext<'_>) -> VisualSpec {
+        let image = load_context.load(self.image);
         let atlas = self.atlas.map(|a| {
             let layout = TextureAtlasLayout::from_grid(a.cell, a.columns, a.rows, None, None);
-
             let label = format!("{}_atlas_layout", load_context.path().to_string_lossy());
             let layout_handle = load_context.add_labeled_asset(label, layout);
 
@@ -51,7 +48,6 @@ impl VisualRaw {
         VisualSpec {
             image,
             size: self.size,
-            z: self.z,
             atlas,
         }
     }
@@ -73,6 +69,15 @@ struct AtlasAnimRaw {
 struct SfxRaw {
     pub attack: Option<String>,
     pub impact: Option<String>,
+}
+
+impl SfxRaw {
+    fn load(self, load_context: &mut LoadContext<'_>) -> WeaponSfx {
+        WeaponSfx {
+            attack: self.attack.map(|p| load_context.load(p)),
+            impact: self.impact.map(|p| load_context.load(p)),
+        }
+    }
 }
 
 //Inspired by https://github.com/NiklasEi/bevy_common_assets/blob/main/src/ron.rs
@@ -112,37 +117,17 @@ impl AssetLoader for WeaponRonLoader {
         let mut bytes = Vec::new();
         reader.read_to_end(&mut bytes).await?;
         let raw = from_bytes::<WeaponSpecRaw>(&bytes)?;
-        let WeaponSpecRaw {
-            name,
-            base_damage,
-            cooldown,
-            attack,
-            on_hit,
-            visuals,
-            impact_visuals,
-            sfx,
-            icon,
-        } = raw;
-
-        let attack_sfx = sfx.attack.map(|p| load_context.load::<AudioSample>(p));
-
-        let impact_sfx = sfx.impact.map(|p| load_context.load::<AudioSample>(p));
-
-        let icon_handle: Handle<Image> = load_context.load(icon);
 
         Ok(WeaponSpec {
-            name,
-            base_damage,
-            cooldown,
-            attack,
-            on_hit,
-            visuals: visuals.into_visual_spec(load_context),
-            impact_visuals: impact_visuals.map(|i| i.into_visual_spec(load_context)),
-            sfx: WeaponSfx {
-                attack: attack_sfx,
-                impact: impact_sfx,
-            },
-            icon: icon_handle,
+            kind: raw.kind,
+            base_damage: raw.base_damage,
+            cooldown: raw.cooldown,
+            attack: raw.attack,
+            on_hit: raw.on_hit,
+            visuals: raw.visuals.load(load_context),
+            impact_visuals: raw.impact_visuals.map(|v| v.load(load_context)),
+            sfx: raw.sfx.load(load_context),
+            icon: load_context.load(raw.icon),
         })
     }
 
@@ -268,6 +253,47 @@ mod tests {
                 failures.len(),
                 failures.join("\n")
             ),
+        }
+    }
+
+    #[test]
+    fn every_weaponkind_has_a_weapon_ron() {
+        use std::collections::HashSet;
+
+        let files = weapon_ron_files("assets/weapons/rons");
+        assert!(!files.is_empty(), "No .weapon.ron files found");
+
+        let mut seen = HashSet::new();
+        let mut failures = Vec::new();
+
+        for p in &files {
+            match parse_weapon_ron(p) {
+                Ok(raw) => {
+                    seen.insert(raw.kind);
+                }
+                Err(e) => failures.push(e),
+            }
+        }
+
+        if !failures.is_empty() {
+            panic!(
+                "Weapon kind scan failed for {} file(s):\n{}",
+                failures.len(),
+                failures.join("\n")
+            );
+        }
+
+        let missing: Vec<WeaponKind> = WeaponKind::ALL
+            .iter()
+            .copied()
+            .filter(|k| !seen.contains(k))
+            .collect();
+
+        if !missing.is_empty() {
+            panic!(
+                "No .weapon.ron found for WeaponKind variant(s): {:?}",
+                missing
+            );
         }
     }
 }

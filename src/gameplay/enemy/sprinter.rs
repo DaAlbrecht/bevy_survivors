@@ -11,11 +11,10 @@ use crate::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
-            AbilityDamage, AbilitySpeed, Charge, Cooldown, DamageCooldown, Enemy, EnemyType,
+            AbilityDamage, AbilitySpeed, Charge, Cooldown, DamageCooldown, Enemy, EnemyType, Halt,
             HitDamage, Meele, RANGE_BUFFER, Range,
         },
         player::{Direction, Player, PlayerHitEvent},
-        ws::prelude::Halt,
     },
     screens::Screen,
 };

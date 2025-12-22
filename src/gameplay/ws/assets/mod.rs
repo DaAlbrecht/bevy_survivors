@@ -1,4 +1,4 @@
-use bevy::{platform::collections::HashMap, prelude::*};
+use bevy::{ecs::system::SystemState, platform::collections::HashMap, prelude::*};
 use bevy_asset_loader::prelude::*;
 
 use crate::{
@@ -12,31 +12,30 @@ pub mod loader;
 pub mod spec;
 
 #[derive(AssetCollection, Resource)]
-pub struct WeaponAssets {
+struct WeaponAssets {
     #[asset(key = "rons", collection(mapped, typed))]
-    pub specs: HashMap<AssetFileStem, Handle<WeaponSpec>>,
+    specs: HashMap<AssetFileStem, Handle<WeaponSpec>>,
 }
 
-#[allow(unused)]
-impl WeaponAssets {
-    pub const SPEC_SUFFIX: &'static str = ".weapon";
+#[derive(Resource, Deref)]
+pub struct WeaponMap(HashMap<WeaponKind, WeaponSpec>);
 
-    #[inline]
-    fn spec_key_for_id(id: &str) -> String {
-        format!("{id}{}", Self::SPEC_SUFFIX)
-    }
+impl FromWorld for WeaponMap {
+    fn from_world(world: &mut World) -> Self {
+        let mut system_state =
+            SystemState::<(Res<WeaponAssets>, Res<Assets<WeaponSpec>>)>::new(world);
+        let (raw_assets, spec_assets) = system_state.get(world);
 
-    pub fn spec_handle_for_kind(&self, kind: WeaponKind) -> Option<&Handle<WeaponSpec>> {
-        let key = Self::spec_key_for_id(kind.id());
-        self.specs.get(key.as_str())
-    }
+        let mut map = HashMap::new();
+        for (file_stem, handle) in &raw_assets.specs {
+            if let Some(spec) = spec_assets.get(handle) {
+                map.insert(spec.kind, spec.clone());
+            } else {
+                warn!("Failed to load weapon spec for: {}", file_stem.as_ref());
+            }
+        }
 
-    pub fn spec_for_kind<'a>(
-        &'a self,
-        kind: WeaponKind,
-        specs: &'a Assets<WeaponSpec>,
-    ) -> Option<&'a WeaponSpec> {
-        self.spec_handle_for_kind(kind).and_then(|h| specs.get(h))
+        WeaponMap(map)
     }
 }
 
@@ -49,6 +48,7 @@ pub(super) fn plugin(app: &mut App) {
             .with_dynamic_assets_file::<StandardDynamicAssetCollection>(
                 "weapons/dynamic_weapons.ron",
             )
-            .load_collection::<WeaponAssets>(),
+            .load_collection::<WeaponAssets>()
+            .finally_init_resource::<WeaponMap>(),
     );
 }

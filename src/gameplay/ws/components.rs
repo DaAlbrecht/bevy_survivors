@@ -1,7 +1,10 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::GameLayer;
+use crate::{
+    GameLayer,
+    gameplay::{damage_numbers::DamageType, ws::systems::cooldown::WeaponDuration},
+};
 
 #[derive(Component, Reflect)]
 #[require(
@@ -16,6 +19,8 @@ use crate::GameLayer;
             GameLayer::Default,
         ],
     ),
+    // TODO: This is a placeholder to remove projectiles after some time.
+    WeaponDuration(Timer::from_seconds(5.0, TimerMode::Once)),
 )]
 pub(crate) struct PlayerProjectile;
 
@@ -32,20 +37,28 @@ pub(crate) struct WeaponProjectiles(Vec<Entity>);
 #[derive(Component, Reflect, Default)]
 pub(crate) struct ProjectileDirection(pub Vec3);
 
-#[derive(Component, Reflect)]
-pub(crate) struct ExplosionRadius(pub f32);
-
 #[derive(Component, Reflect, Default)]
 pub struct ProjectileSpeed(pub f32);
 
 #[derive(Component, Reflect)]
+pub(crate) struct ProjectileCount(pub u32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct WeaponLifetime(pub f32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct WeaponRange(pub f32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct ExplosionRadius(pub f32);
+
+#[derive(Component, Reflect)]
 pub(crate) struct BaseDamage(pub f32);
 
-#[derive(Component, Reflect)]
-pub(crate) struct Range(pub f32);
-
-#[derive(Component, Reflect)]
-pub(crate) struct Halt;
-
-#[derive(Component, Reflect)]
-pub(crate) struct Root(pub Timer);
+#[derive(Component, Clone, Reflect)]
+pub(crate) struct DoT {
+    pub duration: Timer,
+    pub tick: Timer,
+    pub dmg_per_tick: f32,
+    pub damage_type: DamageType,
+}

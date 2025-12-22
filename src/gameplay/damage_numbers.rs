@@ -12,6 +12,7 @@ pub enum DamageType {
     Ice,
     Earth,
     Heal,
+    Bleed,
 }
 
 impl DamageType {
@@ -22,6 +23,7 @@ impl DamageType {
             DamageType::Ice => Some(assets.ice.clone()),
             DamageType::Physical | DamageType::Earth => None,
             DamageType::Heal => Some(assets.heart.clone()),
+            DamageType::Bleed => Some(assets.blood.clone()),
         }
     }
 }
@@ -187,4 +189,6 @@ pub(crate) struct DamageAssets {
     pub(crate) lightning: Handle<Image>,
     #[asset(path = "ui/icons/tag_ice.png")]
     pub(crate) ice: Handle<Image>,
+    #[asset(path = "ui/icons/tag_blood.png")]
+    pub(crate) blood: Handle<Image>,
 }

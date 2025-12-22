@@ -2,12 +2,10 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 mod attack;
-mod movement;
 mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_projectile_attack);
-    app.add_plugins(movement::plugin);
 }
 
 #[derive(Component)]

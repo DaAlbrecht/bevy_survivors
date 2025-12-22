@@ -2,7 +2,13 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 mod attack;
+mod movement;
 mod setup;
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_observer(attack::on_orbiters_attack);
+    app.add_plugins(movement::plugin);
+}
 
 #[derive(Component)]
 pub struct OrbitersAttack;
@@ -10,6 +16,12 @@ pub struct OrbitersAttack;
 pub struct OrbitRadius(pub f32);
 #[derive(Component)]
 pub struct OrbitAngularSpeed(pub f32);
+
+#[derive(Component)]
+pub struct OrbiterProjectile;
+
+#[derive(Component)]
+pub struct OrbitPhase(pub f32);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

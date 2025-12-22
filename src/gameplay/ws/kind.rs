@@ -1,28 +1,31 @@
 use bevy::prelude::*;
+use serde::Deserialize;
 
 #[derive(Component)]
 pub struct Weapon;
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Deserialize)]
 pub enum WeaponKind {
     Orb,
     Lightning,
     Fireball,
+    Energy,
+    Scale,
+    Circles,
+    Icelance,
+    Hammer, // Thorn,
 }
 
 impl WeaponKind {
-    pub fn id(self) -> &'static str {
-        match self {
-            WeaponKind::Orb => "orb",
-            WeaponKind::Lightning => "lightning",
-            WeaponKind::Fireball => "fireball",
-        }
-    }
-
-    pub const ALL: &'static [WeaponKind] =
-        &[WeaponKind::Orb, WeaponKind::Lightning, WeaponKind::Fireball];
-
-    pub fn count() -> usize {
-        Self::ALL.len()
-    }
+    pub const ALL: &'static [WeaponKind] = &[
+        WeaponKind::Orb,
+        WeaponKind::Lightning,
+        WeaponKind::Fireball,
+        WeaponKind::Energy,
+        WeaponKind::Scale,
+        WeaponKind::Circles,
+        WeaponKind::Icelance,
+        WeaponKind::Hammer,
+        // WeaponKind::Thorn,
+    ];
 }

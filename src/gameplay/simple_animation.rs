@@ -2,11 +2,13 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::screens::Screen;
+use crate::{gameplay::enemy::Root, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, animate_sprite.run_if(in_state(Screen::Gameplay)));
-    app.add_systems(Update, hurt_flash.run_if(in_state(Screen::Gameplay)));
+    app.add_systems(
+        Update,
+        (animate_sprite, hurt_flash, root_flash).run_if(in_state(Screen::Gameplay)),
+    );
 }
 
 #[derive(Component, Clone, Copy, Default)]
@@ -37,11 +39,6 @@ impl AnimationTimer {
             ),
         }
     }
-    pub fn once_from_fps(fps: u8) -> Self {
-        Self {
-            timer: Timer::new(Duration::from_secs_f32(1.0 / (fps as f32)), TimerMode::Once),
-        }
-    }
 }
 
 #[derive(Component, Deref, DerefMut)]
@@ -70,6 +67,23 @@ fn hurt_flash(
             commands.entity(entity).remove::<HurtAnimationTimer>();
         } else {
             sprite.color = Color::srgba(1.0, 0.0, 0.0, 1.0);
+        }
+    }
+}
+
+fn root_flash(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Root, &mut Sprite)>,
+) {
+    for (entity, mut root, mut sprite) in &mut query {
+        root.0.tick(time.delta());
+
+        if root.0.just_finished() {
+            sprite.color = Color::WHITE;
+            commands.entity(entity).remove::<Root>();
+        } else {
+            sprite.color = Color::srgba(0.5, 1.0, 1.0, 1.0);
         }
     }
 }

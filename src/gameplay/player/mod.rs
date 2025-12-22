@@ -66,6 +66,15 @@ pub(crate) struct PlayerHitEvent {
 pub(crate) struct Direction(pub Vec3);
 
 #[derive(Component, Reflect)]
+pub(crate) struct LastFacingDirection(pub Vec2);
+
+impl Default for LastFacingDirection {
+    fn default() -> Self {
+        Self(Vec2::X)
+    }
+}
+
+#[derive(Component, Reflect)]
 pub(crate) struct XpCollectionRange(pub f32);
 
 #[derive(Component, Reflect)]
@@ -110,6 +119,7 @@ pub struct PlayerAssets {
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
+    LastFacingDirection,
 )]
 pub(crate) struct Player;
 

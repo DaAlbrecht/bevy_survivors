@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 pub(crate) mod assets;
 mod behaviours;
+pub(crate) mod components;
 mod kind;
 mod runtime;
 mod systems;
@@ -13,19 +14,25 @@ pub(super) fn plugin(app: &mut App) {
 pub mod prelude {
     pub use super::kind::{Weapon, WeaponKind};
 
+    pub use super::components::*;
+
     pub use super::systems::{
-        cooldown::WeaponCooldown,
-        pickup::{PickUpWeaponEvent, UpgradeWeaponEvent},
+        attack::WeaponAttackEvent, cooldown::WeaponCooldown, hit::WeaponHitEvent,
+        pickup::PickUpWeaponEvent,
     };
 
     pub use super::behaviours::{
-        chain::ChainLightningSpec, orbiters::OrbitersSpec, shared::*, shot::ShotSpec,
+        chain::ChainLightningSpec, falling::FallingSpec, homing::HomingSpec, nova::NovaSpec,
+        orbiters::OrbitersSpec, shot::ShotSpec,
     };
 
     pub use super::assets::{
-        WeaponAssets,
+        WeaponMap,
         spec::{AtlasAnim, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
     };
 
-    pub use super::runtime::ApplySpec;
+    pub use super::runtime::{
+        ApplySpec,
+        visuals::{WeaponImpactVisuals, WeaponProjectileVisuals},
+    };
 }

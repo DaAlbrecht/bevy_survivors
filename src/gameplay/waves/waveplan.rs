@@ -11,7 +11,7 @@ pub(crate) fn make_wave_plan() -> WavePlan {
         waves: VecDeque::from([
             WaveStats {
                 enemy_pool: HashMap::from([(EnemyType::Walker, 1.)]),
-                enemy_screen_count: 1.0,
+                enemy_screen_count: 40.0,
                 spawn_frequency: 1.0,
                 duration: 60.0,
                 power_level: 1.0,

@@ -4,6 +4,7 @@ use crate::{PausableSystems, screens::Screen};
 
 #[derive(Component, Default, Reflect)]
 pub struct WeaponCooldown(pub Timer);
+
 #[derive(Component, Reflect)]
 pub struct WeaponDuration(pub Timer);
 

@@ -1,7 +1,4 @@
-use crate::gameplay::ws::{
-    behaviours::shared::{ExplosionRadius, ProjectileSpeed},
-    prelude::*,
-};
+use crate::gameplay::ws::prelude::*;
 use bevy::prelude::*;
 
 impl ApplySpec for ShotSpec {

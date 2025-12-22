@@ -7,7 +7,7 @@ use crate::gameplay::ws::prelude::*;
 
 #[derive(Asset, TypePath, Debug, Clone)]
 pub struct WeaponSpec {
-    pub name: String,
+    pub kind: WeaponKind,
     pub base_damage: f32,
     pub cooldown: f32,
 
@@ -20,17 +20,17 @@ pub struct WeaponSpec {
     pub icon: Handle<Image>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HitSpec {
     pub damage_type: DamageType,
     pub effects: Vec<OnHitEffect>,
+    pub knockback_strength: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum OnHitEffect {
-    Knockback { strength: f32 },
     Bleed { dps: f32, duration: f32, tick: f32 },
     Root { duration: f32 },
 }
@@ -39,7 +39,6 @@ pub enum OnHitEffect {
 pub struct VisualSpec {
     pub image: Handle<Image>,
     pub size: Vec2,
-    pub z: f32,
     pub atlas: Option<AtlasAnim>,
 }
 
@@ -63,4 +62,7 @@ pub enum AttackSpec {
     Orbiters(OrbitersSpec),
     ChainLightning(ChainLightningSpec),
     Shot(ShotSpec),
+    Nova(NovaSpec),
+    Homing(HomingSpec),
+    Falling(FallingSpec),
 }

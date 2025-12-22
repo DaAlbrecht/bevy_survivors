@@ -1,4 +1,3 @@
-use crate::gameplay::ws::prelude::*;
 use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 use rand::Rng;
@@ -100,7 +99,8 @@ pub(crate) struct EnemyDamageEvent {
 #[derive(Event, Reflect)]
 pub(crate) struct EnemyKnockbackEvent {
     pub entity_hit: Entity,
-    pub projectile: Entity,
+    pub strength: f32,
+    pub dir: Vec2,
 }
 
 #[derive(Event, Reflect)]
@@ -144,6 +144,12 @@ pub(crate) struct Cooldown(pub Timer);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Range(pub f32);
+
+#[derive(Component, Reflect)]
+pub(crate) struct Root(pub Timer);
+
+#[derive(Component)]
+pub(crate) struct Halt;
 
 #[derive(Component)]
 pub(crate) struct HitDamage(pub f32);
@@ -238,10 +244,11 @@ fn enemy_movement(
                 continue;
             }
             let direction = to_player.normalize();
-            let velocity = direction * controller.speed;
-            linear_velocity.x = velocity.x;
-            linear_velocity.y = velocity.y;
             intended_direction.0 = direction;
+
+            let desired = direction * controller.speed;
+            linear_velocity.x = linear_velocity.x + (desired.x - linear_velocity.x) * 0.15;
+            linear_velocity.y = linear_velocity.y + (desired.y - linear_velocity.y) * 0.15;
         }
     }
 }

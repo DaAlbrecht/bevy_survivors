@@ -1,5 +1,6 @@
-use crate::gameplay::enemy::{Enemy, EnemyDamageEvent, EnemyKnockbackEvent};
+use crate::gameplay::enemy::{Enemy, EnemyDamageEvent, Root};
 use crate::gameplay::simple_animation::AnimationPlayback;
+use crate::gameplay::ws::prelude::DoT;
 use crate::gameplay::{damage_numbers::DamageType, ws::assets::spec::OnHitEffect};
 use crate::{
     audio::SfxPool,
@@ -15,16 +16,23 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(on_resolved_hit_effects);
 }
 
+/// Emmitted when a weapon projectile hits a target
 #[derive(EntityEvent, Clone, Debug)]
 pub struct WeaponHitEvent {
+    /// Weapon entity that fired the projectile
     pub entity: Entity,
-    pub projectile: Entity,
+    /// Target entity that was hit
     pub target: Entity,
+    /// Position where the hit occurred
     pub hit_pos: Vec3,
 
+    /// Damage dealt by the hit
     pub dmg: f32,
+    /// Type of damage dealt
     pub damage_type: DamageType,
+    /// Area of Effect radius, if applicable
     pub aoe: Option<f32>,
+    /// Additional effects applied on hit
     pub effects: Vec<OnHitEffect>,
 }
 
@@ -101,26 +109,33 @@ pub fn on_resolved_hit_aoe(
     Ok(())
 }
 
-pub fn on_resolved_hit_effects(trigger: On<WeaponHitEvent>, mut commands: Commands) -> Result {
+pub fn on_resolved_hit_effects(
+    trigger: On<WeaponHitEvent>,
+    enemy_q: Query<Entity, With<Enemy>>,
+    mut commands: Commands,
+) -> Result {
     let ev = trigger.event();
+
+    let enemy = enemy_q.get(ev.target)?;
 
     for eff in &ev.effects {
         match eff {
-            OnHitEffect::Knockback { .. } => {
-                commands.trigger(EnemyKnockbackEvent {
-                    entity_hit: ev.target,
-                    projectile: ev.projectile,
-                });
-            }
             OnHitEffect::Bleed {
                 dps,
                 duration,
                 tick,
             } => {
-                todo!("Add Bleed Component")
+                commands.entity(enemy).insert_if_new(DoT {
+                    duration: Timer::from_seconds(*duration, TimerMode::Once),
+                    tick: Timer::from_seconds(*tick, TimerMode::Once),
+                    dmg_per_tick: *dps,
+                    damage_type: DamageType::Bleed,
+                });
             }
             OnHitEffect::Root { duration } => {
-                todo!("Add Root Component")
+                commands
+                    .entity(enemy)
+                    .insert_if_new(Root(Timer::from_seconds(*duration, TimerMode::Once)));
             }
         }
     }
