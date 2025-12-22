@@ -9,23 +9,13 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 fn spawn_character_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let assets = Characters::all().map(|c| c.get_spash_art(asset_server.clone()));
     commands.spawn((
         widget::ui_root("Character Selection  Screen"),
         DespawnOnExit(Screen::CharacterSelection),
-        children![
-            (
-                ImageNode::new(asset_server.load("player_wizard_.png")),
-                Button,
-                Characters::Wizzard,
-                observe(select),
-            ),
-            (
-                ImageNode::new(asset_server.load("player_knight_.png")),
-                Button,
-                Characters::Knight,
-                observe(select),
-            )
-        ],
+        Children::spawn(SpawnIter(Characters::all().into_iter().zip(assets).map(
+            |(character, asset)| (ImageNode::new(asset), Button, character, observe(select)),
+        ))),
     ));
 }
 
