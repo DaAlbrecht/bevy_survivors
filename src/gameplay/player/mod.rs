@@ -122,7 +122,6 @@ impl FromWorld for PlayerAssets {
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
     DespawnOnExit::<Screen>(Screen::Gameplay),
-    
 )]
 pub(crate) struct Player;
 
