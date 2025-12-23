@@ -103,20 +103,17 @@ fn patch_wave(
         }
     };
 
-    commands
-        .entity(wave)
-        .insert(EnemyPool(stats.enemy_pool))
-        .insert(EnemyScreenCount(stats.enemy_screen_count))
-        .insert(SpawnTimer(Timer::from_seconds(
+    commands.entity(wave).insert((
+        EnemyPool(stats.enemy_pool),
+        EnemyScreenCount(stats.enemy_screen_count),
+        SpawnTimer(Timer::from_seconds(
             1.0 / stats.spawn_frequency,
             TimerMode::Once,
-        )))
-        .insert(WaveDuration(Timer::from_seconds(
-            stats.duration,
-            TimerMode::Once,
-        )))
-        .insert(PowerLevel(stats.power_level))
-        .insert(SpritePool(stats.sprite_pool));
+        )),
+        WaveDuration(Timer::from_seconds(stats.duration, TimerMode::Once)),
+        PowerLevel(stats.power_level),
+        SpritePool(stats.sprite_pool),
+    ));
 
     info!("Wave patched");
     Ok(())
