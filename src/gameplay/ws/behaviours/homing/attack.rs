@@ -76,37 +76,19 @@ pub fn on_homing_attack(
 
         projectile_visuals.0.apply_ec(&mut proj);
 
-        proj.observe(on_homing_hit);
+        proj.observe(on_homing_hit_counter);
     }
 
     Ok(())
 }
 
-fn on_homing_hit(
+// Separate observer to track hit count for homing projectiles
+fn on_homing_hit_counter(
     event: On<avian2d::prelude::CollisionStart>,
     mut hit_counter_q: Query<&mut super::HitCounter>,
-    weapon_stats_q: Query<(&HitSpec, &BaseDamage)>,
-    cast_q: Query<&CastWeapon>,
-    enemy_q: Query<&Transform>,
     mut commands: Commands,
 ) -> Result {
     let projectile = event.collider1;
-    let target = event.collider2;
-
-    let weapon = cast_q.get(projectile)?.0;
-    let enemy_tf = enemy_q.get(target)?;
-
-    let (hit, dmg) = weapon_stats_q.get(weapon)?;
-
-    commands.trigger(WeaponHitEvent {
-        entity: weapon,
-        target,
-        hit_pos: enemy_tf.translation,
-        dmg: dmg.0,
-        damage_type: hit.damage_type,
-        aoe: None,
-        effects: hit.effects.clone(),
-    });
 
     if let Ok(mut counter) = hit_counter_q.get_mut(projectile) {
         counter.hits += 1;

@@ -25,7 +25,6 @@ pub struct WeaponHitEvent {
     pub target: Entity,
     /// Position where the hit occurred
     pub hit_pos: Vec3,
-
     /// Damage dealt by the hit
     pub dmg: f32,
     /// Type of damage dealt

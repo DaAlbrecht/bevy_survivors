@@ -53,38 +53,7 @@ pub fn on_nova_attack(
         ));
 
         projectile_visuals.0.apply_ec(&mut proj);
-
-        proj.observe(on_nova_hit);
     }
 
-    Ok(())
-}
-
-fn on_nova_hit(
-    event: On<avian2d::prelude::CollisionStart>,
-    weapon_stats_q: Query<(&HitSpec, &BaseDamage, Option<&ExplosionRadius>)>,
-    cast_q: Query<&CastWeapon>,
-    enemy_q: Query<&Transform>,
-    mut commands: Commands,
-) -> Result {
-    let projectile = event.collider1;
-    let target = event.collider2;
-
-    let weapon = cast_q.get(projectile)?.0;
-    let enemy_tf = enemy_q.get(target)?;
-
-    let (hit, dmg, explosion_radius) = weapon_stats_q.get(weapon)?;
-
-    commands.trigger(WeaponHitEvent {
-        entity: weapon,
-        target,
-        hit_pos: enemy_tf.translation,
-        dmg: dmg.0,
-        damage_type: hit.damage_type,
-        aoe: explosion_radius.map(|er| er.0),
-        effects: hit.effects.clone(),
-    });
-
-    commands.entity(projectile).despawn();
     Ok(())
 }

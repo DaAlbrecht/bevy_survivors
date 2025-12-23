@@ -9,8 +9,7 @@ impl ApplySpec for AttackSpec {
             AttackSpec::Shot(s) => s.apply(commands, entity),
             AttackSpec::Nova(s) => s.apply(commands, entity),
             AttackSpec::Homing(s) => s.apply(commands, entity),
-            AttackSpec::Falling(s) => s.apply(commands, entity),
-        }
+            AttackSpec::Falling(s) => s.apply(commands, entity),            AttackSpec::Zone(spec) => spec.apply(commands, entity),        }
     }
 }
 

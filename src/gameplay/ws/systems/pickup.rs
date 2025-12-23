@@ -74,8 +74,21 @@ pub fn spawn_weapon_instance(
             BaseDamage(spec.base_damage),
             WeaponCooldown(Timer::from_seconds(spec.cooldown, TimerMode::Once)),
             WeaponProjectileVisuals(spec.visuals.clone()),
+            //TODO: Move to attack spec
+            DeathOnCollision,
         ))
         .id();
+
+    match spec.dot {
+        Some(dot) => {
+            commands
+                .entity(w_entity)
+                .insert(TickDamage(Timer::from_seconds(dot, TimerMode::Repeating)));
+        }
+        None => {
+            commands.entity(w_entity).insert(CollisionDamage);
+        }
+    }
 
     if let Some(impact) = &spec.impact_visuals {
         commands

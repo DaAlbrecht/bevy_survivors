@@ -5,7 +5,7 @@ use crate::{
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::gameplay::{enemy::Enemy, player::Player};
+use crate::gameplay::player::Player;
 
 pub fn on_orbiters_attack(
     trigger: On<WeaponAttackEvent>,
@@ -52,43 +52,7 @@ pub fn on_orbiters_attack(
         ));
 
         projectile_visuals.0.apply_ec(&mut e);
-
-        e.observe(on_orbiter_hit);
     }
-
-    Ok(())
-}
-
-fn on_orbiter_hit(
-    event: On<CollisionStart>,
-    enemy_q: Query<(&Transform, Entity), With<Enemy>>,
-    cast_q: Query<&CastWeapon>,
-    weapon_hit_q: Query<&HitSpec>,
-    weapon_stats_q: Query<&BaseDamage>,
-    mut commands: Commands,
-) -> Result {
-    let projectile = event.collider1;
-    let target = event.collider2;
-
-    let weapon = cast_q.get(projectile)?.0;
-
-    let Ok((enemy_tf, enemy_e)) = enemy_q.get(target) else {
-        return Ok(());
-    };
-
-    let hit = weapon_hit_q.get(weapon)?;
-    let dmg = weapon_stats_q.get(weapon)?;
-
-    commands.trigger(WeaponHitEvent {
-        entity: weapon,
-        target: enemy_e,
-        hit_pos: enemy_tf.translation,
-
-        dmg: dmg.0,
-        damage_type: hit.damage_type,
-        aoe: None,
-        effects: hit.effects.clone(),
-    });
 
     Ok(())
 }

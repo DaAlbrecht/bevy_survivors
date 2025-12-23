@@ -10,6 +10,7 @@ pub struct WeaponSpec {
     pub kind: WeaponKind,
     pub base_damage: f32,
     pub cooldown: f32,
+    pub dot: Option<f32>,
 
     pub attack: AttackSpec,
     pub on_hit: HitSpec,
@@ -65,4 +66,5 @@ pub enum AttackSpec {
     Nova(NovaSpec),
     Homing(HomingSpec),
     Falling(FallingSpec),
+    Zone(ZoneSpec),
 }

@@ -174,10 +174,7 @@ fn setup_player(
     ));
 
     commands.trigger(PickUpWeaponEvent {
-        kind: WeaponKind::Icelance,
-    });
-    commands.trigger(PickUpWeaponEvent {
-        kind: WeaponKind::Fireball,
+        kind: WeaponKind::DragonBreath,
     });
 
     commands.spawn((QAbility, Heal));

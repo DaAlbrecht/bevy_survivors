@@ -53,46 +53,7 @@ pub fn on_falling_attack(
         ));
 
         projectile_visuals.0.apply_ec(&mut proj);
-
-        proj.observe(on_falling_hit);
     }
 
-    Ok(())
-}
-
-fn on_falling_hit(
-    event: On<avian2d::prelude::CollisionStart>,
-    enemy_q: Query<(&Transform, Entity), With<Enemy>>,
-    cast_q: Query<&CastWeapon>,
-    weapon_hit_q: Query<&HitSpec>,
-    weapon_stats_q: Query<(&BaseDamage, Option<&ExplosionRadius>)>,
-    mut commands: Commands,
-) -> Result {
-    let projectile = event.collider1;
-    let target = event.collider2;
-
-    let weapon = cast_q.get(projectile)?.0;
-
-    let Ok(enemy_tf) = enemy_q.get(target) else {
-        commands.entity(projectile).despawn();
-        return Ok(());
-    };
-
-    let hit = weapon_hit_q.get(weapon)?;
-    let (dmg, explosion_radius) = weapon_stats_q.get(weapon)?;
-
-    commands.trigger(WeaponHitEvent {
-        entity: weapon,
-        target,
-        hit_pos: enemy_tf.0.translation,
-
-        dmg: dmg.0,
-        damage_type: hit.damage_type,
-        aoe: explosion_radius.map(|er| er.0),
-
-        effects: hit.effects.clone(),
-    });
-
-    commands.entity(projectile).despawn();
     Ok(())
 }

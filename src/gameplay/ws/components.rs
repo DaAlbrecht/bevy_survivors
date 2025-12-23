@@ -50,6 +50,15 @@ pub(crate) struct WeaponLifetime(pub f32);
 pub(crate) struct WeaponRange(pub f32);
 
 #[derive(Component, Reflect)]
+pub struct CollisionDamage;
+
+#[derive(Component, Reflect)]
+pub struct DeathOnCollision;
+
+#[derive(Component, Reflect)]
+pub struct TickDamage(pub Timer);
+
+#[derive(Component, Reflect)]
 pub(crate) struct ExplosionRadius(pub f32);
 
 #[derive(Component, Reflect)]

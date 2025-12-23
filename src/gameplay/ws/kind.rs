@@ -13,6 +13,8 @@ pub enum WeaponKind {
     Scale,
     Circles,
     Icelance,
+    LightningBeam,
+    DragonBreath,
     Hammer, // Thorn,
 }
 
@@ -26,6 +28,7 @@ impl WeaponKind {
         WeaponKind::Circles,
         WeaponKind::Icelance,
         WeaponKind::Hammer,
-        // WeaponKind::Thorn,
+        WeaponKind::LightningBeam,
+        WeaponKind::DragonBreath, // WeaponKind::Thorn,
     ];
 }

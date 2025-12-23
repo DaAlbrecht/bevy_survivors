@@ -1,8 +1,6 @@
-use crate::gameplay::{enemy::EnemyKnockbackEvent, ws::prelude::*};
+use crate::gameplay::{enemy::Enemy, player::Player, ws::prelude::*};
 use avian2d::prelude::*;
 use bevy::prelude::*;
-
-use crate::gameplay::{enemy::Enemy, player::Player};
 
 pub fn on_projectile_attack(
     trigger: On<WeaponAttackEvent>,
@@ -52,60 +50,7 @@ pub fn on_projectile_attack(
         ));
 
         projectile_visuals.0.apply_ec(&mut proj);
-
-        proj.observe(on_shot_hit);
     }
 
-    Ok(())
-}
-
-fn on_shot_hit(
-    event: On<CollisionStart>,
-    enemy_q: Query<(&Transform, Entity), With<Enemy>>,
-    cast_q: Query<&CastWeapon>,
-    proj_tf_q: Query<&Transform, With<PlayerProjectile>>,
-    weapon_hit_q: Query<&HitSpec>,
-    weapon_stats_q: Query<(&BaseDamage, Option<&ExplosionRadius>)>,
-    mut commands: Commands,
-) -> Result {
-    let projectile = event.collider1;
-    let target = event.collider2;
-
-    let weapon = cast_q.get(projectile)?.0;
-
-    let Ok(enemy_tf) = enemy_q.get(target) else {
-        commands.entity(projectile).despawn();
-        return Ok(());
-    };
-
-    let hit = weapon_hit_q.get(weapon)?;
-    let (dmg, explosion_radius) = weapon_stats_q.get(weapon)?;
-
-    if let Ok(proj_tf) = proj_tf_q.get(projectile) {
-        let dir = (enemy_tf.0.translation - proj_tf.translation)
-            .normalize_or_zero()
-            .truncate();
-        if dir.length_squared() > 0.0 && hit.knockback_strength > 0.0 {
-            commands.trigger(EnemyKnockbackEvent {
-                entity_hit: target,
-                dir,
-                strength: hit.knockback_strength,
-            });
-        }
-    }
-
-    commands.trigger(WeaponHitEvent {
-        entity: weapon,
-        target,
-        hit_pos: enemy_tf.0.translation,
-
-        dmg: dmg.0,
-        damage_type: hit.damage_type,
-        aoe: explosion_radius.map(|er| er.0),
-
-        effects: hit.effects.clone(),
-    });
-
-    commands.entity(projectile).despawn();
     Ok(())
 }

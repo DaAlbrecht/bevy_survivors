@@ -23,7 +23,7 @@ pub mod prelude {
 
     pub use super::behaviours::{
         chain::ChainLightningSpec, falling::FallingSpec, homing::HomingSpec, nova::NovaSpec,
-        orbiters::OrbitersSpec, shot::ShotSpec,
+        orbiters::OrbitersSpec, shot::ShotSpec, zone::ZoneSpec,
     };
 
     pub use super::assets::{
