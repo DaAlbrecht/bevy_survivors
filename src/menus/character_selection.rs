@@ -1,21 +1,23 @@
 use bevy::{prelude::*, ui::Val::*, ui_widgets::observe};
 
 use crate::gameplay::player::characters::Characters;
+use crate::menus::Menu;
+use crate::screens::Screen;
 use crate::theme::palette::{
     BUTTON_BACKGROUND, BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND,
 };
 use crate::theme::prelude::InteractionPalette;
-use crate::{screens::Screen, theme::widget};
+use crate::theme::widget;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::CharacterSelection), spawn_character_screen);
+    app.add_systems(OnEnter(Menu::CharacterSelection), spawn_character_screen);
 }
 
 fn spawn_character_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
     let assets = Characters::all().map(|c| c.get_spash_art(asset_server.clone()));
     commands.spawn((
         widget::ui_root("Character Selection  Screen"),
-        DespawnOnExit(Screen::CharacterSelection),
+        DespawnOnExit(Menu::CharacterSelection),
         Children::spawn(SpawnIter(Characters::all().into_iter().zip(assets).map(
             |(character, asset)| {
                 (
