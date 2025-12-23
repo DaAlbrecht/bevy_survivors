@@ -14,7 +14,6 @@ use crate::{
             AbilityDamage, AbilitySpeed, Charge, DamageCooldown, Enemy, EnemyType, Meele,
             RANGE_BUFFER,
         },
-        level::{LevelWalls, find_valid_spawn_position},
         player::{Direction, Player, PlayerHitEvent},
         weapons::{Cooldown, Damage, Halt, Range},
     },
@@ -85,7 +84,6 @@ fn spawn_sprinter(
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
     sprinter_stats: Res<SprinterStats>,
-    level_walls: Res<LevelWalls>,
 ) -> Result {
     let Ok(player_pos) = player_q.single() else {
         return Ok(());
@@ -103,10 +101,9 @@ fn spawn_sprinter(
         player_pos.translation.x + offset_x,
         player_pos.translation.y + offset_y,
     );
-    let adjusted_pos = find_valid_spawn_position(desired, &level_walls, 32.0, 8);
 
-    let enemy_pos_x = adjusted_pos.x;
-    let enemy_pos_y = adjusted_pos.y;
+    let enemy_pos_x = desired.x;
+    let enemy_pos_y = desired.y;
 
     let mut sprinter_count = sprinter_q.iter().count();
     sprinter_count += 1;
@@ -120,7 +117,7 @@ fn spawn_sprinter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 48.0)),
         CharacterController {
             speed: 30.0,

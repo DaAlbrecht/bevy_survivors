@@ -105,7 +105,7 @@ pub fn spawn_fireball_projectile(
                     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
                 CastWeapon(fireball),
-                Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
+                Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 0.0)
                     .with_rotation(towards_quaternion),
                 Direction(direction.extend(0.)),
                 PlayerProjectile,
@@ -202,7 +202,7 @@ fn spawn_visual_effect_at_hit_position(
         ),
         animation_indices,
         AnimationTimer::once_from_fps(24),
-        Transform::from_xyz(hit_position.x, hit_position.y, 10.0).with_scale(Vec3::splat(2.0)),
+        Transform::from_xyz(hit_position.x, hit_position.y, 0.0).with_scale(Vec3::splat(2.0)),
     ));
     commands.spawn((
         SamplePlayer::new(asset_server.load("audio/sound_effects/fireball_impact.wav")),

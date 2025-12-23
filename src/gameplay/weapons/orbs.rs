@@ -98,7 +98,7 @@ pub fn spawn_orb_projectile(
                 CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
                 OrbProjectile,
                 CastWeapon(orb),
-                Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
+                Transform::from_xyz(world_pos.x, world_pos.y, 0.0),
                 WeaponDuration(Timer::from_seconds(4., TimerMode::Once)),
                 OrbPhase(phase),
                 Direction(direction),

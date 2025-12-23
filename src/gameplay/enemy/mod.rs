@@ -84,7 +84,6 @@ pub(crate) struct DamageCooldown(pub Timer);
     CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
     GameLayer::Enemy,
     GameLayer::Player,
-    GameLayer::Default,
 ]))]
 pub(crate) struct Enemy;
 

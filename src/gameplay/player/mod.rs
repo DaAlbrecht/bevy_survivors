@@ -1,7 +1,5 @@
 use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
-use bevy_ecs_ldtk::GridCoords;
-use bevy_ecs_ldtk::{LdtkEntity, app::LdtkEntityAppExt};
 use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
@@ -41,21 +39,12 @@ pub(super) fn plugin(app: &mut App) {
 
     app.load_resource::<PlayerAssets>();
 
-    app.register_ldtk_entity::<PlayerBundle>("Player");
     app.register_type::<XP>().register_type::<Level>();
+    app.register_type::<Player>();
 
     app.add_systems(FixedUpdate, player_hit);
 
     app.add_observer(setup_player);
-}
-
-#[derive(Default, Bundle, LdtkEntity)]
-struct PlayerBundle {
-    player: Player,
-    #[sprite_sheet]
-    sprite_sheet: Sprite,
-    #[grid_coords]
-    grid_coords: GridCoords,
 }
 
 #[derive(Event)]
@@ -92,6 +81,8 @@ pub(crate) struct AddToInventory(pub Entity);
 #[reflect(Resource)]
 pub struct PlayerAssets {
     #[dependency]
+    pub sprite: Handle<Image>,
+    #[dependency]
     pub steps: Vec<Handle<AudioSample>>,
     #[dependency]
     pub shadow: Handle<Image>,
@@ -101,6 +92,7 @@ impl FromWorld for PlayerAssets {
     fn from_world(world: &mut World) -> Self {
         let assets = world.resource::<AssetServer>();
         Self {
+            sprite: assets.load("player_wizard_.png"),
             steps: vec![
                 assets.load("audio/sound_effects/stone_run_1.ogg"),
                 assets.load("audio/sound_effects/stone_run_2.ogg"),
@@ -112,6 +104,11 @@ impl FromWorld for PlayerAssets {
         }
     }
 }
+
+/// This component will mark the player and be used to set the spawn in tiled
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component, Default)]
+pub(crate) struct PlayerSpawnPoint;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[require(
@@ -126,20 +123,35 @@ impl FromWorld for PlayerAssets {
 pub(crate) struct Player;
 
 fn setup_player(
-    add: On<Add, Player>,
+    add: On<Add, PlayerSpawnPoint>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
+    player_spawn_query: Query<&Transform, With<PlayerSpawnPoint>>,
     player_assets: If<Res<PlayerAssets>>,
     mut mesh: ResMut<Assets<Mesh>>,
     mut commands: Commands,
+    mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    commands.entity(add.entity).insert((
+    let layout = TextureAtlasLayout::from_grid(UVec2 { x: 64, y: 64 }, 11, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layout.add(layout);
+
+    let spawn_transform = *player_spawn_query.get(add.event().entity).unwrap();
+
+    commands.spawn((
+        Player,
         player_input_actions(),
         PlayerAnimation::new(),
         LockedAxes::ROTATION_LOCKED,
-        // Prevent the player from getting impacted by external forces.
-        RigidBody::Kinematic,
         Collider::circle(16.),
+        LinearDamping(10.0),
         Friction::ZERO,
+        spawn_transform,
+        Sprite::from_atlas_image(
+            player_assets.sprite.clone(),
+            TextureAtlas {
+                layout: texture_atlas_layout,
+                index: 0,
+            },
+        ),
         CollisionLayers::new(
             GameLayer::Player,
             [
