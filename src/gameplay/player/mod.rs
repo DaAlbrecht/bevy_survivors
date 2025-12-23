@@ -137,6 +137,7 @@ fn setup_player(
     let spawn_transform = *player_spawn_query.get(add.event().entity).unwrap();
 
     commands.spawn((
+        Name::new("Player"),
         Player,
         player_input_actions(),
         PlayerAnimation::new(),
