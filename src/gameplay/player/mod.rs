@@ -14,6 +14,7 @@ use crate::gameplay::abilities::{
     EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
 };
 use crate::gameplay::character_controller::CharacterController;
+use crate::screens::Screen;
 use crate::{
     asset_tracking::LoadResource,
     gameplay::{
@@ -120,6 +121,8 @@ impl FromWorld for PlayerAssets {
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
+    DespawnOnExit::<Screen>(Screen::Gameplay),
+    
 )]
 pub(crate) struct Player;
 

@@ -71,6 +71,7 @@ pub(crate) fn plugin(app: &mut App) {
             GameLayer::Default,
         ],
     ),
+    DespawnOnExit::<Screen>(Screen::Gameplay),
 )]
 pub(crate) struct PlayerProjectile;
 
