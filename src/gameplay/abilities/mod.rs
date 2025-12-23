@@ -119,10 +119,13 @@ pub fn init_ability_assets<T: Component>(
 }
 
 /// Try using an ability, checking its cooldown
-pub fn try_use_ability<T: Component>(
+pub fn try_use_ability<T>(
     ability_entity: Entity,
     ability_query: &mut Query<&mut AbilityCooldown, With<T>>,
-) -> bool {
+) -> bool
+where
+    T: Component,
+{
     let Ok(mut cooldown) = ability_query.get_mut(ability_entity) else {
         return false; // Not this ability type
     };

@@ -30,7 +30,7 @@ fn on_use_heal(
     healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
 ) -> Result {
-    if !try_use_ability::<Heal>(trigger.ability_entity, &mut heal_q) {
+    if !try_use_ability(trigger.ability_entity, &mut heal_q) {
         return Ok(());
     }
 

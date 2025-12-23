@@ -15,11 +15,10 @@ pub enum DamageType {
 impl DamageType {
     pub fn to_icon_handle(self, assets: &DamageAssets) -> Option<Handle<Image>> {
         match self {
-            DamageType::Physical => None,
             DamageType::Fire => Some(assets.fire.clone()),
             DamageType::Lightning => Some(assets.lightning.clone()),
             DamageType::Ice => Some(assets.ice.clone()),
-            DamageType::Earth => None,
+            DamageType::Physical | DamageType::Earth => None,
             DamageType::Heal => Some(assets.heart.clone()),
         }
     }
@@ -160,24 +159,15 @@ fn update_damage_numbers(
 }
 
 fn format_damage_number(amount: i32) -> String {
-    let sign = if amount < 0 { "-" } else { "" };
-    let n = amount.abs() as f64;
+    let sign = if amount.is_negative() { "-" } else { "" };
+    let n = amount.unsigned_abs();
 
-    fn fmt_1_decimal_trim(x: f64) -> String {
-        let s = format!("{x:.1}");
-        s.strip_suffix(".0").unwrap_or(&s).to_string()
-    }
-
-    match n {
-        x if x >= 1_000_000.0 => {
-            let val = fmt_1_decimal_trim(x / 1_000_000.0);
-            format!("{sign}{val}M")
-        }
-        x if x >= 1_000.0 => {
-            let val = fmt_1_decimal_trim(x / 1_000.0);
-            format!("{sign}{val}k")
-        }
-        _ => format!("{sign}{}", n as i32),
+    if n >= 1_000_000 {
+        format!("{sign}{:.1}M", n / 1_000_000)
+    } else if n >= 1_000 {
+        format!("{sign}{:.1}k", n / 1_000)
+    } else {
+        format!("{sign}{n}")
     }
 }
 

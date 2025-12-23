@@ -75,6 +75,7 @@ pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component, Default, Reflect)]
 #[require(
+    DespawnOnExit::<Screen>(Screen::Gameplay),
     Direction,
     LockedAxes::ROTATION_LOCKED,
     RigidBody::Dynamic,

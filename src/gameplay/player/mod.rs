@@ -12,6 +12,7 @@ use crate::gameplay::abilities::{
     EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
 };
 use crate::gameplay::character_controller::CharacterController;
+use crate::screens::Screen;
 use crate::{
     asset_tracking::LoadResource,
     gameplay::{
@@ -23,9 +24,12 @@ use crate::{
         },
     },
 };
+
 pub(crate) mod animation;
+pub(crate) mod characters;
 pub(crate) mod hit;
 pub(crate) mod movement;
+
 use animation::PlayerAnimation;
 
 pub(super) fn plugin(app: &mut App) {
@@ -114,6 +118,7 @@ pub(crate) struct PlayerSpawnPoint;
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
+    DespawnOnExit::<Screen>(Screen::Gameplay),
 )]
 pub(crate) struct Player;
 
