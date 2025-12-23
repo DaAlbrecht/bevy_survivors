@@ -40,10 +40,11 @@ fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn enter_loading_or_gameplay_screen(
     _: On<Pointer<Click>>,
     resource_handles: Res<ResourceHandles>,
+    mut next_menue: ResMut<NextState<Menu>>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
     if resource_handles.is_all_done() {
-        next_screen.set(Screen::Gameplay);
+        next_menue.set(Menu::CharacterSelection);
     } else {
         next_screen.set(Screen::Loading);
     }
