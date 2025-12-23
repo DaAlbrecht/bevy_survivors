@@ -6,7 +6,10 @@ use rand::Rng;
 use crate::{
     gameplay::{
         overlays::Overlay,
-        ws::{assets::WeaponMap, prelude::{PickUpWeaponEvent, WeaponKind}},
+        ws::{
+            assets::WeaponMap,
+            prelude::{PickUpWeaponEvent, WeaponKind},
+        },
     },
     theme::widget,
 };
@@ -48,9 +51,7 @@ fn spawn_level_up_menu(
                     for _ in 0..NUMBER_OF_ITEM_CHOICES {
                         let weapon_index = rng.random_range(0..WeaponKind::ALL.len());
                         let kind = WeaponKind::ALL[weapon_index];
-                        let spec = weapons
-                            .get(&kind)
-                            .expect("expect spec for kind");
+                        let spec = weapons.get(&kind).expect("expect spec for kind");
 
                         let icon = spec.icon.clone();
 

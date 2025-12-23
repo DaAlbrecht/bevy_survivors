@@ -16,6 +16,6 @@ pub(super) fn plugin(app: &mut App) {
         nova::plugin,
         homing::plugin,
         falling::plugin,
-        shared::projectile_movement::plugin,
+        shared::plugin,
     ));
 }

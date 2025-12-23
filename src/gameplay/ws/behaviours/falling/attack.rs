@@ -47,7 +47,7 @@ pub fn on_falling_attack(
         let mut proj = commands.spawn((
             Name::new("Falling Projectile"),
             CastWeapon(weapon),
-            Transform::from_xyz(spawn_position.x, spawn_position.y, 10.0),
+            Transform::from_translation(spawn_position),
             ProjectileDirection(fall_direction),
             PlayerProjectile,
         ));

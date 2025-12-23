@@ -174,6 +174,9 @@ fn setup_player(
     ));
 
     commands.trigger(PickUpWeaponEvent {
+        kind: WeaponKind::Icelance,
+    });
+    commands.trigger(PickUpWeaponEvent {
         kind: WeaponKind::Fireball,
     });
 

@@ -31,10 +31,14 @@ struct VisualRaw {
 
 impl VisualRaw {
     fn load(self, load_context: &mut LoadContext<'_>) -> VisualSpec {
-        let image = load_context.load(self.image);
+        let image = load_context.load(self.image.clone());
         let atlas = self.atlas.map(|a| {
             let layout = TextureAtlasLayout::from_grid(a.cell, a.columns, a.rows, None, None);
-            let label = format!("{}_atlas_layout", load_context.path().to_string_lossy());
+            let label = format!(
+                "{}_atlas_layout_{}",
+                load_context.path().to_string_lossy(),
+                self.image
+            );
             let layout_handle = load_context.add_labeled_asset(label, layout);
 
             AtlasAnim {
