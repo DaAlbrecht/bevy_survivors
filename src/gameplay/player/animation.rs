@@ -128,6 +128,14 @@ impl PlayerAnimation {
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(120);
 
+    /// Return sprite index in the atlas.
+    pub fn get_atlas_index(&self) -> usize {
+        match self.state {
+            PlayerAnimationState::Walking => self.frame + 6,
+            PlayerAnimationState::Idling => self.frame,
+        }
+    }
+
     fn idling() -> Self {
         Self {
             timer: Timer::new(Self::IDLE_INTERVAL, TimerMode::Repeating),
@@ -174,13 +182,5 @@ impl PlayerAnimation {
     /// Whether animation changed this tick.
     pub fn changed(&self) -> bool {
         self.timer.is_finished()
-    }
-
-    /// Return sprite index in the atlas.
-    pub fn get_atlas_index(&self) -> usize {
-        match self.state {
-            PlayerAnimationState::Walking => self.frame + 6,
-            PlayerAnimationState::Idling => self.frame,
-        }
     }
 }
