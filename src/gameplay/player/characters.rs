@@ -34,7 +34,7 @@ impl Characters {
     pub(crate) fn get_idle_indicies(&self) -> (usize, usize) {
         match self {
             Characters::Wizzard => (0, 5),
-            Characters::Knight => (6, 10),
+            Characters::Knight => (0, 4),
         }
     }
 }
