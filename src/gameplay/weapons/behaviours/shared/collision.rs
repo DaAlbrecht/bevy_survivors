@@ -54,7 +54,9 @@ pub fn on_projectile_collision(
     let cast_weapon = projectile_q.get(projectile)?;
     let weapon = cast_weapon.0;
 
-    let enemy_tf = enemy_q.get(target)?;
+    let Ok(enemy_tf) = enemy_q.get(target) else {
+        return Ok(());
+    };
 
     let (hit, dmg, explosion_radius, death_on_collision) = weapon_q.get(weapon)?;
 
