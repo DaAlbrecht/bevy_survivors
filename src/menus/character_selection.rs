@@ -1,6 +1,7 @@
 use bevy::text::FontSmoothing;
 use bevy::{prelude::*, ui::Val::*, ui_widgets::observe};
 
+use crate::gameplay::player::Player;
 use crate::gameplay::player::characters::Characters;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
 use crate::menus::Menu;
@@ -158,15 +159,13 @@ fn spawn_character_cards(
 
 fn select(
     trigger: On<Pointer<Click>>,
+    mut commands: Commands,
     mut next_screen: ResMut<NextState<Screen>>,
     character: Query<&Characters>,
 ) {
     let selected_character = trigger.entity;
     if let Ok(character) = character.get(selected_character) {
-        match character {
-            Characters::Wizzard => info!("Wizzard"),
-            Characters::Knight => info!("Knight"),
-        };
+        commands.spawn((Player, *character));
 
         // Transition to the gameplay
         next_screen.set(Screen::Gameplay);

@@ -11,10 +11,10 @@ use rand::prelude::*;
 use std::time::Duration;
 
 use crate::{
+    PausableSystems, PostPhysicsAppSystems,
     audio::SpatialPool,
     gameplay::player::{Player, PlayerAssets},
     screens::Screen,
-    PausableSystems, PostPhysicsAppSystems,
 };
 
 pub(super) fn plugin(app: &mut App) {

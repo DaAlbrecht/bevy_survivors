@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 /// The different playable Characters
-#[derive(Component)]
+#[derive(Component, Copy, Clone)]
 pub(crate) enum Characters {
     Wizzard,
     Knight,
@@ -34,7 +34,7 @@ impl Characters {
     pub(crate) fn get_idle_indicies(&self) -> (usize, usize) {
         match self {
             Characters::Wizzard => (0, 5),
-            Characters::Knight => (6, 10),
+            Characters::Knight => (0, 4),
         }
     }
 }
