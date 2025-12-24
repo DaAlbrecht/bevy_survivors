@@ -12,6 +12,7 @@ use crate::gameplay::abilities::{
     EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
 };
 use crate::gameplay::character_controller::CharacterController;
+use crate::gameplay::player::characters::Characters;
 use crate::screens::Screen;
 use crate::{
     asset_tracking::LoadResource,
@@ -45,6 +46,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(FixedUpdate, player_hit);
 
     app.add_observer(setup_player);
+    app.add_observer(patch_player_spawn_pos);
 }
 
 #[derive(Event)]
@@ -123,31 +125,38 @@ pub(crate) struct PlayerSpawnPoint;
 pub(crate) struct Player;
 
 fn setup_player(
-    add: On<Add, PlayerSpawnPoint>,
+    player_add: On<Add, Player>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    character: Query<&Characters, With<Player>>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
-    player_spawn_query: Query<&Transform, With<PlayerSpawnPoint>>,
     player_assets: If<Res<PlayerAssets>>,
     mut mesh: ResMut<Assets<Mesh>>,
-    mut commands: Commands,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let layout = TextureAtlasLayout::from_grid(UVec2 { x: 64, y: 64 }, 11, 1, None, None);
     let texture_atlas_layout = texture_atlas_layout.add(layout);
 
-    let spawn_transform = *player_spawn_query.get(add.event().entity).unwrap();
+    let mut player_sprite = player_assets.sprite.clone();
 
-    commands.spawn((
+    if let Ok(character) = character.single() {
+        player_sprite = match character {
+            Characters::Wizzard => asset_server.load("player_wizard_.png"),
+            Characters::Knight => asset_server.load("player_knight_.png"),
+        };
+    }
+
+    commands.entity(player_add.entity).insert((
         Name::new("Player"),
-        Player,
         player_input_actions(),
         PlayerAnimation::new(),
         LockedAxes::ROTATION_LOCKED,
         Collider::circle(16.),
         LinearDamping(10.0),
         Friction::ZERO,
-        spawn_transform,
+        //spawn_transform,
         Sprite::from_atlas_image(
-            player_assets.sprite.clone(),
+            player_sprite,
             TextureAtlas {
                 layout: texture_atlas_layout,
                 index: 0,
@@ -188,15 +197,26 @@ fn setup_player(
         CollidingEntities::default(),
     ));
 
-    commands.trigger(crate::gameplay::PickUpWeapon {
-        weapon_type: crate::gameplay::weapons::WeaponType::Fireball,
-    });
-
     commands.spawn((QAbility, Heal));
     commands.spawn((EAbility, Dash));
     commands.spawn((RAbility, Summon));
 
+    commands.trigger(crate::gameplay::PickUpWeapon {
+        weapon_type: crate::gameplay::weapons::WeaponType::Fireball,
+    });
+
     commands.trigger(PlayerSetupComplete);
+}
+
+fn patch_player_spawn_pos(
+    add: On<Add, PlayerSpawnPoint>,
+    mut player_pos: Query<&mut Transform, (With<Player>, Without<PlayerSpawnPoint>)>,
+    player_spawn_query: Query<&Transform, (With<PlayerSpawnPoint>, Without<Player>)>,
+) {
+    let spawn_transform = *player_spawn_query.get(add.event().entity).unwrap();
+    for mut player_pos in player_pos.iter_mut() {
+        *player_pos = spawn_transform;
+    }
 }
 
 fn player_input_actions() -> impl Bundle {

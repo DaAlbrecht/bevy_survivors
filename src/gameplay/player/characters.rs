@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 /// The different playable Characters
-#[derive(Component)]
+#[derive(Component, Copy, Clone)]
 pub(crate) enum Characters {
     Wizzard,
     Knight,
