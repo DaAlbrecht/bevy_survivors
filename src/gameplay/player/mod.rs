@@ -1,4 +1,4 @@
-use crate::gameplay::ws::prelude::*;
+use crate::gameplay::weapons::prelude::*;
 use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
 use bevy_asset_loader::prelude::*;
@@ -8,12 +8,7 @@ use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
-use crate::gameplay::abilities::dash::Dash;
-use crate::gameplay::abilities::heal::Heal;
-use crate::gameplay::abilities::summon::Summon;
-use crate::gameplay::abilities::{
-    EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
-};
+use crate::gameplay::abilities::prelude::*;
 use crate::gameplay::character_controller::CharacterController;
 use crate::gameplay::{
     Health,
@@ -174,7 +169,7 @@ fn setup_player(
     ));
 
     commands.trigger(PickUpWeaponEvent {
-        kind: WeaponKind::DragonBreath,
+        kind: WeaponKind::Circles,
     });
 
     commands.spawn((QAbility, Heal));

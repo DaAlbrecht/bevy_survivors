@@ -12,7 +12,7 @@ use bevy_inspector_egui::{
 };
 
 use crate::{
-    gameplay::{overlays::experience::LevelUpEvent, ws::assets::debug::debug_weapon_assets},
+    gameplay::{overlays::experience::LevelUpEvent, weapons::assets::debug::debug_weapon_assets},
     screens::Screen,
 };
 

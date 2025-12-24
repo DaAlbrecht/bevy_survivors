@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    gameplay::abilities::{AbilityAssets, AbilityCooldown, EAbility, QAbility, RAbility},
-    gameplay::player::PlayerSetupComplete,
-    screens::Screen,
+    gameplay::abilities::prelude::*, gameplay::player::PlayerSetupComplete, screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {

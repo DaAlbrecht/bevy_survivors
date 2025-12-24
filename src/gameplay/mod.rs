@@ -10,7 +10,7 @@ pub(crate) mod overlays;
 pub(crate) mod player;
 pub(crate) mod simple_animation;
 pub(crate) mod waves;
-pub(crate) mod ws;
+pub(crate) mod weapons;
 
 #[derive(Component, Reflect)]
 pub(crate) struct Health(pub f32);
@@ -30,7 +30,7 @@ pub(crate) fn plugin(app: &mut App) {
         level::plugin,
         overlays::plugin,
         player::plugin,
-        ws::plugin,
+        weapons::plugin,
         waves::plugin,
         simple_animation::plugin,
     ));
