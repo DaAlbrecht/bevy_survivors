@@ -181,6 +181,7 @@ fn shooter_attack(
 
     commands.spawn((
         EnemyProjectile,
+        Sensor,
         Speed(80.),
         Direction(direction),
         Sprite {
