@@ -11,10 +11,10 @@ use rand::prelude::*;
 use std::time::Duration;
 
 use crate::{
-    PausableSystems, PostPhysicsAppSystems,
     audio::SpatialPool,
     gameplay::player::{Player, PlayerAssets},
     screens::Screen,
+    PausableSystems, PostPhysicsAppSystems,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -69,8 +69,6 @@ fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut Sprite), With
             continue;
         };
         if animation.changed() {
-            info!(test=?animation.get_atlas_index());
-
             atlas.index = animation.get_atlas_index();
         }
     }
