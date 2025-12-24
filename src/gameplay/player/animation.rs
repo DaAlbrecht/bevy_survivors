@@ -11,10 +11,10 @@ use rand::prelude::*;
 use std::time::Duration;
 
 use crate::{
-    PausableSystems, PostPhysicsAppSystems,
     audio::SpatialPool,
     gameplay::player::{Player, PlayerAssets},
     screens::Screen,
+    PausableSystems, PostPhysicsAppSystems,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -63,7 +63,7 @@ fn update_animation_movement(
 }
 
 /// Update the texture atlas to reflect changes in the animation.
-fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut Sprite)>) {
+fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut Sprite), With<Player>>) {
     for (animation, mut sprite) in &mut query {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {
             continue;
@@ -122,9 +122,17 @@ impl PlayerAnimation {
     /// The duration of each idle frame.
     const IDLE_INTERVAL: Duration = Duration::from_millis(200);
     /// The number of walking frames.
-    const WALKING_FRAMES: usize = 6;
+    const WALKING_FRAMES: usize = 5;
     /// The duration of each walking frame.
     const WALKING_INTERVAL: Duration = Duration::from_millis(120);
+
+    /// Return sprite index in the atlas.
+    pub fn get_atlas_index(&self) -> usize {
+        match self.state {
+            PlayerAnimationState::Walking => self.frame + 6,
+            PlayerAnimationState::Idling => self.frame,
+        }
+    }
 
     fn idling() -> Self {
         Self {
@@ -172,13 +180,5 @@ impl PlayerAnimation {
     /// Whether animation changed this tick.
     pub fn changed(&self) -> bool {
         self.timer.is_finished()
-    }
-
-    /// Return sprite index in the atlas.
-    pub fn get_atlas_index(&self) -> usize {
-        match self.state {
-            PlayerAnimationState::Walking => self.frame,
-            PlayerAnimationState::Idling => 6 + self.frame,
-        }
     }
 }

@@ -116,7 +116,7 @@ fn spawn_sprinter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 48.0)),
         CharacterController {
             speed: 30.0,

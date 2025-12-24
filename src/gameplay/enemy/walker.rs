@@ -83,7 +83,7 @@ fn spawn_walker(
         HitDamage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0)
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0)
             .with_scale(Vec3::splat((ENEMY_SIZE / 24.0) * 0.7)),
         Sprite::from_atlas_image(
             texture,

@@ -41,10 +41,11 @@ fn start(
     _: On<Pointer<Click>>,
     asset_state: Res<State<AssetStates>>,
     mut next_screen: ResMut<NextState<Screen>>,
+    mut next_menu: ResMut<NextState<Menu>>,
 ) {
     match asset_state.get() {
         AssetStates::AssetLoading => next_screen.set(Screen::Loading),
-        AssetStates::Next => next_screen.set(Screen::Gameplay),
+        AssetStates::Next => next_menu.set(Menu::CharacterSelection),
     }
 }
 

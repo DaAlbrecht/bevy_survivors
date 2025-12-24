@@ -135,7 +135,7 @@ fn spawn_jumper(
                     speed: 30.0,
                     ..default()
                 },
-                Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
+                Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0),
                 Visibility::Visible,
                 Health(stats.health),
                 HitDamage(stats.damage),

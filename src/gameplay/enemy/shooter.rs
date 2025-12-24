@@ -96,7 +96,6 @@ fn spawn_shooter(
         player_pos.translation.x + offset_x,
         player_pos.translation.y + offset_y,
     );
-
     let enemy_pos_x = desired.x;
     let enemy_pos_y = desired.y;
 
@@ -136,7 +135,7 @@ fn spawn_shooter(
                 })
             )
         ],
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 10.0),
+        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0),
         Sprite {
             image: asset_server.load(stats.sprite.clone()),
             ..default()

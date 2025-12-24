@@ -28,6 +28,7 @@ bevy = { version = "0.17", default-features = false, features = [
     "bevy_winit",
     "custom_cursor",
     "default_font",
+    "experimental_bevy_ui_widgets",
     "hdr",
     "multi_threaded",
     "png",
@@ -70,8 +71,7 @@ bevy_seedling = { version = "0.6.0", default-features = false, features = [
     "mp3",
     "wav",
 ] }
-# ldtk integration.
-bevy_ecs_ldtk = { version = "0.13.0", features = ["atlas"] }
+bevy_ecs_tiled = { version = "0.10", features = ["avian"] }
 # Physics engine 
 avian2d = { version = "0.4", default-features = false, features = [
     "2d",
@@ -91,6 +91,8 @@ dev = [
     "bevy/bevy_dev_tools",
     "bevy/bevy_ui_debug",
     "bevy/track_location",
+    "bevy_ecs_tiled/user_properties",
+    "bevy_ecs_tiled/debug",
 ]
 dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 

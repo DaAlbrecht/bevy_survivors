@@ -74,6 +74,7 @@ pub(crate) struct DamageCooldown(pub Timer);
 
 #[derive(Component, Default, Reflect)]
 #[require(
+    DespawnOnExit::<Screen>(Screen::Gameplay),
     Direction,
     LockedAxes::ROTATION_LOCKED,
     RigidBody::Dynamic,
@@ -82,7 +83,6 @@ pub(crate) struct DamageCooldown(pub Timer);
     CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
     GameLayer::Enemy,
     GameLayer::Player,
-    GameLayer::Default,
 ]))]
 pub(crate) struct Enemy;
 
