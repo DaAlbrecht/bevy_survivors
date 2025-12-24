@@ -296,10 +296,7 @@ mod tests {
             .collect();
 
         if !missing.is_empty() {
-            panic!(
-                "No .weapon.ron found for WeaponKind variant(s): {:?}",
-                missing
-            );
+            panic!("No .weapon.ron found for WeaponKind variant(s): {missing:?}",);
         }
     }
 }

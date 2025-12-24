@@ -61,13 +61,13 @@ pub fn spawn_weapon_instance(
     };
 
     let Some(spec) = weapon_assets.get(&kind) else {
-        error!("No WeaponSpec registered for kind {:?}", kind);
+        error!("No WeaponSpec registered for kind {kind:?}");
         return Ok(());
     };
 
     let w_entity = commands
         .spawn((
-            Name::new(format!("{:?}", kind)),
+            Name::new(format!("{kind:?}")),
             Weapon,
             kind,
             InInventoryOf(player),

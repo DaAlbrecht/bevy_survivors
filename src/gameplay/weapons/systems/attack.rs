@@ -1,7 +1,7 @@
 use crate::gameplay::weapons::prelude::*;
 use bevy::prelude::*;
 
-/// Weapon <entity> cooled down and is ready to perform an attack
+/// Weapon [`Entity`] cooled down and is ready to perform an attack
 #[derive(EntityEvent)]
 pub struct WeaponAttackEvent {
     /// Weapon entity that attacked

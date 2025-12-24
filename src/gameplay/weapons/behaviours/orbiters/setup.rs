@@ -10,7 +10,6 @@ impl ApplySpec for OrbitersSpec {
             OrbitRadius(self.radius),
             super::OrbitAngularSpeed(self.angular_speed),
             WeaponLifetime(self.lifetime),
-            BaseDamage(self.damage),
         ));
     }
 }
