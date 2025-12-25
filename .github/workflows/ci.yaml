@@ -132,7 +132,10 @@ jobs:
     timeout-minutes: 40
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+          ssh-key: ${{ secrets.SSH_KEY }}
 
       - name: Set up environment
         run: echo "RUSTFLAGS=${RUSTFLAGS:+$RUSTFLAGS }-Zcodegen-backend=cranelift" >> "${GITHUB_ENV}"
@@ -163,7 +166,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          submodules: 'true'
+          ssh-key: ${{ secrets.SSH_KEY }}
 
       - name: Set up environment
         run: echo "RUSTFLAGS=${RUSTFLAGS:+$RUSTFLAGS }--cfg getrandom_backend=\"wasm_js\"" >> "${GITHUB_ENV}"
