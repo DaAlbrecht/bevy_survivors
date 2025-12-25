@@ -21,17 +21,6 @@ pub(crate) fn plugin(app: &mut App) {
     app.add_observer(on_r_pressed);
 }
 
-pub mod prelude {
-    pub(crate) use super::dash::Dash;
-    pub(crate) use super::heal::Heal;
-    pub(crate) use super::summon::Summon;
-
-    pub(crate) use super::{
-        AbilityAssets, AbilityCooldown, EAbility, QAbility, RAbility, UseEAbility, UseQAbility,
-        UseRAbility,
-    };
-}
-
 #[derive(InputAction)]
 #[action_output(bool)]
 pub(crate) struct UseQAbility;

@@ -7,7 +7,7 @@ use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
-use crate::gameplay::abilities::prelude::*;
+use crate::gameplay::abilities;
 use crate::gameplay::character_controller::CharacterController;
 use crate::gameplay::player::characters::Characters;
 use crate::gameplay::{
@@ -19,6 +19,7 @@ use crate::gameplay::{
     },
 };
 use crate::{AssetStates, GameLayer};
+
 pub(crate) mod animation;
 pub(crate) mod characters;
 pub(crate) mod hit;
@@ -197,9 +198,9 @@ fn setup_player(
         kind: WeaponKind::Circles,
     });
 
-    commands.spawn((QAbility, Heal));
-    commands.spawn((EAbility, Dash));
-    commands.spawn((RAbility, Summon));
+    commands.spawn((abilities::QAbility, abilities::heal::Heal));
+    commands.spawn((abilities::EAbility, abilities::dash::Dash));
+    commands.spawn((abilities::RAbility, abilities::summon::Summon));
 
     commands.trigger(PlayerSetupComplete);
 }
@@ -225,15 +226,15 @@ fn player_input_actions() -> impl Bundle {
             )),
         ),
         (
-            Action::<UseQAbility>::new(),
+            Action::<abilities::UseQAbility>::new(),
             bindings![KeyCode::KeyQ]
         ),
         (
-            Action::<UseEAbility>::new(),
+            Action::<abilities::UseEAbility>::new(),
             bindings![KeyCode::KeyE]
         ),
         (
-            Action::<UseRAbility>::new(),
+            Action::<abilities::UseRAbility>::new(),
             bindings![KeyCode::KeyR]
         )
     ])
