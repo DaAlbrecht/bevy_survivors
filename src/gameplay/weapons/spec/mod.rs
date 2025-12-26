@@ -3,13 +3,12 @@ use bevy_asset_loader::prelude::*;
 
 use crate::{
     AssetStates,
-    gameplay::weapons::{assets::loader::WeaponRonLoader, prelude::*},
+    gameplay::weapons::{prelude::*, spec::loader::WeaponRonLoader},
 };
 
-#[cfg(feature = "dev")]
-pub mod debug;
+pub mod apply;
+pub mod components;
 pub mod loader;
-pub mod spec;
 
 #[derive(AssetCollection, Resource)]
 struct WeaponAssets {

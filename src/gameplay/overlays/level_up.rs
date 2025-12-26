@@ -7,8 +7,8 @@ use crate::{
     gameplay::{
         overlays::Overlay,
         weapons::{
-            assets::WeaponMap,
             prelude::{PickUpWeaponEvent, WeaponKind},
+            spec::WeaponMap,
         },
     },
     theme::widget,

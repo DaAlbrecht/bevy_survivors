@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::gameplay::weapons::runtime::ApplySpec;
+use crate::gameplay::weapons::prelude::ApplySpec;
 
 use super::*;
 

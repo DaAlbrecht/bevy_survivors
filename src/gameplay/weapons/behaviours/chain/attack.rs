@@ -6,7 +6,9 @@ use crate::{
     gameplay::{
         enemy::Enemy,
         player::Player,
-        weapons::{prelude::*, runtime::sfx::WeaponAttackSfx, systems::cooldown::WeaponDuration},
+        weapons::{
+            prelude::*, spec::apply::sfx::WeaponAttackSfx, systems::cooldown::WeaponDuration,
+        },
     },
 };
 

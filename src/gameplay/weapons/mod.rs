@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 
-pub(crate) mod assets;
 mod behaviours;
 pub(crate) mod components;
 mod kind;
-mod runtime;
+pub(crate) mod spec;
 mod systems;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((assets::plugin, behaviours::plugin, systems::plugin));
+    app.add_plugins((spec::plugin, behaviours::plugin, systems::plugin));
 }
 
 pub mod prelude {
@@ -26,13 +25,12 @@ pub mod prelude {
         nova::NovaSpec, orbiters::OrbitersSpec, shot::ShotSpec,
     };
 
-    pub use super::assets::{
+    pub use super::spec::{
         WeaponMap,
-        spec::{AtlasAnim, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
-    };
-
-    pub use super::runtime::{
-        ApplySpec,
-        visuals::{WeaponImpactVisuals, WeaponProjectileVisuals},
+        apply::{
+            ApplySpec,
+            visuals::{WeaponImpactVisuals, WeaponProjectileVisuals},
+        },
+        components::{AtlasAnim, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
     };
 }

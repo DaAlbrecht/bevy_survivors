@@ -11,17 +11,13 @@ use bevy_inspector_egui::{
     quick::{StateInspectorPlugin, WorldInspectorPlugin},
 };
 
-use crate::{
-    gameplay::{overlays::experience::LevelUpEvent, weapons::assets::debug::debug_weapon_assets},
-    screens::Screen,
-};
+use crate::{gameplay::overlays::experience::LevelUpEvent, screens::Screen};
 
 const TOGGLE_DEBUG_UI_KEY: KeyCode = KeyCode::Backquote;
 const TRIGGER_LEVEL_UP_KEY: KeyCode = KeyCode::F1;
 const TOGGLE_INSEPCTOR: KeyCode = KeyCode::F2;
 // const ADD_ALL_WEAPONS: KeyCode = KeyCode::F3;
 const TOGGLE_COLLIDERS_KEY: KeyCode = KeyCode::F4;
-const PRINT_SPECS_KEY: KeyCode = KeyCode::F5;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
@@ -30,7 +26,6 @@ pub(super) fn plugin(app: &mut App) {
             toggle_debug_ui.run_if(input_just_pressed(TOGGLE_DEBUG_UI_KEY)),
             toggle_colliders.run_if(input_just_pressed(TOGGLE_COLLIDERS_KEY)),
             trigger_level_up.run_if(input_just_pressed(TRIGGER_LEVEL_UP_KEY)),
-            debug_weapon_assets.run_if(input_just_pressed(PRINT_SPECS_KEY)),
         ),
     );
 
