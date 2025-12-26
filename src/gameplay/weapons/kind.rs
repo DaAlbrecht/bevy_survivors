@@ -15,7 +15,9 @@ pub enum WeaponKind {
     Icelance,
     LightningBeam,
     DragonBreath,
-    Hammer, // Thorn,
+    Hammer,
+    Slash,
+    Sword, // Thorn,
 }
 
 impl WeaponKind {
@@ -30,6 +32,8 @@ impl WeaponKind {
         WeaponKind::Hammer,
         WeaponKind::LightningBeam,
         WeaponKind::DragonBreath,
+        WeaponKind::Slash,
+        WeaponKind::Sword,
         // TODO: WeaponKind::Thorn,
     ];
 }

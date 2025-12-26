@@ -51,10 +51,10 @@ pub fn on_projectile_hit_fx_sfx(
             Name::new("Impact VFX"),
             Transform::from_translation(ev.hit_pos),
             GlobalTransform::default(),
-            AnimationPlayback::OnceDespawn,
         ));
 
         vfx.0.apply_ec(&mut e);
+        e.insert((AnimationPlayback::OnceDespawn,));
     }
 
     if let Some(sfx) = impact_sfx {

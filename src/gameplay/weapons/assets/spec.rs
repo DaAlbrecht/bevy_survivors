@@ -11,6 +11,7 @@ pub struct WeaponSpec {
     pub base_damage: f32,
     pub cooldown: f32,
     pub dot: Option<f32>,
+    pub despawn_on_hit: bool,
 
     pub attack: AttackSpec,
     pub on_hit: HitSpec,
@@ -66,5 +67,5 @@ pub enum AttackSpec {
     Nova(NovaSpec),
     Homing(HomingSpec),
     Falling(FallingSpec),
-    Zone(ZoneSpec),
+    Melee(MeleeSpec),
 }

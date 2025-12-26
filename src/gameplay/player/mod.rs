@@ -55,12 +55,16 @@ pub(crate) struct PlayerHitEvent {
 #[derive(Component, Reflect, Default)]
 pub(crate) struct Direction(pub Vec3);
 
-#[derive(Component, Reflect)]
-pub(crate) struct LastFacingDirection(pub Vec2);
+#[derive(Component, Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum PlayerFacing {
+    #[default]
+    Right,
+    Left,
+}
 
-impl Default for LastFacingDirection {
-    fn default() -> Self {
-        Self(Vec2::X)
+impl PlayerFacing {
+    pub fn is_right(self) -> bool {
+        self == PlayerFacing::Right
     }
 }
 
@@ -116,7 +120,7 @@ pub(crate) struct PlayerSpawnPoint;
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
-    LastFacingDirection,
+    PlayerFacing,
     DespawnOnExit::<Screen>(Screen::Gameplay),
 )]
 pub(crate) struct Player;
@@ -195,7 +199,7 @@ fn setup_player(
     ));
 
     commands.trigger(PickUpWeaponEvent {
-        kind: WeaponKind::Circles,
+        kind: WeaponKind::Sword,
     });
 
     commands.spawn((abilities::QAbility, abilities::heal::Heal));

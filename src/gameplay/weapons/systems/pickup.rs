@@ -74,10 +74,12 @@ pub fn spawn_weapon_instance(
             BaseDamage(spec.base_damage),
             WeaponCooldown(Timer::from_seconds(spec.cooldown, TimerMode::Once)),
             WeaponProjectileVisuals(spec.visuals.clone()),
-            //TODO: Move to attack spec to allow for pass through
-            DeathOnCollision,
         ))
         .id();
+
+    if spec.despawn_on_hit {
+        commands.entity(w_entity).insert(DeathOnCollision);
+    }
 
     match spec.dot {
         Some(dot) => {

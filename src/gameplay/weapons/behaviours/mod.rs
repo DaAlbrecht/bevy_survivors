@@ -3,11 +3,10 @@ use bevy::prelude::*;
 pub mod chain;
 pub mod falling;
 pub mod homing;
+pub mod melee;
 pub mod nova;
 pub mod orbiters;
-pub mod shared;
 pub mod shot;
-pub mod zone;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -17,7 +16,6 @@ pub(super) fn plugin(app: &mut App) {
         nova::plugin,
         homing::plugin,
         falling::plugin,
-        zone::plugin,
-        shared::plugin,
+        melee::plugin,
     ));
 }
