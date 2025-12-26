@@ -1,5 +1,9 @@
-use crate::gameplay::weapons::prelude::*;
 use bevy::prelude::*;
+
+use crate::gameplay::weapons::{
+    ApplySpec,
+    prelude::{HomingSpec, ProjectileCount, ProjectileSpeed, WeaponLifetime},
+};
 
 impl ApplySpec for HomingSpec {
     fn apply(&self, commands: &mut Commands, entity: Entity) {

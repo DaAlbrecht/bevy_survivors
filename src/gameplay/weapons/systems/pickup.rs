@@ -1,6 +1,8 @@
+use crate::gameplay::weapons::ApplySpec;
 use bevy::prelude::*;
 
 use crate::gameplay::player::{InInventoryOf, Player};
+use crate::gameplay::weapons::behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals};
 use crate::gameplay::weapons::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {

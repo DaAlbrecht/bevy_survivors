@@ -56,15 +56,6 @@ pub(crate) struct PlayerHitEvent {
 pub(crate) struct Direction(pub Vec3);
 
 #[derive(Component, Reflect)]
-pub(crate) struct LastFacingDirection(pub Vec2);
-
-impl Default for LastFacingDirection {
-    fn default() -> Self {
-        Self(Vec2::X)
-    }
-}
-
-#[derive(Component, Reflect)]
 pub(crate) struct XpCollectionRange(pub f32);
 
 #[derive(Component, Reflect)]
@@ -116,7 +107,6 @@ pub(crate) struct PlayerSpawnPoint;
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
-    LastFacingDirection,
     DespawnOnExit::<Screen>(Screen::Gameplay),
 )]
 pub(crate) struct Player;
@@ -195,7 +185,7 @@ fn setup_player(
     ));
 
     commands.trigger(PickUpWeaponEvent {
-        kind: WeaponKind::Circles,
+        kind: WeaponKind::Fireball,
     });
 
     commands.spawn((abilities::QAbility, abilities::heal::Heal));

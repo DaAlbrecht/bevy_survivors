@@ -1,5 +1,9 @@
-use crate::gameplay::weapons::prelude::*;
 use bevy::prelude::*;
+
+use crate::gameplay::weapons::{
+    ApplySpec,
+    prelude::{ExplosionRadius, FallingSpec, ProjectileSpeed},
+};
 
 impl ApplySpec for FallingSpec {
     fn apply(&self, commands: &mut Commands, entity: Entity) {

@@ -3,7 +3,9 @@ use bevy_seedling::sample::AudioSample;
 use serde::{Deserialize, Serialize};
 
 use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::weapons::prelude::*;
+use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
+use crate::gameplay::weapons::behaviours::{WeaponAttackSfx, WeaponImpactSfx};
+use crate::gameplay::weapons::{ApplySpec, prelude::*};
 
 #[derive(Asset, TypePath, Debug, Clone)]
 pub struct WeaponSpec {
@@ -21,6 +23,13 @@ pub struct WeaponSpec {
     pub icon: Handle<Image>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub enum OnHitEffect {
+    Bleed { dps: f32, duration: f32, tick: f32 },
+    Root { duration: f32 },
+}
+
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct HitSpec {
@@ -29,32 +38,70 @@ pub struct HitSpec {
     pub knockback_strength: f32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub enum OnHitEffect {
-    Bleed { dps: f32, duration: f32, tick: f32 },
-    Root { duration: f32 },
+impl ApplySpec for HitSpec {
+    fn apply(&self, commands: &mut Commands, entity: Entity) {
+        commands.entity(entity).insert(self.clone());
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct VisualSpec {
     pub image: Handle<Image>,
     pub size: Vec2,
-    pub atlas: Option<AtlasAnim>,
+    pub atlas: Option<AtlasAnimation>,
 }
 
-#[derive(Debug, Clone)]
-pub struct AtlasAnim {
-    pub layout: Handle<TextureAtlasLayout>,
-    pub first: usize,
-    pub last: usize,
-    pub fps: u8,
+impl VisualSpec {
+    pub fn apply_ec(&self, ec: &mut EntityCommands) {
+        if let Some(atlas) = &self.atlas {
+            ec.insert((
+                Sprite::from_atlas_image(
+                    self.image.clone(),
+                    TextureAtlas {
+                        layout: atlas.layout.clone(),
+                        index: atlas.first,
+                    },
+                ),
+                AnimationIndices {
+                    first: atlas.first,
+                    last: atlas.last,
+                },
+                AnimationTimer::from_fps(atlas.fps),
+            ));
+        } else {
+            ec.insert(Sprite {
+                image: self.image.clone(),
+                custom_size: Some(self.size),
+                ..default()
+            });
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct WeaponSfx {
     pub attack: Option<Handle<AudioSample>>,
     pub impact: Option<Handle<AudioSample>>,
+}
+
+impl ApplySpec for WeaponSfx {
+    fn apply(&self, commands: &mut Commands, entity: Entity) {
+        let mut ec = commands.entity(entity);
+        if let Some(h) = &self.attack {
+            ec.insert(WeaponAttackSfx(h.clone()));
+        }
+        if let Some(h) = &self.impact {
+            ec.insert(WeaponImpactSfx(h.clone()));
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AtlasAnimation {
+    pub layout: Handle<TextureAtlasLayout>,
+    pub first: usize,
+    pub last: usize,
+    pub fps: u8,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,4 +114,18 @@ pub enum AttackSpec {
     Homing(HomingSpec),
     Falling(FallingSpec),
     Zone(ZoneSpec),
+}
+
+impl ApplySpec for AttackSpec {
+    fn apply(&self, commands: &mut Commands, entity: Entity) {
+        match self {
+            AttackSpec::Orbiters(s) => s.apply(commands, entity),
+            AttackSpec::Chain(s) => s.apply(commands, entity),
+            AttackSpec::Shot(s) => s.apply(commands, entity),
+            AttackSpec::Nova(s) => s.apply(commands, entity),
+            AttackSpec::Homing(s) => s.apply(commands, entity),
+            AttackSpec::Falling(s) => s.apply(commands, entity),
+            AttackSpec::Zone(spec) => spec.apply(commands, entity),
+        }
+    }
 }

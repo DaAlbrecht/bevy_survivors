@@ -1,3 +1,7 @@
+use crate::gameplay::weapons::{
+    behaviours::WeaponProjectileVisuals,
+    prelude::{CastWeapon, ProjectileDirection},
+};
 use avian2d::prelude::*;
 use bevy::prelude::*;
 use rand::Rng;
@@ -7,7 +11,10 @@ use crate::{
     gameplay::{
         enemy::Enemy,
         player::Player,
-        weapons::{prelude::*, systems::cooldown::WeaponDuration},
+        weapons::{
+            prelude::{ProjectileCount, WeaponAttackEvent, WeaponLifetime},
+            systems::cooldown::WeaponDuration,
+        },
     },
 };
 

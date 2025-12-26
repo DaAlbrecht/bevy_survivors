@@ -1,4 +1,13 @@
-use crate::gameplay::{enemy::Enemy, player::Player, weapons::prelude::*};
+use crate::gameplay::{
+    enemy::Enemy,
+    player::Player,
+    weapons::{
+        behaviours::WeaponProjectileVisuals,
+        prelude::{
+            CastWeapon, PlayerProjectile, ProjectileDirection, ProjectileSpeed, WeaponAttackEvent,
+        },
+    },
+};
 use avian2d::prelude::*;
 use bevy::prelude::*;
 

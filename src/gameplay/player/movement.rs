@@ -51,14 +51,10 @@ fn clear_input(mut input: Single<&mut AccumulatedInput>) {
 
 fn record_player_directional_input(
     move_action: Single<&Action<Move>>,
-    player_q: Single<(&mut AccumulatedInput, &mut super::LastFacingDirection)>,
+    player_q: Single<&mut AccumulatedInput>,
 ) {
-    let (mut input, mut facing) = player_q.into_inner();
+    let mut input = player_q.into_inner();
     input.last_move = move_action.normalize_or_zero();
-
-    if input.last_move.length_squared() > 0.01 {
-        facing.0 = input.last_move;
-    }
 }
 
 /// Sync the camera's position with the player's interpolated position

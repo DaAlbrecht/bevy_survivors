@@ -1,5 +1,9 @@
-use crate::gameplay::weapons::prelude::*;
 use bevy::prelude::*;
+
+use crate::gameplay::weapons::{
+    ApplySpec,
+    prelude::{ChainSpec, ProjectileCount, WeaponRange},
+};
 
 impl ApplySpec for ChainSpec {
     fn apply(&self, commands: &mut Commands, entity: Entity) {

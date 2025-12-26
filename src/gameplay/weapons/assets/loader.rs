@@ -25,24 +25,24 @@ struct WeaponSpecRaw {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct VisualRaw {
-    pub image: String,
+    pub asset_path: String,
     pub size: Vec2,
-    pub atlas: Option<AtlasAnimRaw>,
+    pub atlas: Option<AtlasAnimationRaw>,
 }
 
 impl VisualRaw {
     fn load(self, load_context: &mut LoadContext<'_>) -> VisualSpec {
-        let image = load_context.load(self.image.clone());
+        let image = load_context.load(&self.asset_path);
         let atlas = self.atlas.map(|a| {
             let layout = TextureAtlasLayout::from_grid(a.cell, a.columns, a.rows, None, None);
             let label = format!(
                 "{}_atlas_layout_{}",
                 load_context.path().to_string_lossy(),
-                self.image
+                self.asset_path
             );
             let layout_handle = load_context.add_labeled_asset(label, layout);
 
-            AtlasAnim {
+            AtlasAnimation {
                 layout: layout_handle,
                 first: a.first,
                 last: a.last,
@@ -60,7 +60,7 @@ impl VisualRaw {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct AtlasAnimRaw {
+struct AtlasAnimationRaw {
     pub cell: UVec2,
     pub columns: u32,
     pub rows: u32,
@@ -235,8 +235,8 @@ mod tests {
             .iter()
             .flat_map(|p| match parse_weapon_ron(p) {
                 Ok(raw) => {
-                    let mut refs = vec![("visuals.image", raw.visuals.image.as_str())];
-                    if let Some(s) = raw.impact_visuals.as_ref().map(|v| v.image.as_str()) {
+                    let mut refs = vec![("visuals.image", raw.visuals.asset_path.as_str())];
+                    if let Some(s) = raw.impact_visuals.as_ref().map(|v| v.asset_path.as_str()) {
                         refs.push(("impact_visuals.image", s));
                     }
                     refs.push(("icon", raw.icon.as_str()));

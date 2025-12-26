@@ -6,8 +6,6 @@ use crate::{
     gameplay::weapons::{assets::loader::WeaponRonLoader, prelude::*},
 };
 
-#[cfg(feature = "dev")]
-pub mod debug;
 pub mod loader;
 pub mod spec;
 

@@ -6,7 +6,14 @@ use crate::{
     gameplay::{
         enemy::Enemy,
         player::Player,
-        weapons::{prelude::*, runtime::sfx::WeaponAttackSfx, systems::cooldown::WeaponDuration},
+        weapons::{
+            behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
+            prelude::{
+                BaseDamage, HitSpec, ProjectileCount, WeaponAttackEvent, WeaponHitEvent,
+                WeaponRange,
+            },
+            systems::cooldown::WeaponDuration,
+        },
     },
 };
 

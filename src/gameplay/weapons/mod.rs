@@ -4,15 +4,18 @@ pub(crate) mod assets;
 mod behaviours;
 pub(crate) mod components;
 mod kind;
-mod runtime;
 mod systems;
 
-pub(super) fn plugin(app: &mut App) {
+pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((assets::plugin, behaviours::plugin, systems::plugin));
 }
 
+pub(crate) trait ApplySpec {
+    fn apply(&self, commands: &mut Commands, entity: Entity);
+}
+
 pub mod prelude {
-    pub use super::kind::{Weapon, WeaponKind};
+    pub use super::kind::WeaponKind;
 
     pub use super::components::*;
 
@@ -28,11 +31,6 @@ pub mod prelude {
 
     pub use super::assets::{
         WeaponMap,
-        spec::{AtlasAnim, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
-    };
-
-    pub use super::runtime::{
-        ApplySpec,
-        visuals::{WeaponImpactVisuals, WeaponProjectileVisuals},
+        spec::{AtlasAnimation, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
     };
 }
