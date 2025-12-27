@@ -2,10 +2,9 @@ use crate::{
     audio::SfxPool,
     gameplay::{
         Health,
-        enemy::{DamageCooldown, Enemy},
+        enemy::{DamageCooldown, Enemy, HitDamage},
         healthbar::HealthBarMaterial,
         player::Player,
-        weapons::Damage,
     },
 };
 use avian2d::prelude::CollidingEntities;
@@ -16,7 +15,7 @@ pub(crate) fn player_hit(
     time: Res<Time>,
     mut commands: Commands,
     mut player_q: Query<(&mut Health, &CollidingEntities), With<Player>>,
-    mut enemy_dmg_timer_q: Query<(&mut DamageCooldown, &Damage), With<Enemy>>,
+    mut enemy_dmg_timer_q: Query<(&mut DamageCooldown, &HitDamage), With<Enemy>>,
     healthbar_material_q: Query<&MeshMaterial2d<HealthBarMaterial>>,
     mut health_bar_materials: ResMut<Assets<HealthBarMaterial>>,
     asset_server: Res<AssetServer>,

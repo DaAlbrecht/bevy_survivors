@@ -1,8 +1,10 @@
 use bevy::{prelude::*, sprite::Text2dShadow, text::FontSmoothing};
+use bevy_asset_loader::prelude::*;
+use serde::{Deserialize, Serialize};
 
-use crate::{asset_tracking::LoadResource, screens::Screen};
+use crate::{AssetStates, screens::Screen};
 
-#[derive(Copy, Clone, Reflect)]
+#[derive(Copy, Clone, Reflect, Deserialize, Serialize, Debug)]
 pub enum DamageType {
     Physical,
     Fire,
@@ -10,6 +12,7 @@ pub enum DamageType {
     Ice,
     Earth,
     Heal,
+    Bleed,
 }
 
 impl DamageType {
@@ -20,6 +23,7 @@ impl DamageType {
             DamageType::Ice => Some(assets.ice.clone()),
             DamageType::Physical | DamageType::Earth => None,
             DamageType::Heal => Some(assets.heart.clone()),
+            DamageType::Bleed => Some(assets.blood.clone()),
         }
     }
 }
@@ -40,7 +44,9 @@ struct DamageNumber {
 }
 
 pub(super) fn plugin(app: &mut App) {
-    app.load_resource::<DamageAssets>();
+    app.configure_loading_state(
+        LoadingStateConfig::new(AssetStates::AssetLoading).load_collection::<DamageAssets>(),
+    );
     app.add_message::<DamageMessage>();
 
     app.add_systems(
@@ -171,30 +177,18 @@ fn format_damage_number(amount: i32) -> String {
     }
 }
 
-#[derive(Resource, Asset, Clone, TypePath)]
+#[derive(AssetCollection, Resource)]
 pub(crate) struct DamageAssets {
-    #[dependency]
+    #[asset(path = "ui/compass.ttf")]
     pub(crate) font: Handle<Font>,
-    #[dependency]
+    #[asset(path = "ui/icons/tag_life.png")]
     pub(crate) heart: Handle<Image>,
-    #[dependency]
+    #[asset(path = "ui/icons/tag_fire.png")]
     pub(crate) fire: Handle<Image>,
-    #[dependency]
+    #[asset(path = "ui/icons/tag_lightning.png")]
     pub(crate) lightning: Handle<Image>,
-    #[dependency]
+    #[asset(path = "ui/icons/tag_ice.png")]
     pub(crate) ice: Handle<Image>,
-}
-
-impl FromWorld for DamageAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-
-        Self {
-            font: assets.load("ui/compass.ttf"),
-            heart: assets.load("ui/icons/tag_life.png"),
-            fire: assets.load("ui/icons/tag_fire.png"),
-            lightning: assets.load("ui/icons/tag_lightning.png"),
-            ice: assets.load("ui/icons/tag_ice.png"),
-        }
-    }
+    #[asset(path = "ui/icons/tag_blood.png")]
+    pub(crate) blood: Handle<Image>,
 }

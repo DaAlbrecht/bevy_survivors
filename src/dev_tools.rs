@@ -11,19 +11,12 @@ use bevy_inspector_egui::{
     quick::{StateInspectorPlugin, WorldInspectorPlugin},
 };
 
-use crate::{
-    gameplay::{
-        PickUpWeapon,
-        overlays::experience::LevelUpEvent,
-        weapons::{Weapon, WeaponType},
-    },
-    screens::Screen,
-};
+use crate::{gameplay::overlays::experience::LevelUpEvent, screens::Screen};
 
 const TOGGLE_DEBUG_UI_KEY: KeyCode = KeyCode::Backquote;
 const TRIGGER_LEVEL_UP_KEY: KeyCode = KeyCode::F1;
 const TOGGLE_INSEPCTOR: KeyCode = KeyCode::F2;
-const ADD_ALL_WEAPONS: KeyCode = KeyCode::F3;
+// const ADD_ALL_WEAPONS: KeyCode = KeyCode::F3;
 const TOGGLE_COLLIDERS_KEY: KeyCode = KeyCode::F4;
 
 pub(super) fn plugin(app: &mut App) {
@@ -33,7 +26,6 @@ pub(super) fn plugin(app: &mut App) {
             toggle_debug_ui.run_if(input_just_pressed(TOGGLE_DEBUG_UI_KEY)),
             toggle_colliders.run_if(input_just_pressed(TOGGLE_COLLIDERS_KEY)),
             trigger_level_up.run_if(input_just_pressed(TRIGGER_LEVEL_UP_KEY)),
-            add_all_weapons.run_if(input_just_pressed(ADD_ALL_WEAPONS)),
         ),
     );
 
@@ -75,25 +67,4 @@ fn toggle_colliders(mut gizmo_config_store: ResMut<GizmoConfigStore>) {
 
 fn trigger_level_up(mut commands: Commands) {
     commands.trigger(LevelUpEvent);
-}
-
-fn all_weapons() -> &'static [WeaponType] {
-    //This is kinda annoying since we have to remember to add each new weapon..
-    &[
-        WeaponType::Scale,
-        WeaponType::Fireball,
-        WeaponType::Orb,
-        WeaponType::Lightning,
-    ]
-}
-
-fn add_all_weapons(mut commands: Commands, owned_weapons: Query<&WeaponType, With<Weapon>>) {
-    let owned_weapons = owned_weapons.iter().copied().collect::<Vec<WeaponType>>();
-    for weapon in all_weapons() {
-        if !owned_weapons.contains(weapon) {
-            commands.trigger(PickUpWeapon {
-                weapon_type: *weapon,
-            });
-        }
-    }
 }

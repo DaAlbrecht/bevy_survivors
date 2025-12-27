@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 
-use crate::{
-    gameplay::abilities::{AbilityAssets, AbilityCooldown, EAbility, QAbility, RAbility},
-    gameplay::player::PlayerSetupComplete,
-    screens::Screen,
-};
+use crate::gameplay::abilities;
+use crate::{gameplay::player::PlayerSetupComplete, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(spawn_hud);
@@ -35,10 +32,10 @@ fn spawn_hud(
     asset_server: Res<AssetServer>,
     abilities: Query<(
         Entity,
-        &AbilityAssets,
-        Option<&QAbility>,
-        Option<&EAbility>,
-        Option<&RAbility>,
+        &abilities::AbilityAssets,
+        Option<&abilities::QAbility>,
+        Option<&abilities::EAbility>,
+        Option<&abilities::RAbility>,
     )>,
 ) {
     let hud_image = asset_server.load("ui/hud.png");
@@ -194,7 +191,7 @@ fn item_rect(
 }
 
 fn update_ability_cooldowns(
-    abilities: Query<(Entity, &AbilityCooldown)>,
+    abilities: Query<(Entity, &abilities::AbilityCooldown)>,
     mut bars: Query<(&TracksAbility, &mut Node), With<AbilityCooldownBar>>,
     mut icons: Query<(&TracksAbility, &mut ImageNode), With<AbilityIconUI>>,
 ) {

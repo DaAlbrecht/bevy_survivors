@@ -2,28 +2,41 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 
-use crate::screens::Screen;
+use crate::{gameplay::enemy::Root, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Update, animate_sprite.run_if(in_state(Screen::Gameplay)));
-    app.add_systems(Update, hurt_flash.run_if(in_state(Screen::Gameplay)));
+    app.add_systems(
+        Update,
+        (animate_sprite, hurt_flash, root_flash).run_if(in_state(Screen::Gameplay)),
+    );
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy, Default)]
+pub enum AnimationPlayback {
+    #[default]
+    Loop,
+    OnceDespawn,
+}
+
+#[derive(Component, Clone)]
 pub(crate) struct AnimationIndices {
     pub first: usize,
     pub last: usize,
 }
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Component, Deref, DerefMut, Clone)]
+#[require(AnimationPlayback)]
 pub(crate) struct AnimationTimer {
     pub timer: Timer,
 }
 
 impl AnimationTimer {
-    pub fn once_from_fps(fps: u8) -> Self {
+    pub fn from_fps(fps: u8) -> Self {
         Self {
-            timer: Timer::new(Duration::from_secs_f32(1.0 / (fps as f32)), TimerMode::Once),
+            timer: Timer::new(
+                Duration::from_secs_f32(1.0 / (fps as f32)),
+                TimerMode::Repeating,
+            ),
         }
     }
 }
@@ -58,29 +71,48 @@ fn hurt_flash(
     }
 }
 
+fn root_flash(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Root, &mut Sprite)>,
+) {
+    for (entity, mut root, mut sprite) in &mut query {
+        root.0.tick(time.delta());
+
+        if root.0.just_finished() {
+            sprite.color = Color::WHITE;
+            commands.entity(entity).remove::<Root>();
+        } else {
+            sprite.color = Color::srgba(0.5, 1.0, 1.0, 1.0);
+        }
+    }
+}
+
 fn animate_sprite(
     time: Res<Time>,
     mut commands: Commands,
-    mut query: Query<(Entity, &AnimationIndices, &mut AnimationTimer, &mut Sprite)>,
+    mut query: Query<(
+        Entity,
+        &AnimationIndices,
+        &mut AnimationTimer,
+        &mut Sprite,
+        &AnimationPlayback,
+    )>,
 ) {
-    for (entity, indices, mut timer, mut sprite) in &mut query {
+    for (entity, indices, mut timer, mut sprite, playback) in &mut query {
         timer.tick(time.delta());
 
         if timer.just_finished()
             && let Some(atlas) = &mut sprite.texture_atlas
         {
-            if atlas.index == indices.last {
-                atlas.index = indices.first;
-                if timer.mode() == TimerMode::Once {
-                    info!("Despawning animated entity {:?}", entity);
-                    commands.entity(entity).despawn();
+            if atlas.index >= indices.last {
+                match *playback {
+                    AnimationPlayback::Loop => atlas.index = indices.first,
+                    AnimationPlayback::OnceDespawn => commands.entity(entity).despawn(),
                 }
             } else {
                 atlas.index += 1;
-                if timer.mode() == TimerMode::Once {
-                    timer.reset();
-                }
-            };
+            }
         }
     }
 }

@@ -1,12 +1,15 @@
 use avian2d::prelude::{CollisionLayers, RigidBody};
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 use bevy_ecs_tiled::prelude::{ColliderCreated, TiledEvent, TiledMap, TiledMapAsset};
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
 
-use crate::{GameLayer, asset_tracking::LoadResource, audio::MusicPool, screens::Screen};
+use crate::{AssetStates, GameLayer, audio::MusicPool, screens::Screen};
 
 pub(super) fn plugin(app: &mut App) {
-    app.load_resource::<LevelAssets>();
+    app.configure_loading_state(
+        LoadingStateConfig::new(AssetStates::AssetLoading).load_collection::<LevelAssets>(),
+    );
 }
 
 pub fn spawn_level(mut commands: Commands, level_assets: Res<LevelAssets>) {
@@ -33,21 +36,10 @@ pub fn spawn_level(mut commands: Commands, level_assets: Res<LevelAssets>) {
 
 /// A [`Resource`] that contains all the assets needed to spawn the level.
 /// We use this to preload assets before the level is spawned.
-#[derive(Resource, Asset, Clone, TypePath)]
+#[derive(AssetCollection, Resource)]
 pub(crate) struct LevelAssets {
-    #[dependency]
+    #[asset(path = "level/dungeon/tiled/dungeon.tmx")]
     pub(crate) level: Handle<TiledMapAsset>,
-    #[dependency]
+    #[asset(path = "audio/music/city.ogg")]
     pub(crate) music: Handle<AudioSample>,
-}
-
-impl FromWorld for LevelAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-
-        Self {
-            level: assets.load("level/winter/tiled/winter.tmx"),
-            music: assets.load("audio/music/city.ogg"),
-        }
-    }
 }

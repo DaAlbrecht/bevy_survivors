@@ -4,7 +4,7 @@ use crate::gameplay::abilities::{
 use crate::gameplay::character_controller::CharacterController;
 use crate::gameplay::enemy::{Enemy, EnemyDamageEvent, EnemyType};
 use crate::gameplay::player::{Direction, Player};
-use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
+use crate::gameplay::simple_animation::{AnimationIndices, AnimationPlayback, AnimationTimer};
 use crate::gameplay::{Health, Speed};
 use crate::{GameLayer, PausableSystems, PostPhysicsAppSystems};
 use avian2d::prelude::*;
@@ -310,8 +310,9 @@ fn spawn_minion_death_effect(
             ..default()
         },
         animation_indices,
-        AnimationTimer::once_from_fps(24),
-        Transform::from_xyz(position.x, position.y, 0.0).with_scale(Vec3::splat(3.0)),
+        AnimationTimer::from_fps(24),
+        AnimationPlayback::OnceDespawn,
+        Transform::from_xyz(position.x, position.y, 10.0).with_scale(Vec3::splat(3.0)),
     ));
 
     let flash_texture = asset_server.load("fx/fireball_hit.png");
@@ -331,7 +332,8 @@ fn spawn_minion_death_effect(
             ..default()
         },
         flash_indices,
-        AnimationTimer::once_from_fps(30),
+        AnimationTimer::from_fps(30),
+        AnimationPlayback::OnceDespawn,
         Transform::from_xyz(position.x, position.y, 10.1).with_scale(Vec3::splat(4.5)),
     ));
 }

@@ -1,7 +1,7 @@
 use avian2d::prelude::PhysicsLayer;
 use bevy::{camera::ScalingMode, prelude::*};
+use bevy_asset_loader::prelude::*;
 
-mod asset_tracking;
 mod audio;
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -28,13 +28,17 @@ pub fn plugin(app: &mut App) {
         })
         .set(ImagePlugin::default_nearest()),));
 
+    // Setup the loading state
+    app.init_state::<AssetStates>().add_loading_state(
+        LoadingState::new(AssetStates::AssetLoading).continue_to_state(AssetStates::Next),
+    );
+
     // Add all third party plugins.
     app.add_plugins(third_party::plugin);
 
     // Add all first party plugins.
     app.add_plugins((
         fixed_update_inspection::plugin,
-        asset_tracking::plugin,
         audio::plugin,
         #[cfg(feature = "dev")]
         dev_tools::plugin,
@@ -117,6 +121,14 @@ pub(crate) enum GameLayer {
     Enemy,
     // Layer 4
     EnemyProjectiles,
+}
+
+/// Whether we are still loading
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum AssetStates {
+    #[default]
+    AssetLoading,
+    Next,
 }
 
 /// Whether or not the game is paused.
