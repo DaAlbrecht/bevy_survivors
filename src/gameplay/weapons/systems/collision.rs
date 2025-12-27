@@ -111,7 +111,7 @@ fn tick_damage(
                     if let Ok(enemy_tf) = enemy_q.get(contact) {
                         trigger_hit_event(
                             &mut commands,
-                            projectile,
+                            weapon,
                             contact,
                             enemy_tf,
                             hit,

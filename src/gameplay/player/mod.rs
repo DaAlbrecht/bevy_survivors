@@ -204,7 +204,7 @@ fn setup_player(
 
     commands.spawn((abilities::QAbility, abilities::heal::Heal));
     commands.spawn((abilities::EAbility, abilities::dash::Dash));
-    commands.spawn((abilities::RAbility, abilities::summon::Summon));
+    commands.spawn((abilities::RAbility, abilities::shield::Shield));
 
     commands.trigger(PlayerSetupComplete);
 }
