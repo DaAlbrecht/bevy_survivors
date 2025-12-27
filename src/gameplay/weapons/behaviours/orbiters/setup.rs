@@ -1,7 +1,7 @@
 use crate::gameplay::weapons::{
     ApplySpec,
-    behaviours::orbiters::OrbitRadius,
-    prelude::{OrbitersSpec, ProjectileCount, WeaponLifetime},
+    behaviours::orbiters::{OrbitRadius, OrbitersSpec},
+    components::{ProjectileCount, WeaponLifetime},
 };
 use bevy::prelude::*;
 

@@ -6,10 +6,10 @@ use crate::gameplay::{
     player::Player,
     weapons::{
         behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
-        prelude::{
+        components::{
             CastWeapon, PlayerProjectile, ProjectileCount, ProjectileDirection, ProjectileSpeed,
-            WeaponAttackEvent,
         },
+        systems::attack::WeaponAttackEvent,
     },
 };
 

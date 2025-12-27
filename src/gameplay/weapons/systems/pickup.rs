@@ -1,9 +1,14 @@
 use crate::gameplay::weapons::ApplySpec;
+use crate::gameplay::weapons::assets::WeaponMap;
+use crate::gameplay::weapons::components::{
+    BaseDamage, CollisionDamage, DeathOnCollision, TickDamage, Weapon,
+};
+use crate::gameplay::weapons::kind::WeaponKind;
+use crate::gameplay::weapons::systems::cooldown::WeaponCooldown;
 use bevy::prelude::*;
 
 use crate::gameplay::player::{InInventoryOf, Player};
 use crate::gameplay::weapons::behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals};
-use crate::gameplay::weapons::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(handle_pickup_weapon);

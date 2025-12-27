@@ -3,7 +3,17 @@ use bevy::prelude::*;
 
 use crate::{
     PausableSystems,
-    gameplay::{enemy::Enemy, weapons::prelude::*},
+    gameplay::{
+        enemy::Enemy,
+        weapons::{
+            assets::spec::HitSpec,
+            components::{
+                BaseDamage, CastWeapon, CollisionDamage, DeathOnCollision, ExplosionRadius,
+                TickDamage, WeaponProjectiles,
+            },
+            systems::hit::WeaponHitEvent,
+        },
+    },
     screens::Screen,
 };
 

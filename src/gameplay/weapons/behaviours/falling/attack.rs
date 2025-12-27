@@ -1,6 +1,7 @@
 use crate::gameplay::weapons::{
     behaviours::WeaponProjectileVisuals,
-    prelude::{CastWeapon, PlayerProjectile, ProjectileDirection, WeaponAttackEvent},
+    components::{CastWeapon, PlayerProjectile, ProjectileDirection},
+    systems::attack::WeaponAttackEvent,
 };
 use bevy::prelude::*;
 

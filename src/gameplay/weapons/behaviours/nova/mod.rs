@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::gameplay::weapons::{
     ApplySpec,
-    prelude::{ProjectileCount, ProjectileSpeed},
+    components::{ProjectileCount, ProjectileSpeed},
 };
 
 mod attack;

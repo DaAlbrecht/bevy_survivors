@@ -3,7 +3,10 @@ use bevy_asset_loader::prelude::*;
 
 use crate::{
     AssetStates,
-    gameplay::weapons::{assets::loader::WeaponRonLoader, prelude::*},
+    gameplay::weapons::{
+        assets::{loader::WeaponRonLoader, spec::WeaponSpec},
+        kind::WeaponKind,
+    },
 };
 
 pub mod loader;

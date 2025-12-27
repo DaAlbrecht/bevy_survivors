@@ -5,7 +5,10 @@ use serde::Deserialize;
 use serde_ron::de::from_bytes;
 use thiserror::Error;
 
-use crate::gameplay::weapons::prelude::*;
+use crate::gameplay::weapons::assets::spec::{
+    AtlasAnimation, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec,
+};
+use crate::gameplay::weapons::kind::WeaponKind;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use crate::gameplay::weapons::{
     ApplySpec,
-    prelude::{ChainSpec, ProjectileCount, WeaponRange},
+    behaviours::chain::ChainSpec,
+    components::{ProjectileCount, WeaponRange},
 };
 
 impl ApplySpec for ChainSpec {

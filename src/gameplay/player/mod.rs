@@ -1,4 +1,5 @@
-use crate::gameplay::weapons::prelude::*;
+use crate::gameplay::weapons::kind::WeaponKind;
+use crate::gameplay::weapons::systems::pickup::PickUpWeaponEvent;
 use crate::screens::Screen;
 use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};

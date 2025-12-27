@@ -3,9 +3,8 @@ use crate::gameplay::{
     player::Player,
     weapons::{
         behaviours::WeaponProjectileVisuals,
-        prelude::{
-            CastWeapon, PlayerProjectile, ProjectileDirection, ProjectileSpeed, WeaponAttackEvent,
-        },
+        components::{CastWeapon, PlayerProjectile, ProjectileDirection, ProjectileSpeed},
+        systems::attack::WeaponAttackEvent,
     },
 };
 use avian2d::prelude::*;

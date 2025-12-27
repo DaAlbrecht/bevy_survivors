@@ -1,5 +1,6 @@
-use crate::gameplay::weapons::prelude::*;
 use bevy::prelude::*;
+
+use crate::gameplay::weapons::{components::Weapon, systems::cooldown::WeaponCooldown};
 
 /// A player has attacked with a Weapon
 ///

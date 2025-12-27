@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::gameplay::weapons::{ApplySpec, prelude::WeaponLifetime};
+use crate::gameplay::weapons::{ApplySpec, components::WeaponLifetime};
 
 use super::{ConeConfig, ZoneAttack, ZoneSpec};
 

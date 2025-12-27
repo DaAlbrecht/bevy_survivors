@@ -5,10 +5,8 @@ use crate::{
             WeaponProjectileVisuals,
             orbiters::{OrbitAngularSpeed, OrbitPhase, OrbitRadius, OrbiterProjectile},
         },
-        prelude::{
-            CastWeapon, PlayerProjectile, ProjectileCount, WeaponAttackEvent, WeaponLifetime,
-        },
-        systems::cooldown::WeaponDuration,
+        components::{CastWeapon, PlayerProjectile, ProjectileCount, WeaponLifetime},
+        systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
     },
 };
 use avian2d::prelude::*;

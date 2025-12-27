@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use crate::gameplay::weapons::{
     ApplySpec,
-    prelude::{HomingSpec, ProjectileCount, ProjectileSpeed, WeaponLifetime},
+    behaviours::homing::{HomingSpec, MaxHits, MovementConfig},
+    components::{ProjectileCount, ProjectileSpeed, WeaponLifetime},
 };
 
 impl ApplySpec for HomingSpec {
@@ -13,8 +14,8 @@ impl ApplySpec for HomingSpec {
             ProjectileCount(self.count),
             ProjectileSpeed(self.movement.speed),
             WeaponLifetime(self.lifetime),
-            super::MaxHits(self.max_hits),
-            super::MovementConfig {
+            MaxHits(self.max_hits),
+            MovementConfig {
                 pattern: self.movement.kind.clone(),
             },
         ));

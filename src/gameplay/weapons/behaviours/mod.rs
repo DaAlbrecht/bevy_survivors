@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_seedling::sample::AudioSample;
 
-use crate::gameplay::weapons::prelude::VisualSpec;
+use crate::gameplay::weapons::assets::spec::VisualSpec;
 
 pub mod chain;
 pub mod falling;

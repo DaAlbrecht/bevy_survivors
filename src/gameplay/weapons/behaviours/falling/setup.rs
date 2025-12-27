@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use crate::gameplay::weapons::{
     ApplySpec,
-    prelude::{ExplosionRadius, FallingSpec, ProjectileSpeed},
+    behaviours::falling::FallingSpec,
+    components::{ExplosionRadius, ProjectileSpeed},
 };
 
 impl ApplySpec for FallingSpec {

@@ -4,8 +4,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::gameplay::damage_numbers::DamageType;
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
+use crate::gameplay::weapons::ApplySpec;
+use crate::gameplay::weapons::behaviours::chain::ChainSpec;
+use crate::gameplay::weapons::behaviours::falling::FallingSpec;
+use crate::gameplay::weapons::behaviours::homing::HomingSpec;
+use crate::gameplay::weapons::behaviours::nova::NovaSpec;
+use crate::gameplay::weapons::behaviours::orbiters::OrbitersSpec;
+use crate::gameplay::weapons::behaviours::shot::ShotSpec;
+use crate::gameplay::weapons::behaviours::zone::ZoneSpec;
 use crate::gameplay::weapons::behaviours::{WeaponAttackSfx, WeaponImpactSfx};
-use crate::gameplay::weapons::{ApplySpec, prelude::*};
+use crate::gameplay::weapons::kind::WeaponKind;
 
 #[derive(Asset, TypePath, Debug, Clone)]
 pub struct WeaponSpec {

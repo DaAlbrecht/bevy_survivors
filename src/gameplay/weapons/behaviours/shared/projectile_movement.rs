@@ -1,8 +1,13 @@
-use crate::gameplay::weapons::prelude::*;
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::{PausableSystems, screens::Screen};
+use crate::{
+    PausableSystems,
+    gameplay::weapons::components::{
+        PlayerProjectile, ProjectileDirection, ProjectileSpeed, WeaponProjectiles,
+    },
+    screens::Screen,
+};
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_systems(
