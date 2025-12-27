@@ -199,7 +199,7 @@ fn setup_player(
     ));
 
     commands.trigger(PickUpWeaponEvent {
-        kind: WeaponKind::Sword,
+        kind: WeaponKind::Aoe,
     });
 
     commands.spawn((abilities::QAbility, abilities::heal::Heal));

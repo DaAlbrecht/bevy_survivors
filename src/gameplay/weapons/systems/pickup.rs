@@ -83,9 +83,7 @@ pub fn spawn_weapon_instance(
 
     match spec.dot {
         Some(dot) => {
-            commands
-                .entity(w_entity)
-                .insert(TickDamage(Timer::from_seconds(dot, TimerMode::Repeating)));
+            commands.entity(w_entity).insert(TickDuration(dot));
         }
         None => {
             commands.entity(w_entity).insert(CollisionDamage);

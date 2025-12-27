@@ -11,6 +11,7 @@ impl ApplySpec for AttackSpec {
             AttackSpec::Homing(s) => s.apply(commands, entity),
             AttackSpec::Falling(s) => s.apply(commands, entity),
             AttackSpec::Melee(s) => s.apply(commands, entity),
+            AttackSpec::Zone(s) => s.apply(commands, entity),
         }
     }
 }

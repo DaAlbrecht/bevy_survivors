@@ -22,7 +22,7 @@ pub mod prelude {
 
     pub use super::behaviours::{
         chain::ChainSpec, falling::FallingSpec, homing::HomingSpec, melee::MeleeSpec,
-        nova::NovaSpec, orbiters::OrbitersSpec, shot::ShotSpec,
+        nova::NovaSpec, orbiters::OrbitersSpec, shot::ShotSpec, zone::ZoneSpec,
     };
 
     pub use super::spec::{

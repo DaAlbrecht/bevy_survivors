@@ -6,6 +6,7 @@ pub struct Weapon;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Deserialize)]
 pub enum WeaponKind {
+    Aoe,
     Orb,
     Lightning,
     Fireball,
@@ -15,11 +16,12 @@ pub enum WeaponKind {
     Icelance,
     Hammer,
     Slash,
-    Sword, // Thorn,
+    Sword,
 }
 
 impl WeaponKind {
     pub const ALL: &'static [WeaponKind] = &[
+        WeaponKind::Aoe,
         WeaponKind::Orb,
         WeaponKind::Lightning,
         WeaponKind::Fireball,

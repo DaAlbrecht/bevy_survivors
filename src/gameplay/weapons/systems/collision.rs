@@ -20,7 +20,10 @@ pub(crate) fn plugin(app: &mut App) {
 /// Setup generic projectile observers
 fn on_added_cast_weapon(
     event: On<Add, CastWeapon>,
-    weapons: Query<Entity, With<CollisionDamage>>,
+    weapons: Query<
+        (Entity, Option<&TickDuration>),
+        Or<(With<CollisionDamage>, With<TickDuration>)>,
+    >,
     projectile_q: Query<&CastWeapon>,
     mut commands: Commands,
 ) -> Result {
@@ -28,8 +31,19 @@ fn on_added_cast_weapon(
     let cast_weapon = projectile_q.get(projectile)?;
 
     let weapon = cast_weapon.0;
-    if weapons.get(weapon).is_ok() {
-        commands.entity(projectile).observe(on_projectile_collision);
+    for (weapon_entity, tick_duration) in &weapons {
+        if weapon_entity == weapon {
+            if let Some(tick_duration) = tick_duration {
+                commands
+                    .entity(projectile)
+                    .insert(TickDamageTimer(Timer::from_seconds(
+                        tick_duration.0,
+                        TimerMode::Repeating,
+                    )));
+            } else {
+                commands.entity(projectile).observe(on_projectile_collision);
+            }
+        }
     }
 
     Ok(())
@@ -77,23 +91,20 @@ pub fn on_projectile_collision(
     Ok(())
 }
 
-//NOTE: Currently we tick per weapon. That means switching enemies mid-tick is not possible.
 fn tick_damage(
     projectiles: Query<&WeaponProjectiles>,
-    mut weapons: Query<(
-        Entity,
-        &HitSpec,
-        &BaseDamage,
-        Option<&ExplosionRadius>,
-        &mut TickDamage,
-    )>,
+    mut projectile_q: Query<&mut TickDamageTimer>,
+    mut weapons: Query<(Entity, &HitSpec, &BaseDamage, Option<&ExplosionRadius>)>,
     enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
     collisions: Collisions,
     time: Res<Time>,
 ) {
-    for (weapon, hit, dmg, explosion_radius, mut tick_timer) in &mut weapons {
+    for (weapon, hit, dmg, explosion_radius) in &mut weapons {
         for projectile in projectiles.iter_descendants(weapon) {
+            let Ok(mut tick_timer) = projectile_q.get_mut(projectile) else {
+                continue;
+            };
             tick_timer.0.tick(time.delta());
             if tick_timer.0.just_finished() {
                 for contact in collisions.entities_colliding_with(projectile) {

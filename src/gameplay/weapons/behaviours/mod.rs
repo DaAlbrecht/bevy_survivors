@@ -7,6 +7,7 @@ pub mod melee;
 pub mod nova;
 pub mod orbiters;
 pub mod shot;
+pub mod zone;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -17,5 +18,6 @@ pub(super) fn plugin(app: &mut App) {
         homing::plugin,
         falling::plugin,
         melee::plugin,
+        zone::plugin,
     ));
 }

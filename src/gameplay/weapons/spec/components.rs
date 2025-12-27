@@ -68,4 +68,5 @@ pub enum AttackSpec {
     Homing(HomingSpec),
     Falling(FallingSpec),
     Melee(MeleeSpec),
+    Zone(ZoneSpec),
 }
