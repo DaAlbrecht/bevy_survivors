@@ -3,68 +3,51 @@ use serde::{Deserialize, Serialize};
 
 use crate::gameplay::weapons::components::WeaponLifetime;
 
-// mod attack;
-// mod movement;
+mod attack;
+mod movement;
 
-pub(super) fn plugin(_app: &mut App) {
-    // app.add_observer(attack::on_zone_attack);
+pub(super) fn plugin(app: &mut App) {
+    app.add_observer(attack::on_zone_attack);
+    app.add_plugins(movement::plugin);
 }
 
 #[derive(Component)]
 pub struct ZoneAttack;
 
-#[derive(Component, Reflect)]
-pub struct ZoneBeam;
+#[derive(Component)]
+pub struct ZoneAttackInstance;
 
-#[derive(Component, Reflect)]
-pub struct ZoneCone {
-    pub range: f32,
-    pub angle: f32,
+#[derive(Component)]
+pub struct ZoneFollowPlayer;
+
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub enum ZoneTarget {
+    Player,
+    Enemy,
 }
 
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub enum ZoneShape {
+    Circle { radius: f32 },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ZoneSpec {
-    /// Duration the zone/beam stays active
-    pub duration: f32,
-    /// Width of the beam/zone (height is calculated based on target distance)
-    pub width: f32,
-    /// Whether the zone follows the player (true for beam/breath, false for arrow rain)
-    pub follow_player: bool,
-    /// Optional cone configuration (range and spread angle in degrees)
-    #[serde(default)]
-    pub cone: Option<ConeConfig>,
+    pub shape: ZoneShape,
+    pub target: ZoneTarget,
+    pub lifetime: f32,
 }
 
 impl EntityCommand for ZoneSpec {
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             ZoneAttack,
-            WeaponLifetime(self.duration),
-            ZoneWidth(self.width),
+            self.target,
+            self.shape,
+            WeaponLifetime(self.lifetime),
         ));
-
-        if self.follow_player {
-            entity.insert(FollowPlayer);
-        }
-
-        if let Some(cone_config) = self.cone {
-            entity.insert(ZoneConeConfig(cone_config));
-        }
     }
-}
-
-#[derive(Component, Reflect, Clone)]
-pub struct ZoneWidth(pub f32);
-
-#[derive(Component, Reflect)]
-pub struct FollowPlayer;
-
-#[derive(Component, Reflect, Clone)]
-pub struct ZoneConeConfig(pub ConeConfig);
-
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
-pub struct ConeConfig {
-    pub range: f32,
-    pub angle_degrees: f32,
 }

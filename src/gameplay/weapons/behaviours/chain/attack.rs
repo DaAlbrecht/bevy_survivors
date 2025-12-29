@@ -7,9 +7,9 @@ use crate::{
         enemy::Enemy,
         player::Player,
         weapons::{
-            assets::spec::HitSpec,
             behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
             components::{BaseDamage, ProjectileCount, WeaponRange},
+            spec::components::HitSpec,
             systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration, hit::WeaponHitEvent},
         },
     },

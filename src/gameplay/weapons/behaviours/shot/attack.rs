@@ -12,14 +12,14 @@ use bevy::prelude::*;
 
 pub fn on_projectile_attack(
     trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<(&ProjectileSpeed, &WeaponProjectileVisuals), With<super::ShotAttack>>,
+    weapon_q: Query<&WeaponProjectileVisuals, With<super::ShotAttack>>,
     player_q: Query<&Transform, With<Player>>,
     enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
     let weapon = trigger.event().entity;
 
-    let Ok((_speed, projectile_visuals)) = weapon_q.get(weapon) else {
+    let Ok(projectile_visuals) = weapon_q.get(weapon) else {
         return Ok(());
     };
 

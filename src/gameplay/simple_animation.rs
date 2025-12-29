@@ -18,13 +18,13 @@ pub enum AnimationPlayback {
     OnceDespawn,
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub(crate) struct AnimationIndices {
     pub first: usize,
     pub last: usize,
 }
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Component, Deref, DerefMut, Clone)]
 #[require(AnimationPlayback)]
 pub(crate) struct AnimationTimer {
     pub timer: Timer,

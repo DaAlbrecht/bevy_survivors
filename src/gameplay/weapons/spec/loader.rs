@@ -1,13 +1,14 @@
-use bevy::asset::io::Reader;
-use bevy::asset::{AssetLoader, LoadContext};
-use bevy::prelude::*;
+use bevy::{
+    asset::{AssetLoader, LoadContext, io::Reader},
+    prelude::*,
+};
 use serde::Deserialize;
 use serde_ron::de::from_bytes;
 use thiserror::Error;
 
 use crate::gameplay::weapons::{
-    assets::spec::{AtlasAnimation, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
     kind::WeaponKind,
+    spec::components::{AtlasAnimation, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
 };
 
 #[derive(Deserialize)]
@@ -17,6 +18,8 @@ struct WeaponSpecRaw {
     pub base_damage: f32,
     pub cooldown: f32,
     pub dot: Option<f32>,
+    #[serde(default)]
+    pub despawn_on_hit: bool,
     pub attack: AttackSpec,
     pub on_hit: HitSpec,
     pub visuals: VisualRaw,
@@ -131,6 +134,7 @@ impl AssetLoader for WeaponRonLoader {
             base_damage: raw.base_damage,
             cooldown: raw.cooldown,
             dot: raw.dot,
+            despawn_on_hit: raw.despawn_on_hit,
             attack: raw.attack,
             on_hit: raw.on_hit,
             visuals: raw.visuals.load(load_context),

@@ -3,21 +3,21 @@ use bevy::prelude::*;
 use crate::gameplay::{
     player::{InInventoryOf, Player},
     weapons::{
-        assets::spec::WeaponSpec,
         behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals},
-        components::{BaseDamage, CollisionDamage, DeathOnCollision, TickDamage, Weapon},
+        components::{BaseDamage, CollisionDamage, DeathOnCollision, TickDuration, Weapon},
+        spec::components::WeaponSpec,
         systems::cooldown::WeaponCooldown,
     },
 };
 
-pub(crate) mod assets;
 mod behaviours;
 pub(crate) mod components;
 pub(crate) mod kind;
+pub(crate) mod spec;
 pub(crate) mod systems;
 
 pub(crate) fn plugin(app: &mut App) {
-    app.add_plugins((assets::plugin, behaviours::plugin, systems::plugin));
+    app.add_plugins((spec::plugin, behaviours::plugin, systems::plugin));
 }
 
 pub(crate) struct AddWeapon(WeaponSpec);
@@ -49,7 +49,7 @@ impl Command for AddWeapon {
 
         match self.0.dot {
             Some(dot) => {
-                entity.insert(TickDamage(Timer::from_seconds(dot, TimerMode::Repeating)));
+                entity.insert(TickDuration(dot));
             }
             None => {
                 entity.insert(CollisionDamage);

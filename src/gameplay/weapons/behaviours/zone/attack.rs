@@ -1,46 +1,106 @@
-// TODO: BEAM
-//
-// let player_pos_2d = player_pos.translation.truncate();
-// let enemy_pos_2d = enemy_pos.translation.truncate();
-// let direction = (enemy_pos_2d - player_pos_2d).normalize();
-// let distance = player_pos_2d.distance(enemy_pos_2d);
-//
-// // Position beam at midpoint between player and enemy
-// let midpoint = player_pos_2d + direction * (distance / 2.0);
-//
-// // Calculate rotation to point at enemy
-// let angle = direction.y.atan2(direction.x);
-//
-// // Create stretched sprite and collider
-// let mut beam = commands.spawn((
-//     Name::new("Zone Beam"),
-//     CastWeapon(weapon),
-//     Transform::from_xyz(midpoint.x, midpoint.y, 9.0)
-//         .with_rotation(Quat::from_rotation_z(angle)),
-//     super::ZoneBeam,
-//     Collider::rectangle(distance, width.0),
-//     CollisionEventsEnabled,
-//     Sensor,
-//     CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
-//     WeaponDuration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
-// ));
+use crate::{
+    GameLayer,
+    gameplay::{
+        enemy::Enemy,
+        player::Player,
+        weapons::{
+            behaviours::{
+                WeaponProjectileVisuals,
+                zone::{ZoneShape, ZoneTarget},
+            },
+            components::{CastWeapon, WeaponLifetime},
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+        },
+    },
+};
+use avian2d::prelude::*;
+use bevy::prelude::*;
 
-//TODO: CONE SHAPE
-//
-//
-// let player_pos_2d = player_pos.translation.truncate();
-//
-// // Get player facing direction (default to right if no direction component)
-// let direction = Vec2::X;
-// let angle = direction.y.atan2(direction.x);
-//
-// // Create cone shape using triangle collider
-// // Cone starts at player and expands outward
-// let half_angle = angle_degrees.to_radians() / 2.0;
-// let left_direction = Vec2::from_angle(angle + half_angle);
-// let right_direction = Vec2::from_angle(angle - half_angle);
-//
-// // Three points of the cone: apex (player), left edge, right edge
-// let apex = Vec2::ZERO;
-// let left_point = left_direction * range;
-// let right_point = right_direction * range;
+pub fn on_zone_attack(
+    trigger: On<WeaponAttackEvent>,
+    weapon_q: Query<
+        (
+            &ZoneShape,
+            &ZoneTarget,
+            &WeaponLifetime,
+            &WeaponProjectileVisuals,
+        ),
+        With<super::ZoneAttack>,
+    >,
+    player_q: Query<&Transform, With<Player>>,
+    enemy_q: Query<&Transform, With<Enemy>>,
+    mut commands: Commands,
+) -> Result {
+    let weapon = trigger.event().entity;
+
+    let Ok((shape, zone_target, lifetime, visuals)) = weapon_q.get(weapon) else {
+        return Ok(());
+    };
+
+    let player_pos = player_q.single()?;
+    let Some(target) = get_target_position(zone_target, player_pos, &enemy_q) else {
+        return Ok(());
+    };
+
+    let sprite_size = visuals.0.size;
+
+    let (scale, collider) = match shape {
+        super::ZoneShape::Circle { radius } => {
+            let diameter = radius * 2.0;
+            let visual_scale = diameter / sprite_size.x;
+            let scale = Vec2::splat(visual_scale);
+            let collider = Collider::circle(radius / visual_scale);
+
+            (scale, collider)
+        }
+    };
+
+    let mut proj = commands.spawn((
+        Name::new("ZoneAttackInstance"),
+        super::ZoneAttackInstance,
+        CastWeapon(weapon),
+        collider,
+        Sensor,
+        CollisionEventsEnabled,
+        CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
+        DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
+        Transform {
+            translation: Vec3::new(target.translation.x, target.translation.y, -1.0),
+            scale: scale.extend(1.0),
+            ..default()
+        },
+        WeaponDuration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
+    ));
+
+    visuals.0.apply_ec(&mut proj);
+
+    Ok(())
+}
+
+fn get_target_position(
+    target: &super::ZoneTarget,
+    player_pos: &Transform,
+    enemy_q: &Query<&Transform, With<Enemy>>,
+) -> Option<Transform> {
+    match target {
+        super::ZoneTarget::Player => Some(*player_pos),
+        super::ZoneTarget::Enemy => {
+            let mut min_distance = f32::MAX;
+            let mut closest_enemy: Option<Transform> = None;
+
+            for enemy_pos in enemy_q.iter() {
+                let distance = player_pos
+                    .translation
+                    .truncate()
+                    .distance(enemy_pos.translation.truncate());
+
+                if distance < min_distance {
+                    min_distance = distance;
+                    closest_enemy = Some(*enemy_pos);
+                }
+            }
+
+            closest_enemy
+        }
+    }
+}

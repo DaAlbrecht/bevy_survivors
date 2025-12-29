@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 use bevy_seedling::sample::AudioSample;
 
-use crate::gameplay::weapons::assets::spec::VisualSpec;
+use crate::gameplay::weapons::spec::components::VisualSpec;
 
 pub mod chain;
 pub mod falling;
 pub mod homing;
+pub mod melee;
 pub mod nova;
 pub mod orbiters;
-pub mod shared;
 pub mod shot;
 pub mod zone;
 
@@ -20,8 +20,8 @@ pub(crate) fn plugin(app: &mut App) {
         nova::plugin,
         homing::plugin,
         falling::plugin,
+        melee::plugin,
         zone::plugin,
-        shared::plugin,
     ));
 }
 

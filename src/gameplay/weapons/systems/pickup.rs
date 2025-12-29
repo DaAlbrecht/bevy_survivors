@@ -1,6 +1,4 @@
-use crate::gameplay::weapons::{
-    AddWeapon, assets::WeaponMap, components::Weapon, kind::WeaponKind,
-};
+use crate::gameplay::weapons::{AddWeapon, components::Weapon, kind::WeaponKind, spec::WeaponMap};
 use bevy::prelude::*;
 
 use crate::gameplay::player::{InInventoryOf, Player};

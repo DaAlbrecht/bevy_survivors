@@ -38,7 +38,7 @@ pub fn spawn_level(mut commands: Commands, level_assets: Res<LevelAssets>) {
 /// We use this to preload assets before the level is spawned.
 #[derive(AssetCollection, Resource)]
 pub(crate) struct LevelAssets {
-    #[asset(path = "level/winter/tiled/winter.tmx")]
+    #[asset(path = "level/dungeon/tiled/dungeon.tmx")]
     pub(crate) level: Handle<TiledMapAsset>,
     #[asset(path = "audio/music/city.ogg")]
     pub(crate) music: Handle<AudioSample>,

@@ -8,8 +8,8 @@ use crate::gameplay::{
     weapons::{
         behaviours::{
             WeaponAttackSfx, WeaponImpactSfx, chain::ChainSpec, falling::FallingSpec,
-            homing::HomingSpec, nova::NovaSpec, orbiters::OrbitersSpec, shot::ShotSpec,
-            zone::ZoneSpec,
+            homing::HomingSpec, melee::MeleeSpec, nova::NovaSpec, orbiters::OrbitersSpec,
+            shot::ShotSpec, zone::ZoneSpec,
         },
         kind::WeaponKind,
     },
@@ -21,6 +21,7 @@ pub struct WeaponSpec {
     pub base_damage: f32,
     pub cooldown: f32,
     pub dot: Option<f32>,
+    pub despawn_on_hit: bool,
 
     pub attack: AttackSpec,
     pub on_hit: HitSpec,
@@ -84,6 +85,38 @@ impl VisualSpec {
             });
         }
     }
+
+    pub fn get_sprite(&self) -> Sprite {
+        if let Some(atlas) = &self.atlas {
+            Sprite::from_atlas_image(
+                self.image.clone(),
+                TextureAtlas {
+                    layout: atlas.layout.clone(),
+                    index: atlas.first,
+                },
+            )
+        } else {
+            Sprite {
+                image: self.image.clone(),
+                custom_size: Some(self.size),
+                ..default()
+            }
+        }
+    }
+
+    /// Duration (seconds) to play the atlas exactly once at its fps.
+    /// Returns `fallback_secs` if there is no atlas.
+    pub fn duration_secs_once_or(&self, fallback_secs: f32) -> f32 {
+        let Some(atlas) = &self.atlas else {
+            return fallback_secs;
+        };
+
+        let fps_frames = atlas.fps.max(1) as f32;
+
+        let frames = (atlas.last - atlas.first + 1) as f32;
+
+        frames / fps_frames
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +153,7 @@ pub enum AttackSpec {
     Nova(NovaSpec),
     Homing(HomingSpec),
     Falling(FallingSpec),
+    Melee(MeleeSpec),
     Zone(ZoneSpec),
 }
 
@@ -132,7 +166,8 @@ impl EntityCommand for AttackSpec {
             AttackSpec::Nova(s) => s.apply(entity),
             AttackSpec::Homing(s) => s.apply(entity),
             AttackSpec::Falling(s) => s.apply(entity),
-            AttackSpec::Zone(spec) => spec.apply(entity),
+            AttackSpec::Zone(s) => s.apply(entity),
+            AttackSpec::Melee(s) => s.apply(entity),
         }
     }
 }

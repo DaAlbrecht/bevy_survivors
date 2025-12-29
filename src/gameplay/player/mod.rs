@@ -56,6 +56,19 @@ pub(crate) struct PlayerHitEvent {
 #[derive(Component, Reflect, Default)]
 pub(crate) struct Direction(pub Vec3);
 
+#[derive(Component, Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum PlayerFacing {
+    #[default]
+    Right,
+    Left,
+}
+
+impl PlayerFacing {
+    pub fn is_right(self) -> bool {
+        self == PlayerFacing::Right
+    }
+}
+
 #[derive(Component, Reflect)]
 pub(crate) struct XpCollectionRange(pub f32);
 
@@ -108,6 +121,7 @@ pub(crate) struct PlayerSpawnPoint;
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
+    PlayerFacing,
     DespawnOnExit::<Screen>(Screen::Gameplay),
 )]
 pub(crate) struct Player;
@@ -191,7 +205,7 @@ fn setup_player(
 
     commands.spawn((abilities::QAbility, abilities::heal::Heal));
     commands.spawn((abilities::EAbility, abilities::dash::Dash));
-    commands.spawn((abilities::RAbility, abilities::summon::Summon));
+    commands.spawn((abilities::RAbility, abilities::shield::Shield));
 
     commands.trigger(PlayerSetupComplete);
 }

@@ -4,9 +4,9 @@ use crate::gameplay::{
     enemy::{Enemy, EnemyDamageEvent, Root},
     simple_animation::AnimationPlayback,
     weapons::{
-        assets::spec::OnHitEffect,
         behaviours::{WeaponImpactSfx, WeaponImpactVisuals},
         components::DoT,
+        spec::components::OnHitEffect,
     },
 };
 use bevy::prelude::*;
@@ -54,10 +54,10 @@ pub fn on_projectile_hit_fx_sfx(
             Name::new("Impact VFX"),
             Transform::from_translation(ev.hit_pos),
             GlobalTransform::default(),
-            AnimationPlayback::OnceDespawn,
         ));
 
         vfx.0.apply_ec(&mut e);
+        e.insert((AnimationPlayback::OnceDespawn,));
     }
 
     if let Some(sfx) = impact_sfx {

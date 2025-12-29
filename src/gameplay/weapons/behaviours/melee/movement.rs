@@ -1,4 +1,4 @@
-use crate::gameplay::player::Player;
+use crate::gameplay::{player::Player, weapons::behaviours::melee::MeleeAttackZone};
 use bevy::prelude::*;
 
 use crate::{PausableSystems, screens::Screen};
@@ -6,15 +6,15 @@ use crate::{PausableSystems, screens::Screen};
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         FixedUpdate,
-        (move_zone_attack)
+        (move_melee_zones)
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
     );
 }
 
-pub fn move_zone_attack(
-    player_q: Query<&Transform, (With<Player>, Without<super::ZoneFollowPlayer>)>,
-    mut zone_q: Query<&mut Transform, (With<super::ZoneFollowPlayer>, Without<Player>)>,
+pub fn move_melee_zones(
+    player_q: Query<&Transform, (With<Player>, Without<MeleeAttackZone>)>,
+    mut zone_q: Query<&mut Transform, (With<MeleeAttackZone>, Without<Player>)>,
 ) {
     let Ok(player_tf) = player_q.single() else {
         return;

@@ -6,7 +6,7 @@ use rand::Rng;
 use crate::{
     gameplay::{
         overlays::Overlay,
-        weapons::{assets::WeaponMap, kind::WeaponKind, systems::pickup::PickUpWeaponEvent},
+        weapons::{kind::WeaponKind, spec::WeaponMap, systems::pickup::PickUpWeaponEvent},
     },
     theme::widget,
 };
