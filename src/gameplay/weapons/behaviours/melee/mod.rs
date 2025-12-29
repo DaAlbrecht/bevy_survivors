@@ -30,7 +30,7 @@ pub struct MeleeSpec {
 }
 
 impl EntityCommand for MeleeSpec {
-    fn apply(self, mut entity: EntityWorldMut) -> () {
+    fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((MeleeAttack, self.cone));
     }
 }

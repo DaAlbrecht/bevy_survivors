@@ -134,7 +134,7 @@ impl AssetLoader for WeaponRonLoader {
             base_damage: raw.base_damage,
             cooldown: raw.cooldown,
             dot: raw.dot,
-            despawn_on_hit: raw.despawn_on_hit,
+            _despawn_on_hit: raw.despawn_on_hit,
             attack: raw.attack,
             on_hit: raw.on_hit,
             visuals: raw.visuals.load(load_context),

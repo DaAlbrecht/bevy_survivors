@@ -3,7 +3,7 @@ use crate::gameplay::{
     player::Player,
     weapons::{
         behaviours::WeaponProjectileVisuals,
-        components::{CastWeapon, PlayerProjectile, ProjectileDirection, ProjectileSpeed},
+        components::{CastWeapon, PlayerProjectile, ProjectileDirection},
         systems::attack::WeaponAttackEvent,
     },
 };
