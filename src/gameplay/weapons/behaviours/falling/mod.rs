@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::components::{ExplosionRadius, ProjectileSpeed};
+
 mod attack;
-mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_falling_attack);
@@ -17,6 +18,20 @@ pub struct FallingSpec {
     pub spawn_height: f32,
     pub fall_speed: f32,
     pub explosion_radius: Option<f32>,
+}
+
+impl EntityCommand for FallingSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
+            FallingAttack,
+            SpawnHeight(self.spawn_height),
+            ProjectileSpeed(self.fall_speed),
+        ));
+
+        if let Some(radius) = self.explosion_radius {
+            entity.insert(ExplosionRadius(radius));
+        }
+    }
 }
 
 #[derive(Component)]

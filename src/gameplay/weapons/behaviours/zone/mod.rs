@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::components::WeaponLifetime;
+
 mod attack;
 mod movement;
-mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_zone_attack);
@@ -38,4 +39,15 @@ pub struct ZoneSpec {
     pub shape: ZoneShape,
     pub target: ZoneTarget,
     pub lifetime: f32,
+}
+
+impl EntityCommand for ZoneSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
+            ZoneAttack,
+            self.target,
+            self.shape,
+            WeaponLifetime(self.lifetime),
+        ));
+    }
 }

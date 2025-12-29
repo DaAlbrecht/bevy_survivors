@@ -1,9 +1,6 @@
 use bevy::prelude::*;
 use serde::Deserialize;
 
-#[derive(Component)]
-pub struct Weapon;
-
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Deserialize)]
 pub enum WeaponKind {
     Aoe,

@@ -1,10 +1,14 @@
-use crate::gameplay::weapons::prelude::*;
 use bevy::prelude::*;
 
-/// Weapon [`Entity`] cooled down and is ready to perform an attack
+use crate::gameplay::weapons::{components::Weapon, systems::cooldown::WeaponCooldown};
+
+/// A player has attacked with a Weapon
+///
+/// The Entity that this Event is triggered for is the Weapon that
+/// attacked.
 #[derive(EntityEvent)]
 pub struct WeaponAttackEvent {
-    /// Weapon entity that attacked
+    /// The Weapon that attacked.
     pub entity: Entity,
 }
 

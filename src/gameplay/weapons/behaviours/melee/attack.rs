@@ -3,7 +3,11 @@ use crate::{
     gameplay::{
         player::{Player, PlayerFacing},
         simple_animation::{AnimationIndices, AnimationPlayback, AnimationTimer},
-        weapons::{prelude::*, systems::cooldown::WeaponDuration},
+        weapons::{
+            behaviours::{WeaponProjectileVisuals, melee::MeleeAttackZone},
+            components::CastWeapon,
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+        },
     },
 };
 use avian2d::prelude::*;
@@ -49,7 +53,7 @@ pub fn on_melee_attack(
     let proj = commands
         .spawn((
             Name::new("MeleeAttackCone"),
-            super::MeleeAttackZone,
+            MeleeAttackZone,
             CastWeapon(weapon),
             collider,
             Sensor,

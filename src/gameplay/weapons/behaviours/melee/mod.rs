@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 mod attack;
 mod movement;
-mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_melee_attack);
@@ -28,4 +27,10 @@ pub struct AttackCone {
 pub struct MeleeSpec {
     /// Whether the zone follows the player
     pub cone: AttackCone,
+}
+
+impl EntityCommand for MeleeSpec {
+    fn apply(self, mut entity: EntityWorldMut) -> () {
+        entity.insert((MeleeAttack, self.cone));
+    }
 }

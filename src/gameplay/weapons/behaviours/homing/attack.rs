@@ -1,15 +1,22 @@
-use avian2d::prelude::*;
-use bevy::prelude::*;
-use rand::Rng;
-
 use crate::{
     GameLayer,
     gameplay::{
         enemy::Enemy,
         player::Player,
-        weapons::{prelude::*, systems::cooldown::WeaponDuration},
+        weapons::{
+            behaviours::{
+                WeaponProjectileVisuals,
+                homing::{CurrentTarget, HitCounter, HomingProjectile, MaxHits, MovementConfig},
+            },
+            components::{CastWeapon, ProjectileCount, ProjectileDirection, WeaponLifetime},
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+        },
     },
 };
+
+use avian2d::prelude::*;
+use bevy::prelude::*;
+use rand::Rng;
 
 pub fn on_homing_attack(
     trigger: On<WeaponAttackEvent>,
@@ -17,8 +24,8 @@ pub fn on_homing_attack(
         (
             &ProjectileCount,
             &WeaponLifetime,
-            &super::MaxHits,
-            &super::MovementConfig,
+            &MaxHits,
+            &MovementConfig,
             &WeaponProjectileVisuals,
         ),
         With<super::HomingAttack>,
@@ -62,9 +69,9 @@ pub fn on_homing_attack(
             CollisionEventsEnabled,
             CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
             LinearVelocity(Vec2::ZERO),
-            super::HomingProjectile,
-            super::CurrentTarget(initial_target),
-            super::HitCounter {
+            HomingProjectile,
+            CurrentTarget(initial_target),
+            HitCounter {
                 hits: 0,
                 max_hits: max_hits.0 as usize,
             },

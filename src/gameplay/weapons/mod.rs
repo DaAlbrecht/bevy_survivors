@@ -1,36 +1,63 @@
 use bevy::prelude::*;
 
+use crate::gameplay::{
+    player::{InInventoryOf, Player},
+    weapons::{
+        behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals},
+        components::{BaseDamage, CollisionDamage, DeathOnCollision, TickDuration, Weapon},
+        spec::components::WeaponSpec,
+        systems::cooldown::WeaponCooldown,
+    },
+};
+
 mod behaviours;
 pub(crate) mod components;
-mod kind;
+pub(crate) mod kind;
 pub(crate) mod spec;
-mod systems;
+pub(crate) mod systems;
 
-pub(super) fn plugin(app: &mut App) {
+pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((spec::plugin, behaviours::plugin, systems::plugin));
 }
 
-pub mod prelude {
-    pub use super::kind::{Weapon, WeaponKind};
+pub(crate) struct AddWeapon(WeaponSpec);
 
-    pub use super::components::*;
+impl Command for AddWeapon {
+    fn apply(self, world: &mut World) {
+        let mut query = world.query_filtered::<Entity, With<Player>>();
+        let Ok(player) = query.single(world) else {
+            return;
+        };
 
-    pub use super::systems::{
-        attack::WeaponAttackEvent, cooldown::WeaponCooldown, hit::WeaponHitEvent,
-        pickup::PickUpWeaponEvent,
-    };
+        let mut commands = world.commands();
 
-    pub use super::behaviours::{
-        chain::ChainSpec, falling::FallingSpec, homing::HomingSpec, melee::MeleeSpec,
-        nova::NovaSpec, orbiters::OrbitersSpec, shot::ShotSpec, zone::ZoneSpec,
-    };
+        let mut entity = commands.spawn((
+            Name::new(format!("{:?}", self.0.kind)),
+            Weapon,
+            self.0.kind,
+            InInventoryOf(player),
+            BaseDamage(self.0.base_damage),
+            WeaponCooldown(Timer::from_seconds(self.0.cooldown, TimerMode::Once)),
+            WeaponProjectileVisuals(self.0.visuals),
+            //TODO: Move to attack spec to allow for pass through
+            DeathOnCollision,
+        ));
 
-    pub use super::spec::{
-        WeaponMap,
-        apply::{
-            ApplySpec,
-            visuals::{WeaponImpactVisuals, WeaponProjectileVisuals},
-        },
-        components::{AtlasAnim, AttackSpec, HitSpec, VisualSpec, WeaponSfx, WeaponSpec},
-    };
+        entity.queue(self.0.attack);
+        entity.queue(self.0.on_hit);
+        entity.queue(self.0.sfx);
+
+        match self.0.dot {
+            Some(dot) => {
+                entity.insert(TickDuration(dot));
+            }
+            None => {
+                entity.insert(CollisionDamage);
+            }
+        }
+
+        if let Some(impact) = self.0.impact_visuals {
+            entity.insert(WeaponImpactVisuals(impact));
+        }
+    }
 }

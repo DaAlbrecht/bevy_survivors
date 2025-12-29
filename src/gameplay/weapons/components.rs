@@ -6,6 +6,9 @@ use crate::{
     gameplay::{damage_numbers::DamageType, weapons::systems::cooldown::WeaponDuration},
 };
 
+#[derive(Component)]
+pub struct Weapon;
+
 #[derive(Component, Reflect)]
 #[require(
     RigidBody::Kinematic,

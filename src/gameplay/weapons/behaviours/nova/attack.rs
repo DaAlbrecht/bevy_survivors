@@ -4,7 +4,13 @@ use rand::Rng;
 
 use crate::gameplay::{
     player::Player,
-    weapons::{prelude::*, spec::apply::sfx::WeaponAttackSfx},
+    weapons::{
+        behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
+        components::{
+            CastWeapon, PlayerProjectile, ProjectileCount, ProjectileDirection, ProjectileSpeed,
+        },
+        systems::attack::WeaponAttackEvent,
+    },
 };
 
 pub fn on_nova_attack(

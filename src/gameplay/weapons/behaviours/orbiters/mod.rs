@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::components::{ProjectileCount, WeaponLifetime};
+
 mod attack;
 mod movement;
-mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_orbiters_attack);
@@ -31,4 +32,16 @@ pub struct OrbitersSpec {
     pub angular_speed: f32,
     pub lifetime: f32,
     pub damage: f32,
+}
+
+impl EntityCommand for OrbitersSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
+            OrbitersAttack,
+            ProjectileCount(self.count),
+            OrbitRadius(self.radius),
+            OrbitAngularSpeed(self.angular_speed),
+            WeaponLifetime(self.lifetime),
+        ));
+    }
 }

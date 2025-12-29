@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::components::{ProjectileCount, ProjectileSpeed, WeaponLifetime};
+
 mod attack;
 mod movement;
-mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_homing_attack);
@@ -40,6 +41,21 @@ pub struct HomingSpec {
     pub lifetime: f32,
     pub max_hits: u32,
     pub movement: MovementPattern,
+}
+
+impl EntityCommand for HomingSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
+            HomingAttack,
+            ProjectileCount(self.count),
+            ProjectileSpeed(self.movement.speed),
+            WeaponLifetime(self.lifetime),
+            MaxHits(self.max_hits),
+            MovementConfig {
+                pattern: self.movement.kind,
+            },
+        ));
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

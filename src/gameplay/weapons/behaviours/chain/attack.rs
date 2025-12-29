@@ -7,7 +7,10 @@ use crate::{
         enemy::Enemy,
         player::Player,
         weapons::{
-            prelude::*, spec::apply::sfx::WeaponAttackSfx, systems::cooldown::WeaponDuration,
+            behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
+            components::{BaseDamage, ProjectileCount, WeaponRange},
+            spec::components::HitSpec,
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration, hit::WeaponHitEvent},
         },
     },
 };

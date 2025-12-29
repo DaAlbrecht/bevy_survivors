@@ -1,11 +1,19 @@
 use crate::{
     GameLayer,
-    gameplay::weapons::{prelude::*, systems::cooldown::WeaponDuration},
+    gameplay::{
+        player::Player,
+        weapons::{
+            behaviours::{
+                WeaponProjectileVisuals,
+                orbiters::{OrbitAngularSpeed, OrbitPhase, OrbitRadius, OrbiterProjectile},
+            },
+            components::{CastWeapon, PlayerProjectile, ProjectileCount, WeaponLifetime},
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+        },
+    },
 };
 use avian2d::prelude::*;
 use bevy::prelude::*;
-
-use crate::gameplay::player::Player;
 
 pub fn on_orbiters_attack(
     trigger: On<WeaponAttackEvent>,
@@ -39,10 +47,10 @@ pub fn on_orbiters_attack(
             Name::new("Orbiter"),
             CastWeapon(weapon),
             PlayerProjectile,
-            super::OrbiterProjectile,
-            super::OrbitPhase(phase),
-            super::OrbitRadius(radius.0),
-            super::OrbitAngularSpeed(ang_speed.0),
+            OrbiterProjectile,
+            OrbitPhase(phase),
+            OrbitRadius(radius.0),
+            OrbitAngularSpeed(ang_speed.0),
             WeaponDuration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
             Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
             // physics

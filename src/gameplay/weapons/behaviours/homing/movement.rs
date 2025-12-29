@@ -3,7 +3,13 @@ use bevy::prelude::*;
 
 use crate::{
     PausableSystems,
-    gameplay::{enemy::Enemy, weapons::prelude::*},
+    gameplay::{
+        enemy::Enemy,
+        weapons::{
+            behaviours::homing::{CurrentTarget, MovementConfig},
+            components::{ProjectileDirection, ProjectileSpeed, WeaponProjectiles},
+        },
+    },
     screens::Screen,
 };
 
@@ -65,8 +71,8 @@ fn move_homing_projectiles(
             &Transform,
             &mut LinearVelocity,
             &mut ProjectileDirection,
-            &super::CurrentTarget,
-            &super::MovementConfig,
+            &CurrentTarget,
+            &MovementConfig,
             Option<&mut ZigzagState>,
             Option<&mut SpiralState>,
         ),

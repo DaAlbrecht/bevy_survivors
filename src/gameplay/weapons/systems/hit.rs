@@ -1,10 +1,13 @@
-use crate::gameplay::enemy::{Enemy, EnemyDamageEvent, Root};
-use crate::gameplay::simple_animation::AnimationPlayback;
-use crate::gameplay::weapons::prelude::DoT;
-use crate::gameplay::{damage_numbers::DamageType, weapons::spec::components::OnHitEffect};
-use crate::{
-    audio::SfxPool,
-    gameplay::weapons::spec::apply::{sfx::WeaponImpactSfx, visuals::WeaponImpactVisuals},
+use crate::audio::SfxPool;
+use crate::gameplay::{
+    damage_numbers::DamageType,
+    enemy::{Enemy, EnemyDamageEvent, Root},
+    simple_animation::AnimationPlayback,
+    weapons::{
+        behaviours::{WeaponImpactSfx, WeaponImpactVisuals},
+        components::DoT,
+        spec::components::OnHitEffect,
+    },
 };
 use bevy::prelude::*;
 use bevy_seedling::sample::SamplePlayer;

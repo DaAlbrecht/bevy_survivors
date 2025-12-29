@@ -1,7 +1,7 @@
+use crate::gameplay::weapons::{AddWeapon, components::Weapon, kind::WeaponKind, spec::WeaponMap};
 use bevy::prelude::*;
 
 use crate::gameplay::player::{InInventoryOf, Player};
-use crate::gameplay::weapons::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(handle_pickup_weapon);
@@ -52,53 +52,14 @@ pub fn handle_pickup_weapon(
 pub fn spawn_weapon_instance(
     trigger: On<SpawnWeaponInstanceEvent>,
     mut commands: Commands,
-    player_q: Query<Entity, With<Player>>,
     weapon_assets: Res<WeaponMap>,
-) -> Result {
+) {
     let kind = trigger.kind;
-    let Ok(player) = player_q.single() else {
-        return Ok(());
-    };
 
     let Some(spec) = weapon_assets.get(&kind) else {
         error!("No WeaponSpec registered for kind {kind:?}");
-        return Ok(());
+        return;
     };
 
-    let w_entity = commands
-        .spawn((
-            Name::new(format!("{kind:?}")),
-            Weapon,
-            kind,
-            InInventoryOf(player),
-            BaseDamage(spec.base_damage),
-            WeaponCooldown(Timer::from_seconds(spec.cooldown, TimerMode::Once)),
-            WeaponProjectileVisuals(spec.visuals.clone()),
-        ))
-        .id();
-
-    if spec.despawn_on_hit {
-        commands.entity(w_entity).insert(DeathOnCollision);
-    }
-
-    match spec.dot {
-        Some(dot) => {
-            commands.entity(w_entity).insert(TickDuration(dot));
-        }
-        None => {
-            commands.entity(w_entity).insert(CollisionDamage);
-        }
-    }
-
-    if let Some(impact) = &spec.impact_visuals {
-        commands
-            .entity(w_entity)
-            .insert(WeaponImpactVisuals(impact.clone()));
-    }
-
-    spec.attack.apply(&mut commands, w_entity);
-    spec.on_hit.apply(&mut commands, w_entity);
-    spec.sfx.apply(&mut commands, w_entity);
-
-    Ok(())
+    commands.queue(AddWeapon(spec.clone()));
 }

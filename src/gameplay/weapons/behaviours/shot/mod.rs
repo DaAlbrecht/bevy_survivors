@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::components::{ExplosionRadius, ProjectileSpeed};
+
 mod attack;
-mod setup;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_projectile_attack);
@@ -17,4 +18,14 @@ pub struct ShotSpec {
     pub speed: f32,
     pub range: f32,
     pub explosion_radius: Option<f32>,
+}
+
+impl EntityCommand for ShotSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((ShotAttack, ProjectileSpeed(self.speed)));
+
+        if let Some(radius) = self.explosion_radius {
+            entity.insert(ExplosionRadius(radius));
+        }
+    }
 }

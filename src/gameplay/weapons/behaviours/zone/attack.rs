@@ -3,7 +3,14 @@ use crate::{
     gameplay::{
         enemy::Enemy,
         player::Player,
-        weapons::{prelude::*, systems::cooldown::WeaponDuration},
+        weapons::{
+            behaviours::{
+                WeaponProjectileVisuals,
+                zone::{ZoneShape, ZoneTarget},
+            },
+            components::{CastWeapon, WeaponLifetime},
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+        },
     },
 };
 use avian2d::prelude::*;
@@ -13,8 +20,8 @@ pub fn on_zone_attack(
     trigger: On<WeaponAttackEvent>,
     weapon_q: Query<
         (
-            &super::ZoneShape,
-            &super::ZoneTarget,
+            &ZoneShape,
+            &ZoneTarget,
             &WeaponLifetime,
             &WeaponProjectileVisuals,
         ),
@@ -39,10 +46,10 @@ pub fn on_zone_attack(
 
     let (scale, collider) = match shape {
         super::ZoneShape::Circle { radius } => {
-            let diameter = *radius * 2.0;
+            let diameter = radius * 2.0;
             let visual_scale = diameter / sprite_size.x;
             let scale = Vec2::splat(visual_scale);
-            let collider = Collider::circle(*radius / visual_scale);
+            let collider = Collider::circle(radius / visual_scale);
 
             (scale, collider)
         }
