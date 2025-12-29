@@ -26,7 +26,7 @@ impl EntityCommand for NovaSpec {
             NovaAttack,
             ProjectileCount(self.projectile_count),
             ProjectileSpeed(self.speed),
-            SpreadPattern(self.spread_pattern.clone()),
+            SpreadPattern(self.spread_pattern),
         ));
     }
 }

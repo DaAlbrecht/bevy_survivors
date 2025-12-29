@@ -48,8 +48,8 @@ impl EntityCommand for ZoneSpec {
             entity.insert(FollowPlayer);
         }
 
-        if let Some(cone_config) = &self.cone {
-            entity.insert(ZoneConeConfig(cone_config.clone()));
+        if let Some(cone_config) = self.cone {
+            entity.insert(ZoneConeConfig(cone_config));
         }
     }
 }

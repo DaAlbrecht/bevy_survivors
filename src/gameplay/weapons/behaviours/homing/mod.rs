@@ -52,7 +52,7 @@ impl EntityCommand for HomingSpec {
             WeaponLifetime(self.lifetime),
             MaxHits(self.max_hits),
             MovementConfig {
-                pattern: self.movement.kind.clone(),
+                pattern: self.movement.kind,
             },
         ));
     }
