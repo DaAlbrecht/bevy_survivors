@@ -1,11 +1,13 @@
-use crate::gameplay::weapons::{
-    behaviours::WeaponProjectileVisuals,
-    components::{CastWeapon, PlayerProjectile, ProjectileDirection},
-    systems::attack::WeaponAttackEvent,
+use crate::gameplay::{
+    enemy::Enemy,
+    player::Player,
+    weapons::{
+        behaviours::WeaponProjectileVisuals,
+        components::{CastWeapon, PlayerProjectile, ProjectileDirection},
+        systems::attack::WeaponAttackEvent,
+    },
 };
 use bevy::prelude::*;
-
-use crate::gameplay::{enemy::Enemy, player::Player};
 
 pub fn on_falling_attack(
     trigger: On<WeaponAttackEvent>,

@@ -2,18 +2,18 @@ use bevy::prelude::*;
 use bevy_seedling::sample::AudioSample;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::damage_numbers::DamageType;
-use crate::gameplay::simple_animation::{AnimationIndices, AnimationTimer};
-use crate::gameplay::weapons::ApplySpec;
-use crate::gameplay::weapons::behaviours::chain::ChainSpec;
-use crate::gameplay::weapons::behaviours::falling::FallingSpec;
-use crate::gameplay::weapons::behaviours::homing::HomingSpec;
-use crate::gameplay::weapons::behaviours::nova::NovaSpec;
-use crate::gameplay::weapons::behaviours::orbiters::OrbitersSpec;
-use crate::gameplay::weapons::behaviours::shot::ShotSpec;
-use crate::gameplay::weapons::behaviours::zone::ZoneSpec;
-use crate::gameplay::weapons::behaviours::{WeaponAttackSfx, WeaponImpactSfx};
-use crate::gameplay::weapons::kind::WeaponKind;
+use crate::gameplay::{
+    damage_numbers::DamageType,
+    simple_animation::{AnimationIndices, AnimationTimer},
+    weapons::{
+        behaviours::{
+            WeaponAttackSfx, WeaponImpactSfx, chain::ChainSpec, falling::FallingSpec,
+            homing::HomingSpec, nova::NovaSpec, orbiters::OrbitersSpec, shot::ShotSpec,
+            zone::ZoneSpec,
+        },
+        kind::WeaponKind,
+    },
+};
 
 #[derive(Asset, TypePath, Debug, Clone)]
 pub struct WeaponSpec {
@@ -46,9 +46,9 @@ pub struct HitSpec {
     pub knockback_strength: f32,
 }
 
-impl ApplySpec for HitSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        commands.entity(entity).insert(self.clone());
+impl EntityCommand for HitSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert(self);
     }
 }
 
@@ -92,14 +92,13 @@ pub struct WeaponSfx {
     pub impact: Option<Handle<AudioSample>>,
 }
 
-impl ApplySpec for WeaponSfx {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        let mut ec = commands.entity(entity);
-        if let Some(h) = &self.attack {
-            ec.insert(WeaponAttackSfx(h.clone()));
+impl EntityCommand for WeaponSfx {
+    fn apply(self, mut entity: EntityWorldMut) {
+        if let Some(handle) = self.attack {
+            entity.insert(WeaponAttackSfx(handle));
         }
-        if let Some(h) = &self.impact {
-            ec.insert(WeaponImpactSfx(h.clone()));
+        if let Some(handle) = self.impact {
+            entity.insert(WeaponImpactSfx(handle));
         }
     }
 }
@@ -124,16 +123,16 @@ pub enum AttackSpec {
     Zone(ZoneSpec),
 }
 
-impl ApplySpec for AttackSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
+impl EntityCommand for AttackSpec {
+    fn apply(self, entity: EntityWorldMut) {
         match self {
-            AttackSpec::Orbiters(s) => s.apply(commands, entity),
-            AttackSpec::Chain(s) => s.apply(commands, entity),
-            AttackSpec::Shot(s) => s.apply(commands, entity),
-            AttackSpec::Nova(s) => s.apply(commands, entity),
-            AttackSpec::Homing(s) => s.apply(commands, entity),
-            AttackSpec::Falling(s) => s.apply(commands, entity),
-            AttackSpec::Zone(spec) => spec.apply(commands, entity),
+            AttackSpec::Orbiters(s) => s.apply(entity),
+            AttackSpec::Chain(s) => s.apply(entity),
+            AttackSpec::Shot(s) => s.apply(entity),
+            AttackSpec::Nova(s) => s.apply(entity),
+            AttackSpec::Homing(s) => s.apply(entity),
+            AttackSpec::Falling(s) => s.apply(entity),
+            AttackSpec::Zone(spec) => spec.apply(entity),
         }
     }
 }

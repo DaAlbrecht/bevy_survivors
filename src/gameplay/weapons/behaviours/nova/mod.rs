@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::{
-    ApplySpec,
-    components::{ProjectileCount, ProjectileSpeed},
-};
+use crate::gameplay::weapons::components::{ProjectileCount, ProjectileSpeed};
 
 mod attack;
 
@@ -23,10 +20,9 @@ pub struct NovaSpec {
     pub spread_pattern: SpreadPatternKind,
 }
 
-impl ApplySpec for NovaSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        let mut ec = commands.entity(entity);
-        ec.insert((
+impl EntityCommand for NovaSpec {
+    fn apply(self, mut entity: EntityWorldMut) -> () {
+        entity.insert((
             NovaAttack,
             ProjectileCount(self.projectile_count),
             ProjectileSpeed(self.speed),

@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::{
-    ApplySpec,
-    components::{ProjectileCount, ProjectileSpeed, WeaponLifetime},
-};
+use crate::gameplay::weapons::components::{ProjectileCount, ProjectileSpeed, WeaponLifetime};
 
 mod attack;
 mod movement;
@@ -46,10 +43,9 @@ pub struct HomingSpec {
     pub movement: MovementPattern,
 }
 
-impl ApplySpec for HomingSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        let mut ec = commands.entity(entity);
-        ec.insert((
+impl EntityCommand for HomingSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
             HomingAttack,
             ProjectileCount(self.count),
             ProjectileSpeed(self.movement.speed),

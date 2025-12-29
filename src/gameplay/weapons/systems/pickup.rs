@@ -1,14 +1,9 @@
-use crate::gameplay::weapons::ApplySpec;
-use crate::gameplay::weapons::assets::WeaponMap;
-use crate::gameplay::weapons::components::{
-    BaseDamage, CollisionDamage, DeathOnCollision, TickDamage, Weapon,
+use crate::gameplay::weapons::{
+    AddWeapon, assets::WeaponMap, components::Weapon, kind::WeaponKind,
 };
-use crate::gameplay::weapons::kind::WeaponKind;
-use crate::gameplay::weapons::systems::cooldown::WeaponCooldown;
 use bevy::prelude::*;
 
 use crate::gameplay::player::{InInventoryOf, Player};
-use crate::gameplay::weapons::behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(handle_pickup_weapon);
@@ -59,53 +54,14 @@ pub fn handle_pickup_weapon(
 pub fn spawn_weapon_instance(
     trigger: On<SpawnWeaponInstanceEvent>,
     mut commands: Commands,
-    player_q: Query<Entity, With<Player>>,
     weapon_assets: Res<WeaponMap>,
-) -> Result {
+) {
     let kind = trigger.kind;
-    let Ok(player) = player_q.single() else {
-        return Ok(());
-    };
 
     let Some(spec) = weapon_assets.get(&kind) else {
         error!("No WeaponSpec registered for kind {kind:?}");
-        return Ok(());
+        return;
     };
 
-    let w_entity = commands
-        .spawn((
-            Name::new(format!("{kind:?}")),
-            Weapon,
-            kind,
-            InInventoryOf(player),
-            BaseDamage(spec.base_damage),
-            WeaponCooldown(Timer::from_seconds(spec.cooldown, TimerMode::Once)),
-            WeaponProjectileVisuals(spec.visuals.clone()),
-            //TODO: Move to attack spec to allow for pass through
-            DeathOnCollision,
-        ))
-        .id();
-
-    match spec.dot {
-        Some(dot) => {
-            commands
-                .entity(w_entity)
-                .insert(TickDamage(Timer::from_seconds(dot, TimerMode::Repeating)));
-        }
-        None => {
-            commands.entity(w_entity).insert(CollisionDamage);
-        }
-    }
-
-    if let Some(impact) = &spec.impact_visuals {
-        commands
-            .entity(w_entity)
-            .insert(WeaponImpactVisuals(impact.clone()));
-    }
-
-    spec.attack.apply(&mut commands, w_entity);
-    spec.on_hit.apply(&mut commands, w_entity);
-    spec.sfx.apply(&mut commands, w_entity);
-
-    Ok(())
+    commands.queue(AddWeapon(spec.clone()));
 }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::{ApplySpec, components::WeaponLifetime};
+use crate::gameplay::weapons::components::WeaponLifetime;
 
 // mod attack;
 // mod movement;
@@ -36,21 +36,20 @@ pub struct ZoneSpec {
     pub cone: Option<ConeConfig>,
 }
 
-impl ApplySpec for ZoneSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        let mut entity_commands = commands.entity(entity);
-        entity_commands.insert((
+impl EntityCommand for ZoneSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
             ZoneAttack,
             WeaponLifetime(self.duration),
             ZoneWidth(self.width),
         ));
 
         if self.follow_player {
-            entity_commands.insert(FollowPlayer);
+            entity.insert(FollowPlayer);
         }
 
         if let Some(cone_config) = &self.cone {
-            entity_commands.insert(ZoneConeConfig(cone_config.clone()));
+            entity.insert(ZoneConeConfig(cone_config.clone()));
         }
     }
 }

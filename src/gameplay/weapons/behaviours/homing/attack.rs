@@ -1,19 +1,22 @@
-use crate::gameplay::weapons::{
-    behaviours::{
-        WeaponProjectileVisuals,
-        homing::{CurrentTarget, HitCounter, HomingProjectile, MaxHits, MovementConfig},
+use crate::{
+    GameLayer,
+    gameplay::{
+        enemy::Enemy,
+        player::Player,
+        weapons::{
+            behaviours::{
+                WeaponProjectileVisuals,
+                homing::{CurrentTarget, HitCounter, HomingProjectile, MaxHits, MovementConfig},
+            },
+            components::{CastWeapon, ProjectileCount, ProjectileDirection, WeaponLifetime},
+            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+        },
     },
-    components::{CastWeapon, ProjectileCount, ProjectileDirection, WeaponLifetime},
-    systems::attack::WeaponAttackEvent,
 };
+
 use avian2d::prelude::*;
 use bevy::prelude::*;
 use rand::Rng;
-
-use crate::{
-    GameLayer,
-    gameplay::{enemy::Enemy, player::Player, weapons::systems::cooldown::WeaponDuration},
-};
 
 pub fn on_homing_attack(
     trigger: On<WeaponAttackEvent>,

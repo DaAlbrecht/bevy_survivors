@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::{
-    ApplySpec,
-    components::{ProjectileCount, WeaponLifetime},
-};
+use crate::gameplay::weapons::components::{ProjectileCount, WeaponLifetime};
 
 mod attack;
 mod movement;
@@ -37,10 +34,9 @@ pub struct OrbitersSpec {
     pub damage: f32,
 }
 
-impl ApplySpec for OrbitersSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        let mut ec = commands.entity(entity);
-        ec.insert((
+impl EntityCommand for OrbitersSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
             OrbitersAttack,
             ProjectileCount(self.count),
             OrbitRadius(self.radius),

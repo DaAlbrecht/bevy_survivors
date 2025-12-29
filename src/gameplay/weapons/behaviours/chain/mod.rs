@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::{
-    ApplySpec,
-    components::{ProjectileCount, WeaponRange},
-};
+use crate::gameplay::weapons::components::{ProjectileCount, WeaponRange};
 
 mod attack;
 
@@ -26,10 +23,9 @@ pub struct ChainSpec {
     pub bolt_lifetime: f32,
 }
 
-impl ApplySpec for ChainSpec {
-    fn apply(&self, commands: &mut Commands, entity: Entity) {
-        let mut ec = commands.entity(entity);
-        ec.insert((
+impl EntityCommand for ChainSpec {
+    fn apply(self, mut entity: EntityWorldMut) {
+        entity.insert((
             ChainAttack,
             ProjectileCount(self.max_hits),
             WeaponRange(self.range),
