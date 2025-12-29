@@ -21,7 +21,7 @@ pub struct NovaSpec {
 }
 
 impl EntityCommand for NovaSpec {
-    fn apply(self, mut entity: EntityWorldMut) -> () {
+    fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             NovaAttack,
             ProjectileCount(self.projectile_count),
