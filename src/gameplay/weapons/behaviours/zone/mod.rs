@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::{ApplySpec, components::WeaponLifetime};
+
 // mod attack;
 // mod movement;
-mod setup;
 
 pub(super) fn plugin(_app: &mut App) {
     // app.add_observer(attack::on_zone_attack);
@@ -34,6 +35,34 @@ pub struct ZoneSpec {
     #[serde(default)]
     pub cone: Option<ConeConfig>,
 }
+
+impl ApplySpec for ZoneSpec {
+    fn apply(&self, commands: &mut Commands, entity: Entity) {
+        let mut entity_commands = commands.entity(entity);
+        entity_commands.insert((
+            ZoneAttack,
+            WeaponLifetime(self.duration),
+            ZoneWidth(self.width),
+        ));
+
+        if self.follow_player {
+            entity_commands.insert(FollowPlayer);
+        }
+
+        if let Some(cone_config) = &self.cone {
+            entity_commands.insert(ZoneConeConfig(cone_config.clone()));
+        }
+    }
+}
+
+#[derive(Component, Reflect, Clone)]
+pub struct ZoneWidth(pub f32);
+
+#[derive(Component, Reflect)]
+pub struct FollowPlayer;
+
+#[derive(Component, Reflect, Clone)]
+pub struct ZoneConeConfig(pub ConeConfig);
 
 #[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
 pub struct ConeConfig {
