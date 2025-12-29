@@ -10,6 +10,8 @@ use bevy_seedling::sample::AudioSample;
 
 use crate::gameplay::abilities;
 use crate::gameplay::character_controller::CharacterController;
+use crate::gameplay::items::items::{ItemId, ItemLevel};
+use crate::gameplay::items::stats::{BaseStats, DerivedStats, ItemModifiers, UpgradeStats};
 use crate::gameplay::player::characters::Characters;
 use crate::gameplay::{
     Health,
@@ -81,7 +83,7 @@ pub(crate) struct Level(pub f32);
 #[derive(Component)]
 #[relationship_target(relationship = InInventoryOf)]
 #[derive(Reflect)]
-pub(crate) struct Inventory(Vec<Entity>);
+pub(crate) struct Inventory(Vec<Entity>); //EquippedBy
 
 #[derive(Component)]
 #[relationship(relationship_target = Inventory)]
@@ -164,6 +166,9 @@ fn setup_player(
                 index: 0,
             },
         ),
+        BaseStats::default(),
+        UpgradeStats::default(),
+        DerivedStats::default(),
         CollisionLayers::new(
             GameLayer::Player,
             [
@@ -206,6 +211,12 @@ fn setup_player(
     commands.spawn((abilities::QAbility, abilities::heal::Heal));
     commands.spawn((abilities::EAbility, abilities::dash::Dash));
     commands.spawn((abilities::RAbility, abilities::shield::Shield));
+    commands.spawn((
+        ItemId("tome_crit".to_string()),
+        ItemLevel(1),
+        InInventoryOf(player_add.entity),
+        ItemModifiers::default(),
+    ));
 
     commands.trigger(PlayerSetupComplete);
 }

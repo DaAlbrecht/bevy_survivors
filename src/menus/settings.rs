@@ -5,7 +5,11 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_seedling::prelude::*;
 
-use crate::{menus::Menu, screens::Screen, theme::prelude::*};
+use crate::{
+    menus::Menu,
+    screens::Screen,
+    theme::{prelude::*, widget::ButtonConfig},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Settings), spawn_settings_menu);
@@ -28,7 +32,7 @@ fn spawn_settings_menu(mut commands: Commands) {
         children![
             widget::header("Settings"),
             settings_grid(),
-            widget::button("Back", go_back_on_click),
+            widget::button("Back", go_back_on_click, ButtonConfig::default()),
         ],
     ));
 }
