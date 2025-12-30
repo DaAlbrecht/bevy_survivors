@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::components::{ProjectileCount, ProjectileSpeed, WeaponLifetime};
+use crate::gameplay::weapons::{
+    behaviours::TriggerAttackBehavior,
+    components::{ProjectileCount, ProjectileSpeed, WeaponLifetime},
+};
 
 mod attack;
 mod movement;
@@ -11,7 +14,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(movement::plugin);
 }
 
-#[derive(Component)]
+#[derive(Component, Event)]
 pub struct HomingAttack;
 
 #[derive(Component, Reflect)]
@@ -55,6 +58,12 @@ impl EntityCommand for HomingSpec {
                 pattern: self.movement.kind,
             },
         ));
+    }
+}
+
+impl TriggerAttackBehavior for HomingSpec {
+    fn trigger(&self, mut commands: Commands) {
+        commands.trigger(HomingAttack);
     }
 }
 

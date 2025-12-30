@@ -134,7 +134,7 @@ impl AssetLoader for WeaponRonLoader {
             base_damage: raw.base_damage,
             cooldown: raw.cooldown,
             dot: raw.dot,
-            _despawn_on_hit: raw.despawn_on_hit,
+            despawn_on_hit: raw.despawn_on_hit,
             attack: raw.attack,
             on_hit: raw.on_hit,
             visuals: raw.visuals.load(load_context),
@@ -163,17 +163,16 @@ mod tests {
         }
 
         fn walk(dir: &Path, out: &mut Vec<PathBuf>) {
-            let entries = match std::fs::read_dir(dir) {
-                Ok(rd) => rd,
-                Err(_) => return,
+            let Ok(entries) = std::fs::read_dir(dir) else {
+                return;
             };
 
             for entry in entries.flatten() {
                 let path = entry.path();
-                match path.is_dir() {
-                    true => walk(&path, out),
-                    false if is_weapon_ron(&path) => out.push(path),
-                    _ => {}
+                if path.is_dir() {
+                    walk(&path, out);
+                } else if is_weapon_ron(&path) {
+                    out.push(path);
                 }
             }
         }
@@ -221,14 +220,12 @@ mod tests {
             .filter_map(|p| parse_weapon_ron(p).err())
             .collect();
 
-        match failures.is_empty() {
-            true => {}
-            false => panic!(
-                "Weapon RON validation failed for {} file(s):\n{}",
-                failures.len(),
-                failures.join("\n")
-            ),
-        }
+        assert!(
+            failures.is_empty(),
+            "Weapon RON validation failed for {} file(s):\n{}",
+            failures.len(),
+            failures.join("\n")
+        );
     }
 
     #[test]
@@ -259,14 +256,12 @@ mod tests {
             })
             .collect();
 
-        match failures.is_empty() {
-            true => {}
-            false => panic!(
-                "Weapon reference validation failed for {} file(s):\n{}",
-                failures.len(),
-                failures.join("\n")
-            ),
-        }
+        assert!(
+            failures.is_empty(),
+            "Weapon reference validation failed for {} file(s):\n{}",
+            failures.len(),
+            failures.join("\n")
+        );
     }
 
     #[test]
@@ -288,13 +283,12 @@ mod tests {
             }
         }
 
-        if !failures.is_empty() {
-            panic!(
-                "Weapon kind scan failed for {} file(s):\n{}",
-                failures.len(),
-                failures.join("\n")
-            );
-        }
+        assert!(
+            failures.is_empty(),
+            "Weapon kind scan failed for {} file(s):\n{}",
+            failures.len(),
+            failures.join("\n")
+        );
 
         let missing: Vec<WeaponKind> = WeaponKind::ALL
             .iter()
@@ -302,8 +296,9 @@ mod tests {
             .filter(|k| !seen.contains(k))
             .collect();
 
-        if !missing.is_empty() {
-            panic!("No .weapon.ron found for WeaponKind variant(s): {missing:?}",);
-        }
+        assert!(
+            missing.is_empty(),
+            "No .weapon.ron found for WeaponKind variant(s): {missing:?}",
+        );
     }
 }

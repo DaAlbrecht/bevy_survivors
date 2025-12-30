@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::components::{ProjectileCount, WeaponRange};
+use crate::gameplay::weapons::{
+    behaviours::TriggerAttackBehavior,
+    components::{ProjectileCount, WeaponRange},
+};
 
 mod attack;
 
@@ -9,7 +12,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_chain_attack);
 }
 
-#[derive(Component)]
+#[derive(Component, Event)]
 pub struct ChainAttack;
 
 #[derive(Component)]
@@ -31,5 +34,11 @@ impl EntityCommand for ChainSpec {
             WeaponRange(self.range),
             ChainLifetime(self.bolt_lifetime),
         ));
+    }
+}
+
+impl TriggerAttackBehavior for ChainSpec {
+    fn trigger(&self, mut commands: Commands) {
+        commands.trigger(ChainAttack);
     }
 }

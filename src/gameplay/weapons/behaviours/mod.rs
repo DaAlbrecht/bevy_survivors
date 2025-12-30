@@ -36,3 +36,7 @@ pub struct WeaponAttackSfx(pub Handle<AudioSample>);
 
 #[derive(Component, Clone)]
 pub struct WeaponImpactSfx(pub Handle<AudioSample>);
+
+pub trait TriggerAttackBehavior {
+    fn trigger(&self, commands: Commands);
+}

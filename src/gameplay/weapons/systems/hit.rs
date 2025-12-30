@@ -83,10 +83,10 @@ pub fn on_resolved_hit_aoe(
     trigger: On<WeaponHitEvent>,
     enemy_q: Query<(Entity, &Transform), With<Enemy>>,
     mut commands: Commands,
-) -> Result {
+) {
     let ev = trigger.event();
     let Some(r) = ev.aoe else {
-        return Ok(());
+        return;
     };
 
     for (other_e, other_tf) in &enemy_q {
@@ -107,8 +107,6 @@ pub fn on_resolved_hit_aoe(
             });
         }
     }
-
-    Ok(())
 }
 
 pub fn on_resolved_hit_effects(

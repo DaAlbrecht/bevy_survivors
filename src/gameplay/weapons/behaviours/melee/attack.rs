@@ -4,9 +4,12 @@ use crate::{
         player::{Player, PlayerFacing},
         simple_animation::{AnimationIndices, AnimationPlayback, AnimationTimer},
         weapons::{
-            behaviours::{WeaponProjectileVisuals, melee::MeleeAttackZone},
+            behaviours::{
+                WeaponProjectileVisuals,
+                melee::{AttackCone, MeleeAttack, MeleeAttackZone},
+            },
             components::CastWeapon,
-            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+            systems::cooldown::WeaponDuration,
         },
     },
 };
@@ -16,18 +19,14 @@ use bevy::prelude::*;
 const DEFAUL_DURATION: f32 = 0.5;
 
 pub fn on_melee_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<(&super::AttackCone, &WeaponProjectileVisuals), With<super::MeleeAttack>>,
-    player_q: Query<(&Transform, &PlayerFacing), With<Player>>,
+    _melee_attack: On<MeleeAttack>,
+    weapon: Single<(Entity, &AttackCone, &WeaponProjectileVisuals), With<MeleeAttack>>,
+    player: Single<(&Transform, &PlayerFacing), With<Player>>,
     mut commands: Commands,
-) -> Result {
-    let weapon = trigger.event().entity;
+) {
+    let (entity, cone, visuals) = weapon.into_inner();
 
-    let Ok((cone, visuals)) = weapon_q.get(weapon) else {
-        return Ok(());
-    };
-
-    let (player_pos, facing) = player_q.single()?;
+    let (player_pos, facing) = player.into_inner();
 
     let facing_right = facing.is_right();
     let dir_x = if facing_right { 1.0 } else { -1.0 };
@@ -54,7 +53,7 @@ pub fn on_melee_attack(
         .spawn((
             Name::new("MeleeAttackCone"),
             MeleeAttackZone,
-            CastWeapon(weapon),
+            CastWeapon(entity),
             collider,
             Sensor,
             CollisionEventsEnabled,
@@ -62,6 +61,7 @@ pub fn on_melee_attack(
             DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0),
             WeaponDuration(Timer::from_seconds(duration_secs, TimerMode::Once)),
+            Visibility::default(),
         ))
         .id();
 
@@ -76,7 +76,6 @@ pub fn on_melee_attack(
             Name::new("MeleeAttackConeVisual"),
             sprite,
             Transform::from_xyz(dir_x * sprite_offset_x, 0.0, 0.0),
-            GlobalTransform::default(),
         ));
 
         if let Some(atlas) = visuals.0.atlas.as_ref() {
@@ -90,6 +89,4 @@ pub fn on_melee_attack(
             ));
         }
     });
-
-    Ok(())
 }

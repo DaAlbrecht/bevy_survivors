@@ -2,33 +2,26 @@ use crate::gameplay::{
     enemy::Enemy,
     player::Player,
     weapons::{
-        behaviours::WeaponProjectileVisuals,
+        behaviours::{WeaponProjectileVisuals, shot::ShotAttack},
         components::{CastWeapon, PlayerProjectile, ProjectileDirection},
-        systems::attack::WeaponAttackEvent,
     },
 };
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
 pub fn on_projectile_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<&WeaponProjectileVisuals, With<super::ShotAttack>>,
-    player_q: Query<&Transform, With<Player>>,
-    enemy_q: Query<&Transform, With<Enemy>>,
+    _shot_attack: On<ShotAttack>,
     mut commands: Commands,
-) -> Result {
-    let weapon = trigger.event().entity;
-
-    let Ok(projectile_visuals) = weapon_q.get(weapon) else {
-        return Ok(());
-    };
-
-    let player_pos = player_q.single()?;
+    weapon: Single<(Entity, &WeaponProjectileVisuals), With<ShotAttack>>,
+    player_pos: Single<&Transform, With<Player>>,
+    enemy_positions: Query<&Transform, With<Enemy>>,
+) {
+    let (weapon, projectile_visuals) = weapon.into_inner();
 
     let mut min_distance = f32::MAX;
     let mut closest_enemy: Option<&Transform> = None;
 
-    for enemy_pos in &enemy_q {
+    for enemy_pos in &enemy_positions {
         let distance = player_pos
             .translation
             .truncate()
@@ -48,7 +41,7 @@ pub fn on_projectile_attack(
         let towards_quaternion = Quat::from_rotation_arc(Vec3::Y, direction.extend(0.).normalize());
 
         let mut proj = commands.spawn((
-            Name::new("Projectile"),
+            Name::new("Shot Projectile"),
             CastWeapon(weapon),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
                 .with_rotation(towards_quaternion),
@@ -59,6 +52,4 @@ pub fn on_projectile_attack(
 
         projectile_visuals.0.apply_ec(&mut proj);
     }
-
-    Ok(())
 }

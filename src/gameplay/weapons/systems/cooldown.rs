@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{PausableSystems, screens::Screen};
+use crate::{
+    PausableSystems,
+    gameplay::weapons::{components::Weapon, systems::attack::WeaponAttack},
+    screens::Screen,
+};
 
 #[derive(Component, Default, Reflect)]
 pub struct WeaponCooldown(pub Timer);
@@ -18,11 +22,15 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 fn handle_timers(
+    mut commands: Commands,
     time: Res<Time>,
-    mut cooldowns: Query<&mut WeaponCooldown>,
+    mut weapon_q: Query<(Entity, &mut WeaponCooldown), With<Weapon>>,
     mut durations: Query<&mut WeaponDuration>,
 ) {
-    for mut cooldown in &mut cooldowns {
+    for (entity, mut cooldown) in &mut weapon_q {
+        if cooldown.0.just_finished() {
+            commands.trigger(WeaponAttack { entity });
+        }
         cooldown.0.tick(time.delta());
     }
 

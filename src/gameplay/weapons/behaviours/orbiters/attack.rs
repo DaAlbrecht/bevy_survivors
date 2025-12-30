@@ -5,10 +5,12 @@ use crate::{
         weapons::{
             behaviours::{
                 WeaponProjectileVisuals,
-                orbiters::{OrbitAngularSpeed, OrbitPhase, OrbitRadius, OrbiterProjectile},
+                orbiters::{
+                    OrbitAngularSpeed, OrbitPhase, OrbitRadius, OrbiterProjectile, OrbitersAttack,
+                },
             },
             components::{CastWeapon, PlayerProjectile, ProjectileCount, WeaponLifetime},
-            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+            systems::cooldown::WeaponDuration,
         },
     },
 };
@@ -16,24 +18,23 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 pub fn on_orbiters_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<
+    _orbiters_attack: On<OrbitersAttack>,
+    weapon: Single<
         (
+            Entity,
             &ProjectileCount,
-            &super::OrbitRadius,
-            &super::OrbitAngularSpeed,
+            &OrbitRadius,
+            &OrbitAngularSpeed,
             &WeaponLifetime,
             &WeaponProjectileVisuals,
         ),
-        With<super::OrbitersAttack>,
+        With<OrbitersAttack>,
     >,
     player_q: Query<&Transform, With<Player>>,
     mut commands: Commands,
 ) -> Result {
-    let weapon = trigger.event().entity;
-    let Ok((count, radius, ang_speed, lifetime, projectile_visuals)) = weapon_q.get(weapon) else {
-        return Ok(());
-    };
+    let (entity, count, radius, ang_speed, lifetime, projectile_visuals) = weapon.into_inner();
+
     let player_tf = player_q.single()?;
 
     let count_f = count.0.max(1) as f32;
@@ -45,7 +46,7 @@ pub fn on_orbiters_attack(
 
         let mut e = commands.spawn((
             Name::new("Orbiter"),
-            CastWeapon(weapon),
+            CastWeapon(entity),
             PlayerProjectile,
             OrbiterProjectile,
             OrbitPhase(phase),

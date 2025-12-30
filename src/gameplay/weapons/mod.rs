@@ -37,10 +37,8 @@ impl Command for AddWeapon {
             self.0.kind,
             InInventoryOf(player),
             BaseDamage(self.0.base_damage),
-            WeaponCooldown(Timer::from_seconds(self.0.cooldown, TimerMode::Once)),
+            WeaponCooldown(Timer::from_seconds(self.0.cooldown, TimerMode::Repeating)),
             WeaponProjectileVisuals(self.0.visuals),
-            //TODO: Move to attack spec to allow for pass through
-            DeathOnCollision,
         ));
 
         entity.queue(self.0.attack);
@@ -58,6 +56,11 @@ impl Command for AddWeapon {
 
         if let Some(impact) = self.0.impact_visuals {
             entity.insert(WeaponImpactVisuals(impact));
+        }
+
+        if self.0.despawn_on_hit {
+            //TODO: Move to attack spec to allow for pass through
+            entity.insert(DeathOnCollision);
         }
     }
 }

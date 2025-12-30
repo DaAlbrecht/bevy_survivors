@@ -6,10 +6,13 @@ use crate::{
         weapons::{
             behaviours::{
                 WeaponProjectileVisuals,
-                homing::{CurrentTarget, HitCounter, HomingProjectile, MaxHits, MovementConfig},
+                homing::{
+                    CurrentTarget, HitCounter, HomingAttack, HomingProjectile, MaxHits,
+                    MovementConfig,
+                },
             },
             components::{CastWeapon, ProjectileCount, ProjectileDirection, WeaponLifetime},
-            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+            systems::cooldown::WeaponDuration,
         },
     },
 };
@@ -19,29 +22,24 @@ use bevy::prelude::*;
 use rand::Rng;
 
 pub fn on_homing_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<
+    _homing_attack: On<HomingAttack>,
+    weapon: Single<
         (
+            Entity,
             &ProjectileCount,
             &WeaponLifetime,
             &MaxHits,
             &MovementConfig,
             &WeaponProjectileVisuals,
         ),
-        With<super::HomingAttack>,
+        With<HomingAttack>,
     >,
-    player_q: Query<&Transform, With<Player>>,
+    player_pos: Single<&Transform, With<Player>>,
     enemy_q: Query<Entity, With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
-    let weapon = trigger.event().entity;
-
-    let Ok((count, lifetime, max_hits, movement_config, projectile_visuals)) = weapon_q.get(weapon)
-    else {
-        return Ok(());
-    };
-
-    let player_pos = player_q.single()?;
+    let (entity, count, lifetime, max_hits, movement_config, projectile_visuals) =
+        weapon.into_inner();
 
     let enemy_count = enemy_q.iter().len();
     let mut rng = rand::rng();
@@ -60,7 +58,7 @@ pub fn on_homing_attack(
 
         let mut proj = commands.spawn((
             Name::new("Homing Projectile"),
-            CastWeapon(weapon),
+            CastWeapon(entity),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0),
             ProjectileDirection(Vec3::ZERO), // Will be updated by movement system
             RigidBody::Kinematic,

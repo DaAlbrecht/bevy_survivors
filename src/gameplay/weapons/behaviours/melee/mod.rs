@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::gameplay::weapons::behaviours::TriggerAttackBehavior;
+
 mod attack;
 mod movement;
 
@@ -9,7 +11,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(movement::plugin);
 }
 
-#[derive(Component)]
+#[derive(Component, Event)]
 pub struct MeleeAttack;
 
 #[derive(Component)]
@@ -32,5 +34,11 @@ pub struct MeleeSpec {
 impl EntityCommand for MeleeSpec {
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((MeleeAttack, self.cone));
+    }
+}
+
+impl TriggerAttackBehavior for MeleeSpec {
+    fn trigger(&self, mut commands: Commands) {
+        commands.trigger(MeleeAttack);
     }
 }

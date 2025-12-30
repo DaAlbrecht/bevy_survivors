@@ -6,10 +6,10 @@ use crate::{
         weapons::{
             behaviours::{
                 WeaponProjectileVisuals,
-                zone::{ZoneShape, ZoneTarget},
+                zone::{ZoneAttack, ZoneShape, ZoneTarget},
             },
             components::{CastWeapon, WeaponLifetime},
-            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration},
+            systems::cooldown::WeaponDuration,
         },
     },
 };
@@ -17,29 +17,25 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 
 pub fn on_zone_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<
+    _zone_attack: On<ZoneAttack>,
+    weapon: Single<
         (
+            Entity,
             &ZoneShape,
             &ZoneTarget,
             &WeaponLifetime,
             &WeaponProjectileVisuals,
         ),
-        With<super::ZoneAttack>,
+        With<ZoneAttack>,
     >,
-    player_q: Query<&Transform, With<Player>>,
+    player_pos: Single<&Transform, With<Player>>,
     enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
-) -> Result {
-    let weapon = trigger.event().entity;
+) {
+    let (entity, shape, zone_target, lifetime, visuals) = weapon.into_inner();
 
-    let Ok((shape, zone_target, lifetime, visuals)) = weapon_q.get(weapon) else {
-        return Ok(());
-    };
-
-    let player_pos = player_q.single()?;
-    let Some(target) = get_target_position(zone_target, player_pos, &enemy_q) else {
-        return Ok(());
+    let Some(target) = get_target_position(zone_target, &player_pos, &enemy_q) else {
+        return;
     };
 
     let sprite_size = visuals.0.size;
@@ -58,7 +54,7 @@ pub fn on_zone_attack(
     let mut proj = commands.spawn((
         Name::new("ZoneAttackInstance"),
         super::ZoneAttackInstance,
-        CastWeapon(weapon),
+        CastWeapon(entity),
         collider,
         Sensor,
         CollisionEventsEnabled,
@@ -73,8 +69,6 @@ pub fn on_zone_attack(
     ));
 
     visuals.0.apply_ec(&mut proj);
-
-    Ok(())
 }
 
 fn get_target_position(

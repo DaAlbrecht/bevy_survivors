@@ -7,9 +7,9 @@ use crate::gameplay::{
     simple_animation::{AnimationIndices, AnimationTimer},
     weapons::{
         behaviours::{
-            WeaponAttackSfx, WeaponImpactSfx, chain::ChainSpec, falling::FallingSpec,
-            homing::HomingSpec, melee::MeleeSpec, nova::NovaSpec, orbiters::OrbitersSpec,
-            shot::ShotSpec, zone::ZoneSpec,
+            TriggerAttackBehavior, WeaponAttackSfx, WeaponImpactSfx, chain::ChainSpec,
+            falling::FallingSpec, homing::HomingSpec, melee::MeleeSpec, nova::NovaSpec,
+            orbiters::OrbitersSpec, shot::ShotSpec, zone::ZoneSpec,
         },
         kind::WeaponKind,
     },
@@ -21,7 +21,7 @@ pub struct WeaponSpec {
     pub base_damage: f32,
     pub cooldown: f32,
     pub dot: Option<f32>,
-    pub _despawn_on_hit: bool,
+    pub despawn_on_hit: bool,
 
     pub attack: AttackSpec,
     pub on_hit: HitSpec,
@@ -168,6 +168,21 @@ impl EntityCommand for AttackSpec {
             AttackSpec::Falling(s) => s.apply(entity),
             AttackSpec::Zone(s) => s.apply(entity),
             AttackSpec::Melee(s) => s.apply(entity),
+        }
+    }
+}
+
+impl TriggerAttackBehavior for AttackSpec {
+    fn trigger(&self, commands: Commands) {
+        match self {
+            AttackSpec::Shot(s) => s.trigger(commands),
+            AttackSpec::Orbiters(s) => s.trigger(commands),
+            AttackSpec::Chain(s) => s.trigger(commands),
+            AttackSpec::Nova(s) => s.trigger(commands),
+            AttackSpec::Homing(s) => s.trigger(commands),
+            AttackSpec::Falling(s) => s.trigger(commands),
+            AttackSpec::Melee(s) => s.trigger(commands),
+            AttackSpec::Zone(s) => s.trigger(commands),
         }
     }
 }

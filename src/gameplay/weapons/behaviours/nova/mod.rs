@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::components::{ProjectileCount, ProjectileSpeed};
+use crate::gameplay::weapons::{
+    behaviours::TriggerAttackBehavior,
+    components::{ProjectileCount, ProjectileSpeed},
+};
 
 mod attack;
 
@@ -9,7 +12,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_nova_attack);
 }
 
-#[derive(Component)]
+#[derive(Component, Event)]
 pub struct NovaAttack;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +31,12 @@ impl EntityCommand for NovaSpec {
             ProjectileSpeed(self.speed),
             SpreadPattern(self.spread_pattern),
         ));
+    }
+}
+
+impl TriggerAttackBehavior for NovaSpec {
+    fn trigger(&self, mut commands: Commands) {
+        commands.trigger(NovaAttack);
     }
 }
 

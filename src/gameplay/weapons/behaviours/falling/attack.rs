@@ -2,27 +2,23 @@ use crate::gameplay::{
     enemy::Enemy,
     player::Player,
     weapons::{
-        behaviours::WeaponProjectileVisuals,
+        behaviours::{
+            WeaponProjectileVisuals,
+            falling::{FallingAttack, SpawnHeight},
+        },
         components::{CastWeapon, PlayerProjectile, ProjectileDirection},
-        systems::attack::WeaponAttackEvent,
     },
 };
 use bevy::prelude::*;
 
 pub fn on_falling_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<(&super::SpawnHeight, &WeaponProjectileVisuals), With<super::FallingAttack>>,
-    player_q: Query<&Transform, With<Player>>,
+    _falling_attack: On<FallingAttack>,
+    weapon: Single<(Entity, &SpawnHeight, &WeaponProjectileVisuals), With<FallingAttack>>,
+    player_pos: Single<&Transform, With<Player>>,
     enemy_q: Query<&Transform, With<Enemy>>,
     mut commands: Commands,
 ) -> Result {
-    let weapon = trigger.event().entity;
-
-    let Ok((spawn_height, projectile_visuals)) = weapon_q.get(weapon) else {
-        return Ok(());
-    };
-
-    let player_pos = player_q.single()?;
+    let (entity, spawn_height, projectile_visuals) = weapon.into_inner();
 
     let mut min_distance = f32::MAX;
     let mut closest_enemy: Option<&Transform> = None;
@@ -51,7 +47,7 @@ pub fn on_falling_attack(
 
         let mut proj = commands.spawn((
             Name::new("Falling Projectile"),
-            CastWeapon(weapon),
+            CastWeapon(entity),
             Transform::from_translation(spawn_position),
             ProjectileDirection(fall_direction),
             PlayerProjectile,

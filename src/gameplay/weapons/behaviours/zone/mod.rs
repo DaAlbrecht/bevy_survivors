@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::components::WeaponLifetime;
+use crate::gameplay::weapons::{behaviours::TriggerAttackBehavior, components::WeaponLifetime};
 
 mod attack;
 mod movement;
@@ -11,7 +11,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(movement::plugin);
 }
 
-#[derive(Component)]
+#[derive(Component, Event)]
 pub struct ZoneAttack;
 
 #[derive(Component)]
@@ -49,5 +49,11 @@ impl EntityCommand for ZoneSpec {
             self.shape,
             WeaponLifetime(self.lifetime),
         ));
+    }
+}
+
+impl TriggerAttackBehavior for ZoneSpec {
+    fn trigger(&self, mut commands: Commands) {
+        commands.trigger(ZoneAttack);
     }
 }

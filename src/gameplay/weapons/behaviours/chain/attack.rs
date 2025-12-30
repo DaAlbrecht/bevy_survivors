@@ -7,46 +7,43 @@ use crate::{
         enemy::Enemy,
         player::Player,
         weapons::{
-            behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
+            behaviours::{
+                WeaponAttackSfx, WeaponProjectileVisuals,
+                chain::{ChainAttack, ChainLifetime},
+            },
             components::{BaseDamage, ProjectileCount, WeaponRange},
             spec::components::HitSpec,
-            systems::{attack::WeaponAttackEvent, cooldown::WeaponDuration, hit::WeaponHitEvent},
+            systems::{cooldown::WeaponDuration, hit::WeaponHitEvent},
         },
     },
 };
 
 pub fn on_chain_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<
+    _chain_attack: On<ChainAttack>,
+    weapon_q: Single<
         (
+            Entity,
             &ProjectileCount,
             &WeaponRange,
-            &super::ChainLifetime,
+            &ChainLifetime,
             &WeaponProjectileVisuals,
             Option<&WeaponAttackSfx>,
         ),
-        With<super::ChainAttack>,
+        With<ChainAttack>,
     >,
-    player_q: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    player_pos: Single<&Transform, (With<Player>, Without<Enemy>)>,
     enemy_q: Query<(&Transform, Entity), (With<Enemy>, Without<Player>)>,
     weapon_stats_q: Query<(&HitSpec, &BaseDamage)>,
     mut commands: Commands,
 ) -> Result {
-    let weapon = trigger.event().entity;
-
-    let Ok((chain_count, chain_range, bolt_lifetime, projectile_visuals, sfx)) =
-        weapon_q.get(weapon)
-    else {
-        return Ok(());
-    };
+    let (entity, chain_count, chain_range, bolt_lifetime, projectile_visuals, sfx) =
+        weapon_q.into_inner();
 
     if let Some(weapon_sfx) = sfx {
         commands.spawn((SamplePlayer::new(weapon_sfx.0.clone()), SfxPool));
     }
 
-    let player_pos = player_q.single()?;
-
-    let mut current_source_pos = player_pos;
+    let mut current_source_pos = player_pos.into_inner();
     let mut current_source_entity: Option<Entity> = None;
     let mut visited: HashSet<Entity> = HashSet::new();
 
@@ -95,9 +92,9 @@ pub fn on_chain_attack(
 
         projectile_visuals.0.apply_ec(&mut bolt);
 
-        let (hit, dmg) = weapon_stats_q.get(weapon)?;
+        let (hit, dmg) = weapon_stats_q.get(entity)?;
         commands.trigger(WeaponHitEvent {
-            entity: weapon,
+            entity,
             target: enemy,
             hit_pos: enemy_pos.translation,
             dmg: dmg.0,

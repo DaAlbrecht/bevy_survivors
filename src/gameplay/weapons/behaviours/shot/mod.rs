@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::gameplay::weapons::components::{ExplosionRadius, ProjectileSpeed};
+use crate::gameplay::weapons::{
+    behaviours::TriggerAttackBehavior,
+    components::{ExplosionRadius, ProjectileSpeed},
+};
 
 mod attack;
 
@@ -9,7 +12,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(attack::on_projectile_attack);
 }
 
-#[derive(Component)]
+#[derive(Component, Event)]
 pub struct ShotAttack;
 
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
@@ -27,5 +30,11 @@ impl EntityCommand for ShotSpec {
         if let Some(radius) = self.explosion_radius {
             entity.insert(ExplosionRadius(radius));
         }
+    }
+}
+
+impl TriggerAttackBehavior for ShotSpec {
+    fn trigger(&self, mut commands: Commands) {
+        commands.trigger(ShotAttack);
     }
 }

@@ -5,37 +5,34 @@ use rand::Rng;
 use crate::gameplay::{
     player::Player,
     weapons::{
-        behaviours::{WeaponAttackSfx, WeaponProjectileVisuals},
+        behaviours::{
+            WeaponAttackSfx, WeaponProjectileVisuals,
+            nova::{NovaAttack, SpreadPattern},
+        },
         components::{
             CastWeapon, PlayerProjectile, ProjectileCount, ProjectileDirection, ProjectileSpeed,
         },
-        systems::attack::WeaponAttackEvent,
     },
 };
 
 pub fn on_nova_attack(
-    trigger: On<WeaponAttackEvent>,
-    weapon_q: Query<
+    _nova_attack: On<NovaAttack>,
+    weapon: Single<
         (
+            Entity,
             &ProjectileCount,
             &ProjectileSpeed,
-            &super::SpreadPattern,
+            &SpreadPattern,
             &WeaponProjectileVisuals,
             Option<&WeaponAttackSfx>,
         ),
-        With<super::NovaAttack>,
+        With<NovaAttack>,
     >,
-    player_q: Query<&Transform, With<Player>>,
+    player_pos: Single<&Transform, With<Player>>,
     mut commands: Commands,
     mut rng: Single<&mut WyRand, With<GlobalRng>>,
 ) -> Result {
-    let weapon = trigger.event().entity;
-
-    let Ok((count, _speed, spread_pattern, projectile_visuals, _sfx)) = weapon_q.get(weapon) else {
-        return Ok(());
-    };
-
-    let player_pos = player_q.single()?;
+    let (entity, count, _speed, spread_pattern, projectile_visuals, _sfx) = weapon.into_inner();
 
     let num_projectiles = count.0.max(1);
     let angle_step = std::f32::consts::TAU / num_projectiles as f32;
@@ -51,7 +48,7 @@ pub fn on_nova_attack(
 
         let mut proj = commands.spawn((
             Name::new("Nova Projectile"),
-            CastWeapon(weapon),
+            CastWeapon(entity),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0)
                 .with_rotation(rotation),
             ProjectileDirection(direction.extend(0.0)),

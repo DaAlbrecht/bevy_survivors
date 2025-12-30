@@ -27,26 +27,21 @@ pub struct UpgradeWeaponEvent {
 
 pub fn handle_pickup_weapon(
     trigger: On<PickUpWeaponEvent>,
-    player_q: Query<Entity, With<Player>>,
+    player: Single<Entity, With<Player>>,
     weapons_in_inventories: Query<(&WeaponKind, &InInventoryOf), With<Weapon>>,
     mut commands: Commands,
-) -> Result {
+) {
     let kind = trigger.kind;
-    let Ok(player) = player_q.single() else {
-        return Ok(());
-    };
 
     let owned = weapons_in_inventories
         .iter()
-        .any(|(k, rel)| *k == kind && rel.0 == player);
+        .any(|(k, rel)| *k == kind && rel.0 == *player);
 
     if owned {
         commands.trigger(UpgradeWeaponEvent { kind, amount: 1 });
     } else {
         commands.trigger(SpawnWeaponInstanceEvent { kind });
     }
-
-    Ok(())
 }
 
 pub fn spawn_weapon_instance(
