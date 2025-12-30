@@ -156,7 +156,6 @@ fn setup_player(
         Collider::circle(16.),
         LinearDamping(10.0),
         Friction::ZERO,
-        //spawn_transform,
         Sprite::from_atlas_image(
             player_sprite,
             TextureAtlas {

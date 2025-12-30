@@ -6,6 +6,7 @@
 
 use avian2d::prelude::LinearVelocity;
 use bevy::prelude::*;
+use bevy_enhanced_input::prelude::{Complete, Fire};
 use bevy_seedling::sample::SamplePlayer;
 use rand::prelude::*;
 use std::time::Duration;
@@ -13,7 +14,7 @@ use std::time::Duration;
 use crate::{
     PausableSystems, PostPhysicsAppSystems,
     audio::SpatialPool,
-    gameplay::player::{Player, PlayerAssets},
+    gameplay::player::{Player, PlayerAssets, movement::Move},
     screens::Screen,
 };
 
@@ -23,17 +24,16 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             update_animation_timer.in_set(PostPhysicsAppSystems::TickTimers),
-            (
-                update_animation_movement,
-                update_animation_atlas,
-                trigger_step_sound_effect,
-            )
+            (update_animation_atlas, trigger_step_sound_effect)
                 .chain()
                 .in_set(PostPhysicsAppSystems::PlayAnimations),
         )
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
     );
+
+    app.add_observer(update_animation_movement);
+    app.add_observer(update_animation_idle);
 }
 
 /// Update the animation timer.
@@ -45,21 +45,25 @@ fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation
 
 /// Update the sprite direction and animation state (idling/walking).
 fn update_animation_movement(
+    _input: On<Fire<Move>>,
     player: Single<(&LinearVelocity, &mut Sprite, &mut PlayerAnimation), With<Player>>,
 ) {
     let (linear_velocity, mut sprite, mut animation) = player.into_inner();
 
     let dx = linear_velocity.x;
     if dx != 0.0 {
-        sprite.flip_x = dx < 0.0;
+        sprite.flip_x = dx < 0.6;
     }
+    animation.update_state(PlayerAnimationState::Walking);
+}
 
-    let animation_state = if **linear_velocity == Vec2::ZERO {
-        PlayerAnimationState::Idling
-    } else {
-        PlayerAnimationState::Walking
-    };
-    animation.update_state(animation_state);
+fn update_animation_idle(
+    _input: On<Complete<Move>>,
+    player: Single<&mut PlayerAnimation, With<Player>>,
+) {
+    player
+        .into_inner()
+        .update_state(PlayerAnimationState::Idling);
 }
 
 /// Update the texture atlas to reflect changes in the animation.
