@@ -12,10 +12,10 @@ use crate::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
-            AbilityDamage, DamageCooldown, Enemy, EnemyProjectile, EnemyType, ProjectileOf, Ranged,
+            AbilityDamage, Cooldown, DamageCooldown, Enemy, EnemyProjectile, EnemyType, HitDamage,
+            ProjectileOf, Range, Ranged,
         },
         player::{Direction, Player, PlayerHitEvent},
-        weapons::{Cooldown, Damage, Range},
     },
 };
 
@@ -145,7 +145,7 @@ fn spawn_shooter(
             ..default()
         },
         Health(stats.health),
-        Damage(stats.damage),
+        HitDamage(stats.damage),
         AbilityDamage(stats.ability_damage),
         Range(stats.range),
         Cooldown(Timer::from_seconds(stats.cooldown, TimerMode::Repeating)),
@@ -181,6 +181,7 @@ fn shooter_attack(
 
     commands.spawn((
         EnemyProjectile,
+        Sensor,
         Speed(80.),
         Direction(direction),
         Sprite {

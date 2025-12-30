@@ -1,30 +1,25 @@
+use crate::gameplay::weapons::kind::WeaponKind;
+use crate::gameplay::weapons::systems::pickup::PickUpWeaponEvent;
+use crate::screens::Screen;
 use avian2d::prelude::*;
 use bevy::{color::palettes::tailwind, prelude::*, sprite_render::MeshMaterial2d};
+use bevy_asset_loader::prelude::*;
 use bevy_enhanced_input::prelude::*;
 use bevy_enhanced_input::{action::Action, actions};
 use bevy_seedling::sample::AudioSample;
 
-use crate::GameLayer;
-use crate::gameplay::abilities::dash::Dash;
-use crate::gameplay::abilities::heal::Heal;
-use crate::gameplay::abilities::summon::Summon;
-use crate::gameplay::abilities::{
-    EAbility, QAbility, RAbility, UseEAbility, UseQAbility, UseRAbility,
-};
+use crate::gameplay::abilities;
 use crate::gameplay::character_controller::CharacterController;
 use crate::gameplay::player::characters::Characters;
-use crate::screens::Screen;
-use crate::{
-    asset_tracking::LoadResource,
-    gameplay::{
-        Health,
-        healthbar::HealthBarMaterial,
-        player::{
-            hit::player_hit,
-            movement::{AccumulatedInput, Move},
-        },
+use crate::gameplay::{
+    Health,
+    healthbar::HealthBarMaterial,
+    player::{
+        hit::player_hit,
+        movement::{AccumulatedInput, Move},
     },
 };
+use crate::{AssetStates, GameLayer};
 
 pub(crate) mod animation;
 pub(crate) mod characters;
@@ -35,10 +30,11 @@ use animation::PlayerAnimation;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_input_context::<Player>();
+    app.configure_loading_state(
+        LoadingStateConfig::new(AssetStates::AssetLoading).load_collection::<PlayerAssets>(),
+    );
 
     app.add_plugins((animation::plugin, movement::plugin));
-
-    app.load_resource::<PlayerAssets>();
 
     app.register_type::<XP>().register_type::<Level>();
     app.register_type::<Player>();
@@ -60,6 +56,19 @@ pub(crate) struct PlayerHitEvent {
 #[derive(Component, Reflect, Default)]
 pub(crate) struct Direction(pub Vec3);
 
+#[derive(Component, Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum PlayerFacing {
+    #[default]
+    Right,
+    Left,
+}
+
+impl PlayerFacing {
+    pub fn is_right(self) -> bool {
+        self == PlayerFacing::Right
+    }
+}
+
 #[derive(Component, Reflect)]
 pub(crate) struct XpCollectionRange(pub f32);
 
@@ -70,41 +79,33 @@ pub(crate) struct XP(pub f32);
 pub(crate) struct Level(pub f32);
 
 #[derive(Component)]
-#[relationship_target(relationship = AddToInventory)]
+#[relationship_target(relationship = InInventoryOf)]
 #[derive(Reflect)]
 pub(crate) struct Inventory(Vec<Entity>);
 
 #[derive(Component)]
 #[relationship(relationship_target = Inventory)]
 #[derive(Reflect)]
-pub(crate) struct AddToInventory(pub Entity);
+pub(crate) struct InInventoryOf(pub Entity);
 
-#[derive(Resource, Asset, Clone, Reflect)]
+#[derive(AssetCollection, Resource, Reflect)]
 #[reflect(Resource)]
 pub struct PlayerAssets {
-    #[dependency]
+    #[asset(path = "player_wizard_.png")]
     pub sprite: Handle<Image>,
-    #[dependency]
+    #[asset(
+        paths(
+            "audio/sound_effects/stone_run_1.ogg",
+            "audio/sound_effects/stone_run_2.ogg",
+            "audio/sound_effects/stone_run_3.ogg",
+            "audio/sound_effects/stone_run_4.ogg",
+            "audio/sound_effects/stone_run_5.ogg",
+        ),
+        collection(typed)
+    )]
     pub steps: Vec<Handle<AudioSample>>,
-    #[dependency]
+    #[asset(path = "fx/shadow.png")]
     pub shadow: Handle<Image>,
-}
-
-impl FromWorld for PlayerAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-        Self {
-            sprite: assets.load("player_wizard_.png"),
-            steps: vec![
-                assets.load("audio/sound_effects/stone_run_1.ogg"),
-                assets.load("audio/sound_effects/stone_run_2.ogg"),
-                assets.load("audio/sound_effects/stone_run_3.ogg"),
-                assets.load("audio/sound_effects/stone_run_4.ogg"),
-                assets.load("audio/sound_effects/stone_run_5.ogg"),
-            ],
-            shadow: assets.load("fx/shadow.png"),
-        }
-    }
 }
 
 /// This component will mark the player and be used to set the spawn in tiled
@@ -120,6 +121,7 @@ pub(crate) struct PlayerSpawnPoint;
     Level(1.),
     CharacterController{speed: 100., ..default()},
     AccumulatedInput,
+    PlayerFacing,
     DespawnOnExit::<Screen>(Screen::Gameplay),
 )]
 pub(crate) struct Player;
@@ -197,13 +199,13 @@ fn setup_player(
         CollidingEntities::default(),
     ));
 
-    commands.spawn((QAbility, Heal));
-    commands.spawn((EAbility, Dash));
-    commands.spawn((RAbility, Summon));
-
-    commands.trigger(crate::gameplay::PickUpWeapon {
-        weapon_type: crate::gameplay::weapons::WeaponType::Fireball,
+    commands.trigger(PickUpWeaponEvent {
+        kind: WeaponKind::Fireball,
     });
+
+    commands.spawn((abilities::QAbility, abilities::heal::Heal));
+    commands.spawn((abilities::EAbility, abilities::dash::Dash));
+    commands.spawn((abilities::RAbility, abilities::shield::Shield));
 
     commands.trigger(PlayerSetupComplete);
 }
@@ -229,15 +231,15 @@ fn player_input_actions() -> impl Bundle {
             )),
         ),
         (
-            Action::<UseQAbility>::new(),
+            Action::<abilities::UseQAbility>::new(),
             bindings![KeyCode::KeyQ]
         ),
         (
-            Action::<UseEAbility>::new(),
+            Action::<abilities::UseEAbility>::new(),
             bindings![KeyCode::KeyE]
         ),
         (
-            Action::<UseRAbility>::new(),
+            Action::<abilities::UseRAbility>::new(),
             bindings![KeyCode::KeyR]
         )
     ])

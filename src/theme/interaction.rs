@@ -1,10 +1,11 @@
 use bevy::prelude::*;
+use bevy_asset_loader::prelude::*;
 use bevy_seedling::sample::{AudioSample, SamplePlayer};
 
-use crate::{asset_tracking::LoadResource, audio::SfxPool};
+use crate::audio::SfxPool;
 
 pub(super) fn plugin(app: &mut App) {
-    app.load_resource::<InteractionAssets>();
+    app.init_collection::<InteractionAssets>();
     app.add_systems(
         Update,
         (
@@ -61,27 +62,12 @@ fn apply_interaction_palette(
     }
 }
 
-#[derive(Resource, Asset, Reflect, Clone)]
-pub(crate) struct InteractionAssets {
-    #[dependency]
+#[derive(AssetCollection, Resource)]
+struct InteractionAssets {
+    #[asset(path = "audio/sound_effects/button_hover.ogg")]
     hover: Handle<AudioSample>,
-    #[dependency]
+    #[asset(path = "audio/sound_effects/button_press.ogg")]
     press: Handle<AudioSample>,
-}
-
-impl InteractionAssets {
-    pub(crate) const PATH_BUTTON_HOVER: &'static str = "audio/sound_effects/button_hover.ogg";
-    pub(crate) const PATH_BUTTON_PRESS: &'static str = "audio/sound_effects/button_press.ogg";
-}
-
-impl FromWorld for InteractionAssets {
-    fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
-        Self {
-            hover: assets.load(Self::PATH_BUTTON_HOVER),
-            press: assets.load(Self::PATH_BUTTON_PRESS),
-        }
-    }
 }
 
 fn trigger_interaction_sound_effect(
