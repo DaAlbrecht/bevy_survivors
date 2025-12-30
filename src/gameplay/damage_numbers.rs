@@ -3,6 +3,7 @@ use bevy_asset_loader::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{AssetStates, screens::Screen};
+use rand::Rng;
 
 #[derive(Copy, Clone, Reflect, Deserialize, Serialize, Debug)]
 pub enum DamageType {
@@ -75,8 +76,10 @@ fn spawn_damage_numbers_from_messages(
         };
 
         let font_size = if msg.crit { 24.0 } else { 12.0 };
+        let mut rng = rand::rng();
+        let mut base_pos = Vec3::new(msg.world_pos.x, msg.world_pos.y + 10.0, 20.0);
 
-        let base_pos = Vec3::new(msg.world_pos.x, msg.world_pos.y + 10.0, 20.0);
+        base_pos.x += rng.random_range(-5.0..5.0);
         let snapped = Vec3::new(base_pos.x.round(), base_pos.y.round(), base_pos.z);
 
         let parent = commands

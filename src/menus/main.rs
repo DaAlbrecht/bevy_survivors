@@ -6,7 +6,10 @@ use crate::{
     AssetStates,
     menus::Menu,
     screens::Screen,
-    theme::{palette::SCREEN_BACKGROUND, widget},
+    theme::{
+        palette::SCREEN_BACKGROUND,
+        widget::{self, ButtonConfig},
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -30,9 +33,9 @@ fn spawn_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ImageNode::new(asset_server.load("splash_bs.png",)),
             ),
-            widget::button("Play", start),
-            widget::button("Settings", open_settings_menu),
-            widget::button("Exit", exit_app),
+            widget::button("Play", start, ButtonConfig::default()),
+            widget::button("Settings", open_settings_menu, ButtonConfig::default()),
+            widget::button("Exit", exit_app, ButtonConfig::default()),
         ],
     ));
 }

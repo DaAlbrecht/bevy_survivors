@@ -10,7 +10,7 @@ use crate::theme::palette::{
     BUTTON_BACKGROUND, BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND,
 };
 use crate::theme::prelude::InteractionPalette;
-use crate::theme::widget;
+use crate::theme::widget::{self, ButtonConfig};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::CharacterSelection), spawn_character_screen);
@@ -49,7 +49,7 @@ fn spawn_character_screen(
                     },
                 )),
                 Spawn(spawn_character_grid(asset_server, texture_atlases)),
-                Spawn(widget::button("Back", back)),
+                Spawn(widget::button("Back", back, ButtonConfig::default())),
             )),
         ))),
     ));
