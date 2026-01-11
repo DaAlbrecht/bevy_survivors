@@ -9,7 +9,7 @@ use crate::{
                 zone::{ZoneAttack, ZoneShape, ZoneTarget},
             },
             components::{CastWeapon, WeaponLifetime},
-            systems::cooldown::WeaponDuration,
+            systems::cooldown::WeaponDurationTimer,
         },
     },
 };
@@ -65,7 +65,7 @@ pub fn on_zone_attack(
             scale: scale.extend(1.0),
             ..default()
         },
-        WeaponDuration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
+        WeaponDurationTimer(Timer::from_seconds(lifetime.0, TimerMode::Once)),
     ));
 
     visuals.0.apply_ec(&mut proj);

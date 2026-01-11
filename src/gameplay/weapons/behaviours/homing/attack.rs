@@ -12,7 +12,7 @@ use crate::{
                 },
             },
             components::{CastWeapon, ProjectileCount, ProjectileDirection, WeaponLifetime},
-            systems::cooldown::WeaponDuration,
+            systems::cooldown::WeaponDurationTimer,
         },
     },
 };
@@ -74,7 +74,7 @@ pub fn on_homing_attack(
                 max_hits: max_hits.0 as usize,
             },
             movement_config.clone(),
-            WeaponDuration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
+            WeaponDurationTimer(Timer::from_seconds(lifetime.0, TimerMode::Once)),
         ));
 
         projectile_visuals.0.apply_ec(&mut proj);

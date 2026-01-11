@@ -234,7 +234,8 @@ impl Default for BaseStats {
         let mut stats = Stats::zero();
 
         // Set multiplier-based stats to 1.0 (100% baseline)
-        stats.set(StatId::CritDamage, 1.5); // 150% crit damage baseline
+        stats.set(StatId::CritChance, 0.5);
+        stats.set(StatId::CritDamage, 1.5);
         stats.set(StatId::AttackSpeed, 1.0);
         stats.set(StatId::MoveSpeed, 1.0);
         stats.set(StatId::Duration, 1.0);
@@ -254,8 +255,15 @@ impl Default for BaseStats {
 #[derive(Component, Default, Debug, Clone, Copy)]
 pub struct UpgradeStats(pub Stats);
 
-#[derive(Component, Default, Debug, Clone, Copy)]
+#[derive(Component, Debug, Clone, Copy)]
 pub struct DerivedStats(pub Stats);
+
+impl Default for DerivedStats {
+    fn default() -> Self {
+        // Start with BaseStats defaults so we always have valid values
+        Self(BaseStats::default().0)
+    }
+}
 
 #[derive(Component, Debug, Clone, Copy)]
 pub struct ItemModifiers {

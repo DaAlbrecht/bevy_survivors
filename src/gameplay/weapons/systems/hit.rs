@@ -1,7 +1,7 @@
 use crate::audio::SfxPool;
 use crate::gameplay::{
     damage_numbers::DamageType,
-    enemy::{Enemy, EnemyDamageEvent, Root},
+    enemy::{Enemy, Root, damage::EnemyDamageEvent},
     simple_animation::AnimationPlayback,
     weapons::{
         behaviours::{WeaponImpactSfx, WeaponImpactVisuals},

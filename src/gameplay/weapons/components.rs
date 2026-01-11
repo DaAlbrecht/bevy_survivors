@@ -3,7 +3,7 @@ use bevy::prelude::*;
 
 use crate::{
     GameLayer,
-    gameplay::{damage_numbers::DamageType, weapons::systems::cooldown::WeaponDuration},
+    gameplay::{damage_numbers::DamageType, weapons::systems::cooldown::WeaponDurationTimer},
 };
 
 #[derive(Component)]
@@ -23,7 +23,7 @@ pub struct Weapon;
         ],
     ),
     // TODO: This is a placeholder to remove projectiles after some time.
-    WeaponDuration(Timer::from_seconds(5.0, TimerMode::Once)),
+    WeaponDurationTimer(Timer::from_seconds(5.0, TimerMode::Once)),
 )]
 pub(crate) struct PlayerProjectile;
 

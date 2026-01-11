@@ -2,7 +2,7 @@ use crate::gameplay::abilities::{
     Ability, AbilityAssets, AbilityCooldown, UseAbility, init_ability_assets, try_use_ability,
 };
 use crate::gameplay::character_controller::CharacterController;
-use crate::gameplay::enemy::{Enemy, EnemyDamageEvent, EnemyType};
+use crate::gameplay::enemy::{Enemy, EnemyType, damage::EnemyDamageEvent};
 use crate::gameplay::player::{Direction, Player};
 use crate::gameplay::simple_animation::{AnimationIndices, AnimationPlayback, AnimationTimer};
 use crate::gameplay::{Health, Speed};

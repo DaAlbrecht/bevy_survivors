@@ -6,7 +6,7 @@ use crate::gameplay::{
         behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals},
         components::{BaseDamage, CollisionDamage, DeathOnCollision, TickDuration, Weapon},
         spec::components::WeaponSpec,
-        systems::cooldown::WeaponCooldown,
+        systems::cooldown::{WeaponBaseCooldown, WeaponCooldownTimer},
     },
 };
 
@@ -37,7 +37,8 @@ impl Command for AddWeapon {
             self.0.kind,
             InInventoryOf(player),
             BaseDamage(self.0.base_damage),
-            WeaponCooldown(Timer::from_seconds(self.0.cooldown, TimerMode::Repeating)),
+            WeaponBaseCooldown(self.0.cooldown),
+            WeaponCooldownTimer(Timer::from_seconds(self.0.cooldown, TimerMode::Repeating)),
             WeaponProjectileVisuals(self.0.visuals),
         ));
 

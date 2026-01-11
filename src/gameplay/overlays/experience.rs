@@ -12,7 +12,7 @@ use crate::{
     audio::SfxPool,
     gameplay::{
         Speed,
-        enemy::EnemyDeathEvent,
+        enemy::damage::EnemyDeathEvent,
         overlays::Overlay,
         player::{Level, Player, XP, XpCollectionRange},
     },
