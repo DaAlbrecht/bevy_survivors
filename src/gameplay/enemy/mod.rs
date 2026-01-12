@@ -1,26 +1,24 @@
 use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
-use rand::Rng;
 
 use crate::{
     GameLayer, PLAYER_SIZE, PROJECTILE_SIZE, PausableSystems, PostPhysicsAppSystems,
     gameplay::{
-        Despawn, Health, Speed,
+        Despawn, Speed,
         character_controller::CharacterController,
-        damage_numbers::{DamageMessage, DamageType},
         enemy::{
             jumper::{JumperAttackEvent, JumperAttackIndicator},
             shooter::{ShooterAttackEvent, ShooterProjectileHitEvent},
             sprinter::SprinterAttackEvent,
         },
         player::{Direction, PlayerHitEvent},
-        simple_animation::HurtAnimationTimer,
     },
     screens::Screen,
 };
 
 use super::player::Player;
 
+pub(crate) mod damage;
 pub(crate) mod jumper;
 pub(crate) mod shooter;
 pub(crate) mod sprinter;
@@ -28,6 +26,7 @@ pub(crate) mod walker;
 
 pub(crate) fn plugin(app: &mut App) {
     app.add_plugins((
+        damage::plugin,
         jumper::plugin,
         walker::plugin,
         shooter::plugin,
@@ -63,8 +62,6 @@ pub(crate) fn plugin(app: &mut App) {
             .run_if(in_state(Screen::Gameplay))
             .in_set(PausableSystems),
     );
-
-    app.add_observer(enemy_take_dmg);
 }
 
 const RANGE_BUFFER: f32 = 50.0;
@@ -88,23 +85,6 @@ pub(crate) struct Enemy;
 
 #[derive(Event, Reflect)]
 pub(crate) struct PlayerPushingEvent(pub Entity);
-
-#[derive(Event, Reflect)]
-pub(crate) struct EnemyDamageEvent {
-    pub entity_hit: Entity,
-    pub dmg: f32,
-    pub damage_type: DamageType,
-}
-
-#[derive(Event, Reflect)]
-pub(crate) struct EnemyKnockbackEvent {
-    pub entity_hit: Entity,
-    pub strength: f32,
-    pub dir: Vec2,
-}
-
-#[derive(Event, Reflect)]
-pub(crate) struct EnemyDeathEvent(pub Transform);
 
 #[derive(Component, Reflect)]
 pub(crate) struct Colliding;
@@ -283,39 +263,6 @@ fn update_animation_movement(mut enemies_q: Query<(&Direction, &mut Sprite), Wit
         let dx = intended_direction.0.x;
         if dx != 0.0 {
             sprite.flip_x = dx < 0.0;
-        }
-    }
-}
-
-fn enemy_take_dmg(
-    trigger: On<EnemyDamageEvent>,
-    mut damage_writer: MessageWriter<DamageMessage>,
-    mut enemy_q: Query<(&mut Health, &Transform), (With<Enemy>, Without<Despawn>)>,
-    mut commands: Commands,
-) {
-    let enemy_entity = trigger.entity_hit;
-
-    commands
-        .entity(enemy_entity)
-        .insert(HurtAnimationTimer::default());
-
-    if let Ok((mut health, transform)) = enemy_q.get_mut(enemy_entity) {
-        health.0 -= trigger.dmg;
-
-        //TODO: GET REAL CRIT
-        //TODO: DamageType only really used for effects
-        let mut rng = rand::rng();
-        let is_crit = rng.random_bool(0.10);
-        damage_writer.write(DamageMessage {
-            amount: trigger.dmg as i32,
-            world_pos: transform.translation.truncate(),
-            crit: is_crit,
-            damage_type: trigger.damage_type,
-        });
-
-        if health.0 <= 0.0 {
-            commands.trigger(EnemyDeathEvent(*transform));
-            commands.entity(enemy_entity).insert(Despawn);
         }
     }
 }

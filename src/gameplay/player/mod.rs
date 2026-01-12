@@ -10,6 +10,10 @@ use bevy_seedling::sample::AudioSample;
 
 use crate::gameplay::abilities;
 use crate::gameplay::character_controller::CharacterController;
+use crate::gameplay::items::items::{ItemId, ItemLevel};
+use crate::gameplay::items::stats::{
+    BaseStats, DerivedStats, ItemModifiers, RecalculateStats, StatId, UpgradeStats,
+};
 use crate::gameplay::player::characters::Characters;
 use crate::gameplay::{
     Health,
@@ -43,6 +47,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_observer(setup_player);
     app.add_observer(patch_player_spawn_pos);
+    app.add_observer(update_player_stats_on_change);
 }
 
 #[derive(Event)]
@@ -81,7 +86,7 @@ pub(crate) struct Level(pub f32);
 #[derive(Component)]
 #[relationship_target(relationship = InInventoryOf)]
 #[derive(Reflect)]
-pub(crate) struct Inventory(Vec<Entity>);
+pub(crate) struct Inventory(Vec<Entity>); //EquippedBy
 
 #[derive(Component)]
 #[relationship(relationship_target = Inventory)]
@@ -115,6 +120,9 @@ pub(crate) struct PlayerSpawnPoint;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[require(
+    BaseStats,
+    UpgradeStats,
+    DerivedStats,
     Health(100.),
     XpCollectionRange(150.0),
     XP(0.),
@@ -205,7 +213,16 @@ fn setup_player(
     commands.spawn((abilities::QAbility, abilities::heal::Heal));
     commands.spawn((abilities::EAbility, abilities::dash::Dash));
     commands.spawn((abilities::RAbility, abilities::shield::Shield));
+    commands.spawn((
+        ItemId("tome_crit".to_string()),
+        ItemLevel(1),
+        InInventoryOf(player_add.entity),
+        ItemModifiers::default(),
+    ));
 
+    commands.trigger(RecalculateStats {
+        entity: player_add.entity,
+    });
     commands.trigger(PlayerSetupComplete);
 }
 
@@ -218,6 +235,26 @@ fn patch_player_spawn_pos(
     for mut player_pos in player_pos.iter_mut() {
         *player_pos = spawn_transform;
     }
+}
+
+fn update_player_stats_on_change(
+    trigger: On<RecalculateStats>,
+    mut player_q: Query<(&mut CharacterController, &mut Health), With<Player>>,
+    stats_q: Query<&DerivedStats>,
+) {
+    let Ok(stats) = stats_q.get(trigger.entity) else {
+        return;
+    };
+
+    let Ok((mut controller, mut health)) = player_q.get_mut(trigger.entity) else {
+        return;
+    };
+
+    let move_speed = stats.0.get(StatId::MoveSpeed);
+    let max_health = stats.0.get(StatId::MaxHealth);
+
+    controller.speed = move_speed * 100.0;
+    health.0 = health.0.min(max_health);
 }
 
 fn player_input_actions() -> impl Bundle {

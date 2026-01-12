@@ -89,7 +89,7 @@ fn spawn_hud(
                 .spawn((
                     Name::new("LevelUp"),
                     Node {
-                        width: Val::Px(352.),
+                        width: Val::Px(416.),
                         height: Val::Px(96.),
                         display: Display::Flex,
                         position_type: PositionType::Relative,
@@ -118,7 +118,7 @@ fn spawn_hud(
                                 display: Display::Grid,
                                 width: Val::Percent(100.0),
                                 height: Val::Percent(100.0),
-                                grid_template_columns: RepeatedGridTrack::flex(11, 1.0),
+                                grid_template_columns: RepeatedGridTrack::flex(13, 1.0),
                                 grid_template_rows: RepeatedGridTrack::flex(3, 1.0),
                                 position_type: PositionType::Absolute,
                                 ..default()

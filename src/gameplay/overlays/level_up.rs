@@ -1,4 +1,3 @@
-//! The level up menu.
 use bevy::{color::palettes::basic, prelude::*, text::FontSmoothing};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;

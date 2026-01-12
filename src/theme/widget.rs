@@ -58,8 +58,28 @@ fn label_base(text: impl Into<String>, font_size: f32) -> impl Bundle {
     )
 }
 
+pub(crate) struct ButtonConfig {
+    pub width: Val,
+    pub height: Val,
+    pub text_size: f32,
+}
+
+impl Default for ButtonConfig {
+    fn default() -> Self {
+        Self {
+            width: Px(380.0),
+            height: Px(80.0),
+            text_size: 40.0,
+        }
+    }
+}
+
 /// A large rounded button with text and an action defined as an [`Observer`].
-pub(crate) fn button<E, B, M, I>(text: impl Into<String>, action: I) -> impl Bundle
+pub(crate) fn button<E, B, M, I>(
+    text: impl Into<String>,
+    action: I,
+    config: ButtonConfig,
+) -> impl Bundle
 where
     E: EntityEvent,
     B: Bundle,
@@ -67,11 +87,12 @@ where
 {
     button_base(
         text,
+        config.text_size,
         action,
         (
             Node {
-                width: Px(380.0),
-                height: Px(80.0),
+                width: config.width,
+                height: config.height,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 ..default()
@@ -90,6 +111,7 @@ where
 {
     button_base(
         text,
+        42.0,
         action,
         Node {
             width: Px(30.0),
@@ -104,6 +126,7 @@ where
 /// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
 fn button_base<E, B, M, I>(
     text: impl Into<String>,
+    text_size: f32,
     action: I,
     button_bundle: impl Bundle,
 ) -> impl Bundle
@@ -117,7 +140,7 @@ where
     (
         Name::new("Button"),
         Node::default(),
-        Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
+        Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
             parent
                 .spawn((
                     Name::new("Button Inner"),
@@ -131,7 +154,7 @@ where
                     children![(
                         Name::new("Button Text"),
                         Text(text),
-                        TextFont::from_font_size(40.0),
+                        TextFont::from_font_size(text_size),
                         TextColor(BUTTON_TEXT.into()),
                         // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,

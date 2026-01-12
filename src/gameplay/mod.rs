@@ -5,6 +5,7 @@ pub(crate) mod character_controller;
 pub(crate) mod damage_numbers;
 pub(crate) mod enemy;
 pub(crate) mod healthbar;
+pub(crate) mod items;
 pub(crate) mod level;
 pub(crate) mod overlays;
 pub(crate) mod player;
@@ -26,6 +27,7 @@ pub(crate) fn plugin(app: &mut App) {
         abilities::plugin,
         damage_numbers::plugin,
         enemy::plugin,
+        items::plugin,
         healthbar::plugin,
         level::plugin,
         overlays::plugin,

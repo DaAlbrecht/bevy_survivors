@@ -9,7 +9,7 @@ use crate::{
                 melee::{AttackCone, MeleeAttack, MeleeAttackZone},
             },
             components::CastWeapon,
-            systems::cooldown::WeaponDuration,
+            systems::cooldown::WeaponDurationTimer,
         },
     },
 };
@@ -60,7 +60,7 @@ pub fn on_melee_attack(
             CollisionLayers::new(GameLayer::Player, [GameLayer::Enemy, GameLayer::Default]),
             DebugRender::default().with_collider_color(Color::srgb(0.0, 1.0, 0.0)),
             Transform::from_xyz(player_pos.translation.x, player_pos.translation.y, 10.0),
-            WeaponDuration(Timer::from_seconds(duration_secs, TimerMode::Once)),
+            WeaponDurationTimer(Timer::from_seconds(duration_secs, TimerMode::Once)),
             Visibility::default(),
         ))
         .id();

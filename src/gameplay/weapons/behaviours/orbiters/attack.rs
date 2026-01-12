@@ -10,7 +10,7 @@ use crate::{
                 },
             },
             components::{CastWeapon, PlayerProjectile, ProjectileCount, WeaponLifetime},
-            systems::cooldown::WeaponDuration,
+            systems::cooldown::WeaponDurationTimer,
         },
     },
 };
@@ -52,7 +52,7 @@ pub fn on_orbiters_attack(
             OrbitPhase(phase),
             OrbitRadius(radius.0),
             OrbitAngularSpeed(ang_speed.0),
-            WeaponDuration(Timer::from_seconds(lifetime.0, TimerMode::Once)),
+            WeaponDurationTimer(Timer::from_seconds(lifetime.0, TimerMode::Once)),
             Transform::from_xyz(world_pos.x, world_pos.y, 10.0),
             // physics
             Collider::rectangle(16., 16.),

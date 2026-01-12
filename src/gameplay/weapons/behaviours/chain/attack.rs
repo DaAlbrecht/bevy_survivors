@@ -13,7 +13,7 @@ use crate::{
             },
             components::{BaseDamage, ProjectileCount, WeaponRange},
             spec::components::HitSpec,
-            systems::{cooldown::WeaponDuration, hit::WeaponHitEvent},
+            systems::{cooldown::WeaponDurationTimer, hit::WeaponHitEvent},
         },
     },
 };
@@ -87,7 +87,7 @@ pub fn on_chain_attack(
                 rotation: Quat::from_rotation_z(angle),
                 scale: Vec3::new(length / 16.0, 1.0, 1.0),
             },
-            WeaponDuration(Timer::from_seconds(bolt_lifetime.0, TimerMode::Once)),
+            WeaponDurationTimer(Timer::from_seconds(bolt_lifetime.0, TimerMode::Once)),
         ));
 
         projectile_visuals.0.apply_ec(&mut bolt);
