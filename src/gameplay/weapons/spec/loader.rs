@@ -43,7 +43,7 @@ impl VisualRaw {
             let layout = TextureAtlasLayout::from_grid(a.cell, a.columns, a.rows, None, None);
             let label = format!(
                 "{}_atlas_layout_{}",
-                load_context.path().to_string_lossy(),
+                load_context.path().path().display(),
                 self.asset_path
             );
             let layout_handle = load_context.add_labeled_asset(label, layout);
@@ -92,6 +92,7 @@ impl SfxRaw {
 }
 
 //Inspired by https://github.com/NiklasEi/bevy_common_assets/blob/main/src/ron.rs
+#[derive(Reflect)]
 pub struct WeaponRonLoader {
     extensions: Vec<&'static str>,
 }

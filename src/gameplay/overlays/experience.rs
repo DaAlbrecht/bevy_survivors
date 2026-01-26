@@ -164,9 +164,9 @@ fn spawn_xp_bar(mut commands: Commands, mut ui_materials: ResMut<Assets<XpBarMat
                     height: Percent(50.0),
                     margin: UiRect::all(Px(20.)),
                     border: UiRect::all(Val::Px(2.)),
+                    border_radius: BorderRadius::all(Px(10.0)),
                     ..default()
                 },
-                BorderRadius::all(Px(10.0)),
                 MaterialNode(ui_materials.add(XpBarMaterial {
                     filled_color: AMBER_300.into(),
                     background_color: SLATE_900.into(),

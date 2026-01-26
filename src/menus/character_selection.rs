@@ -136,12 +136,12 @@ fn spawn_character_cards(
                                 top: Val::Px(0.),
                                 bottom: Val::Px(0.),
                             },
+                            border_radius: BorderRadius::MAX,
                             ..default()
                         },
                         TextLayout::new_with_justify(Justify::Center),
                         character,
                         widget::label("Select"),
-                        BorderRadius::MAX,
                         BackgroundColor(BUTTON_BACKGROUND.into()),
                         InteractionPalette {
                             none: BUTTON_BACKGROUND.into(),

@@ -4,40 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.17", default-features = false, features = [
-    "animation",
-    "bevy_asset",
-    "bevy_color",
-    "bevy_core_pipeline",
-    "bevy_gilrs",
-    "bevy_gizmos",
-    "bevy_mesh_picking_backend",
-    "bevy_pbr",
-    "bevy_picking",
-    "bevy_render",
-    "bevy_scene",
-    "bevy_sprite",
-    "bevy_sprite_picking_backend",
-    "bevy_state",
-    "bevy_text",
-    "bevy_ui",
-    "bevy_ui_picking_backend",
-    "bevy_ui_render",
-    "bevy_sprite_render",
-    "bevy_window",
-    "bevy_winit",
-    "custom_cursor",
-    "default_font",
+bevy = { version = "0.18", default-features = false, features = [
+    "2d_api",
+    "2d_bevy_render",
+    "ui",
+    "scene",
+    "picking",
+    "experimental_bevy_feathers",
     "experimental_bevy_ui_widgets",
-    "hdr",
-    "multi_threaded",
-    "png",
-    "smaa_luts",
-    "sysinfo_plugin",
-    "tonemapping_luts",
-    "webgl2",
-    "reflect_auto_register",
-    "wayland",
+
 ] }
 
 # Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
@@ -51,29 +26,29 @@ tracing = { version = "0.1", features = [
 ] }
 
 # Assets
-bevy_asset_loader = { version = "0.24", features = ["standard_dynamic_assets"] }
+bevy_asset_loader = { version = "0.25", features = ["standard_dynamic_assets"] }
 serde = { version = "1.0" }
-serde_ron = { version = "0.12", package = "ron"}
+serde_ron = { version = "0.12", package = "ron" }
 thiserror = "2.0"
 
 # Rand
-bevy_rand = { version = "0.12", features = ["wyrand"] }
+bevy_rand = { version = "0.13", features = ["wyrand"] }
 rand_core = "0.9"
 rand = "0.9"
 
 # World inspector
-bevy-inspector-egui = "0.35"
+bevy-inspector-egui = "0.36"
 # Handling user input
-bevy_enhanced_input = "0.20"
+bevy_enhanced_input = "0.22"
 # Sound
-bevy_seedling = { version = "0.6.0", default-features = false, features = [
+bevy_seedling = { version = "0.7.0", default-features = false, features = [
     "ogg",
     "mp3",
     "wav",
 ] }
-bevy_ecs_tiled = { version = "0.10", features = ["avian"] }
+bevy_ecs_tiled = { version = "0.11", features = ["avian"] }
 # Physics engine 
-avian2d = { version = "0.4", default-features = false, features = [
+avian2d = { version = "0.5", default-features = false, features = [
     "2d",
     "f32",
     "default-collider",
@@ -81,8 +56,7 @@ avian2d = { version = "0.4", default-features = false, features = [
     "debug-plugin",
 ] }
 
-# Latest version that works with bevy_seedling
-wasm-bindgen = { version = "=0.2.101", optional = true, default-features = false }
+wasm-bindgen = { version = "0.2.108", optional = true, default-features = false }
 
 [features]
 default = ["dev_native"]
