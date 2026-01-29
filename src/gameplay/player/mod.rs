@@ -150,6 +150,7 @@ fn setup_player(
 
     commands.entity(player_add.entity).insert((
         Name::new("Player"),
+        DespawnOnExit(Screen::Gameplay),
         player_input_actions(),
         PlayerAnimation::new(),
         LockedAxes::ROTATION_LOCKED,
@@ -202,9 +203,12 @@ fn setup_player(
         kind: WeaponKind::Fireball,
     });
 
-    commands.spawn((abilities::QAbility, abilities::heal::Heal));
-    commands.spawn((abilities::EAbility, abilities::dash::Dash));
-    commands.spawn((abilities::RAbility, abilities::shield::Shield));
+    // Abilities as children so they despawn with player
+    commands.entity(player_add.entity).with_children(|parent| {
+        parent.spawn((abilities::EAbility, abilities::dash::Dash));
+        parent.spawn((abilities::RAbility, abilities::shield::Shield));
+        parent.spawn((abilities::QAbility, abilities::heal::Heal));
+    });
 
     commands.trigger(PlayerSetupComplete);
 }

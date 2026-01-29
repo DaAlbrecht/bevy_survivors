@@ -83,7 +83,8 @@ pub(crate) struct WavePlan {
 fn wave_spawner(mut commands: Commands) {
     info!("Wave spawned");
     commands.insert_resource(make_wave_plan());
-    commands.spawn((Name::new("Wave"), Wave));
+    commands.spawn((Name::new("Wave"), Wave, DespawnOnExit(Screen::Gameplay)));
+    // commands.spawn((Name::new("Wave"), Wave));
     commands.trigger(WavePatchEvent);
 }
 

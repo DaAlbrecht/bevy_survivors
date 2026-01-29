@@ -1,13 +1,16 @@
 use bevy::prelude::*;
 
-use crate::gameplay::{
-    player::{InInventoryOf, Player},
-    weapons::{
-        behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals},
-        components::{BaseDamage, CollisionDamage, DeathOnCollision, TickDuration, Weapon},
-        spec::components::WeaponSpec,
-        systems::cooldown::WeaponCooldown,
+use crate::{
+    gameplay::{
+        player::{InInventoryOf, Player},
+        weapons::{
+            behaviours::{WeaponImpactVisuals, WeaponProjectileVisuals},
+            components::{BaseDamage, CollisionDamage, DeathOnCollision, TickDuration, Weapon},
+            spec::components::WeaponSpec,
+            systems::cooldown::WeaponCooldown,
+        },
     },
+    screens::Screen,
 };
 
 mod behaviours;
@@ -34,6 +37,7 @@ impl Command for AddWeapon {
         let mut entity = commands.spawn((
             Name::new(format!("{:?}", self.0.kind)),
             Weapon,
+            DespawnOnExit(Screen::Gameplay),
             self.0.kind,
             InInventoryOf(player),
             BaseDamage(self.0.base_damage),
