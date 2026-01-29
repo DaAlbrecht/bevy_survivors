@@ -1,15 +1,13 @@
-use std::f32::consts::PI;
-
+use avian2d::prelude::SpatialQuery;
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE, SPAWN_RADIUS,
+    ENEMY_SIZE,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
-        enemy::{DamageCooldown, Enemy, EnemyType, HitDamage, Meele},
+        enemy::{DamageCooldown, Enemy, EnemyType, HitDamage, Meele, get_valid_spawn_position},
         player::Player,
         simple_animation::{AnimationIndices, AnimationTimer},
     },
@@ -49,7 +47,8 @@ fn spawn_walker(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_q: Query<&Transform, With<Player>>,
-    mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    spatial_q: SpatialQuery,
+    rng: Single<&mut WyRand, With<GlobalRng>>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
     walker_stats: Res<WalkerStats>,
 ) {
@@ -59,18 +58,12 @@ fn spawn_walker(
 
     let stats = walker_stats;
 
-    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    // let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
-    let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
-
-    let desired = Vec2::new(
-        player_pos.translation.x + offset_x,
-        player_pos.translation.y + offset_y,
-    );
-
-    let enemy_pos_x = desired.x;
-    let enemy_pos_y = desired.y;
+    let Some(enemy_pos) =
+        get_valid_spawn_position(spatial_q, player_pos.translation.truncate(), rng)
+    else {
+        // No valid pos
+        return;
+    };
 
     let texture: Handle<Image> = asset_server.load(stats.sprite.clone());
     let layout = TextureAtlasLayout::from_grid(UVec2 { x: 58, y: 24 }, 11, 1, None, None);
@@ -83,7 +76,7 @@ fn spawn_walker(
         HitDamage(stats.damage),
         Health(stats.health),
         Speed(stats.speed),
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0)
+        Transform::from_xyz(enemy_pos.x, enemy_pos.y, 0.0)
             .with_scale(Vec3::splat((ENEMY_SIZE / 24.0) * 0.7)),
         Sprite::from_atlas_image(
             texture,

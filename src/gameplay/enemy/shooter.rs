@@ -1,19 +1,17 @@
 use avian2d::prelude::*;
-use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
 
 use crate::{
-    GameLayer, SPAWN_RADIUS,
+    GameLayer,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
             AbilityDamage, Cooldown, DamageCooldown, Enemy, EnemyProjectile, EnemyType, HitDamage,
-            ProjectileOf, Range, Ranged,
+            ProjectileOf, Range, Ranged, get_valid_spawn_position,
         },
         player::{Direction, Player, PlayerHitEvent},
     },
@@ -76,7 +74,8 @@ fn spawn_shooter(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_q: Query<&Transform, With<Player>>,
-    mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    rng: Single<&mut WyRand, With<GlobalRng>>,
+    spatial_q: SpatialQuery,
     shooter_q: Query<&Shooter>,
     shooter_stats: Res<ShooterStats>,
 ) {
@@ -86,18 +85,12 @@ fn spawn_shooter(
 
     let stats = shooter_stats;
 
-    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    // let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
-    let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
-
-    // tile size, search radius
-    let desired = Vec2::new(
-        player_pos.translation.x + offset_x,
-        player_pos.translation.y + offset_y,
-    );
-    let enemy_pos_x = desired.x;
-    let enemy_pos_y = desired.y;
+    let Some(enemy_pos) =
+        get_valid_spawn_position(spatial_q, player_pos.translation.truncate(), rng)
+    else {
+        // No valid pos
+        return;
+    };
 
     let mut shooter_count = shooter_q.iter().count();
     shooter_count += 1;
@@ -135,7 +128,7 @@ fn spawn_shooter(
                 })
             )
         ],
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0),
+        Transform::from_xyz(enemy_pos.x, enemy_pos.y, 0.0),
         Sprite {
             image: asset_server.load(stats.sprite.clone()),
             ..default()

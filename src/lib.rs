@@ -79,6 +79,7 @@ const PROJECTILE_SIZE: f32 = 8.0;
 const XP_GAIN_GEM: f32 = 10.;
 
 const SPAWN_RADIUS: f32 = 200.0;
+const SPAWN_ATTEMPTS: usize = 10;
 const SPAWN_RADIUS_BUFFER: f32 = 80.0;
 
 /// How quickly should the camera snap to the desired location.

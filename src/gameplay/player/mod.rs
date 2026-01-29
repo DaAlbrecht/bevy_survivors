@@ -150,7 +150,6 @@ fn setup_player(
 
     commands.entity(player_add.entity).insert((
         Name::new("Player"),
-        DespawnOnExit(Screen::Gameplay),
         player_input_actions(),
         PlayerAnimation::new(),
         LockedAxes::ROTATION_LOCKED,

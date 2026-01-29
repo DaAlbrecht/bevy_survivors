@@ -5,7 +5,7 @@ use crate::gameplay::enemy::EnemyType;
 
 use super::{WavePlan, WaveStats};
 
-//TODO: Later read json or someting
+//TODO: Later read json or something
 pub(crate) fn make_wave_plan() -> WavePlan {
     WavePlan {
         waves: VecDeque::from([

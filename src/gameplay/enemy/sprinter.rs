@@ -1,18 +1,15 @@
 use avian2d::prelude::*;
-use std::f32::consts::PI;
-
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE, SPAWN_RADIUS,
+    ENEMY_SIZE,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
             AbilityDamage, AbilitySpeed, Charge, Cooldown, DamageCooldown, Enemy, EnemyType, Halt,
-            HitDamage, Meele, RANGE_BUFFER, Range,
+            HitDamage, Meele, RANGE_BUFFER, Range, get_valid_spawn_position,
         },
         player::{Direction, Player, PlayerHitEvent},
     },
@@ -36,7 +33,7 @@ pub(crate) fn plugin(app: &mut App) {
     );
     app.add_observer(spawn_sprinter)
         .add_observer(sprinter_attack)
-        .add_observer(sprinter_abulity_hit)
+        .add_observer(sprinter_ability_hit)
         .add_observer(patch_sprinter);
 }
 
@@ -80,7 +77,8 @@ fn spawn_sprinter(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_q: Query<&Transform, With<Player>>,
-    mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    spatial_q: SpatialQuery,
+    rng: Single<&mut WyRand, With<GlobalRng>>,
     sprinter_q: Query<&Sprinter>,
     sprinter_stats: Res<SprinterStats>,
 ) -> Result {
@@ -90,19 +88,12 @@ fn spawn_sprinter(
 
     let stats = sprinter_stats;
 
-    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    // let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = f32::sin(random_angle);
-    let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
-
-    // tile size, search radius
-    let desired = Vec2::new(
-        player_pos.translation.x + offset_x,
-        player_pos.translation.y + offset_y,
-    );
-
-    let enemy_pos_x = desired.x;
-    let enemy_pos_y = desired.y;
+    let Some(enemy_pos) =
+        get_valid_spawn_position(spatial_q, player_pos.translation.truncate(), rng)
+    else {
+        // No valid pos
+        return Ok(());
+    };
 
     let mut sprinter_count = sprinter_q.iter().count();
     sprinter_count += 1;
@@ -116,7 +107,7 @@ fn spawn_sprinter(
             image: asset_server.load(stats.sprite.clone()),
             ..default()
         },
-        Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0)
+        Transform::from_xyz(enemy_pos.x, enemy_pos.y, 0.0)
             .with_scale(Vec3::splat(ENEMY_SIZE / 48.0)),
         CharacterController {
             speed: 30.0,
@@ -211,7 +202,7 @@ fn move_charging_sprinter(
     Ok(())
 }
 
-fn sprinter_abulity_hit(
+fn sprinter_ability_hit(
     trigger: On<SprinterAbilityHitEvent>,
     sprinter_q: Query<&AbilityDamage, With<Sprinter>>,
     mut commands: Commands,

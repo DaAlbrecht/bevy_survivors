@@ -1,9 +1,13 @@
+use std::f32::consts::PI;
+
 use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
+use bevy_rand::{global::GlobalRng, prelude::WyRand};
 use rand::Rng;
 
 use crate::{
     GameLayer, PLAYER_SIZE, PROJECTILE_SIZE, PausableSystems, PostPhysicsAppSystems,
+    SPAWN_ATTEMPTS, SPAWN_RADIUS,
     gameplay::{
         Despawn, Health, Speed,
         character_controller::CharacterController,
@@ -82,6 +86,7 @@ pub(crate) struct DamageCooldown(pub Timer);
     Friction = Friction::ZERO,
     CollisionLayers = CollisionLayers::new(GameLayer::Enemy,[
     GameLayer::Enemy,
+    GameLayer::Default,
     GameLayer::Player,
 ]))]
 pub(crate) struct Enemy;
@@ -515,4 +520,38 @@ fn terrain_manager(
     }
 
     Ok(())
+}
+
+fn get_valid_spawn_position(
+    spatial_q: SpatialQuery,
+    player_pos: Vec2,
+    mut rng: Single<&mut WyRand, With<GlobalRng>>,
+) -> Option<Vec2> {
+    let mut chosen: Option<Vec2> = None;
+    for _ in 0..SPAWN_ATTEMPTS {
+        let random_angle: f32 = rng.random_range(0.0..(2. * PI));
+        let offset = Vec2::new(
+            SPAWN_RADIUS * f32::sin(random_angle),
+            SPAWN_RADIUS * f32::cos(random_angle),
+        );
+
+        let desired = player_pos + offset;
+        let distance = player_pos.distance(desired);
+        let Ok(direction) = Dir2::new((player_pos - desired).normalize()) else {
+            return None;
+        };
+
+        let collision_filter = SpatialQueryFilter::from_mask(GameLayer::Default);
+
+        if spatial_q
+            .cast_ray(desired, direction, distance, true, &collision_filter)
+            .is_some()
+        {
+            continue;
+        }
+
+        chosen = Some(desired);
+        break;
+    }
+    chosen
 }

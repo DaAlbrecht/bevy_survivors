@@ -1,18 +1,16 @@
-use std::f32::consts::PI;
-
-use avian2d::prelude::ColliderDisabled;
+use avian2d::prelude::{ColliderDisabled, SpatialQuery};
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
 
 use crate::{
-    ENEMY_SIZE, SPAWN_RADIUS,
+    ENEMY_SIZE,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
         enemy::{
             AbilityDamage, AbilityDuration, AbilitySpeed, AbilityTick, Cooldown, DamageCooldown,
             Enemy, EnemyType, HazardousTerrain, HitDamage, Jump, Meele, Owner, Range, Size,
+            get_valid_spawn_position,
         },
         player::{Direction, Player},
         simple_animation::{AnimationIndices, AnimationTimer},
@@ -97,7 +95,8 @@ fn spawn_jumper(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     player_q: Query<&Transform, With<Player>>,
-    mut rng: Single<&mut WyRand, With<GlobalRng>>,
+    rng: Single<&mut WyRand, With<GlobalRng>>,
+    spatial_q: SpatialQuery,
     jumper_q: Query<&Jumper>,
     jumper_stats: Res<JumperStats>,
     mut texture_atlas_layout: ResMut<Assets<TextureAtlasLayout>>,
@@ -108,13 +107,12 @@ fn spawn_jumper(
 
     let stats = jumper_stats;
 
-    let random_angle: f32 = rng.random_range(0.0..(2. * PI));
-    // let random_radius: f32 = rng.random_range(0.0..10.);
-    let offset_x = SPAWN_RADIUS * f32::sin(random_angle);
-    let offset_y = SPAWN_RADIUS * f32::cos(random_angle);
-
-    let enemy_pos_x = player_pos.translation.x + offset_x;
-    let enemy_pos_y = player_pos.translation.y + offset_y;
+    let Some(enemy_pos) =
+        get_valid_spawn_position(spatial_q, player_pos.translation.truncate(), rng)
+    else {
+        // No valid pos
+        return Ok(());
+    };
 
     let mut jumper_count = jumper_q.iter().count();
     jumper_count += 1;
@@ -135,7 +133,7 @@ fn spawn_jumper(
                     speed: 30.0,
                     ..default()
                 },
-                Transform::from_xyz(enemy_pos_x, enemy_pos_y, 0.0),
+                Transform::from_xyz(enemy_pos.x, enemy_pos.y, 0.0),
                 Visibility::Visible,
                 Health(stats.health),
                 HitDamage(stats.damage),
