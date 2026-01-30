@@ -173,10 +173,7 @@ pub(crate) struct AbilityTick(pub Timer);
 
 #[derive(Component)]
 #[allow(dead_code)]
-pub(crate) struct Charge {
-    active: bool,
-    hit_target: bool,
-}
+pub(crate) struct Charge;
 
 #[derive(Component)]
 pub(crate) struct Jump {

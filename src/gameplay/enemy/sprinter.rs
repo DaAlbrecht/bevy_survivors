@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
 
 use crate::{
-    ENEMY_SIZE,
+    ENEMY_SIZE, GameLayer,
     gameplay::{
         Health, Speed,
         character_controller::CharacterController,
@@ -46,6 +46,7 @@ pub(crate) fn plugin(app: &mut App) {
     //Meele hit
     DamageCooldown(Timer::from_seconds(0.5, TimerMode::Repeating)),
     Direction(Vec3{x:0.,y:0.,z:0.}),
+    CollidingEntities::default(),
 )]
 pub(crate) struct Sprinter;
 
@@ -159,26 +160,34 @@ fn sprinter_attack(
     if halt.is_some() {
         commands.entity(sprinter).remove::<Halt>();
     }
-    commands.entity(sprinter).insert(Charge {
-        active: true,
-        hit_target: false,
-    });
+    commands
+        .entity(sprinter)
+        .insert(Charge)
+        //Charge does not collide with enemies whiel charging
+        .insert(CollisionLayers::new(
+            GameLayer::Enemy,
+            [GameLayer::Player, GameLayer::Default],
+        ));
+
     Ok(())
 }
 
 fn move_charging_sprinter(
     mut sprinter_q: Query<
         (
-            &mut Transform,
+            &Transform,
+            &mut LinearVelocity,
             Entity,
             &AbilitySpeed,
             &Range,
             &Direction,
-            Option<&Charge>,
+            &CollidingEntities,
+            &Charge,
         ),
         With<Sprinter>,
     >,
     player_q: Query<&Transform, (With<Player>, Without<Sprinter>)>,
+    layer_q: Query<&CollisionLayers>,
     mut commands: Commands,
     time: Res<Time>,
 ) -> Result {
@@ -187,15 +196,39 @@ fn move_charging_sprinter(
     };
     let player_pos = player_pos.translation.truncate();
 
-    for (mut transform, sprinter, speed, range, direction, charge) in &mut sprinter_q {
+    for (transform, mut linear_velocity, sprinter, speed, range, direction, collisions, _charge) in
+        &mut sprinter_q
+    {
         let sprinter_pos = transform.translation.truncate();
         let distance = player_pos.distance(sprinter_pos);
-        if charge.is_some() {
-            let movement = direction.0 * speed.0 * time.delta_secs();
-            transform.translation += movement;
-            if (distance - RANGE_BUFFER) >= range.0 {
-                commands.entity(sprinter).remove::<Charge>();
+        let mut charge_over = false;
+
+        let movement = direction.0 * speed.0 * time.delta_secs();
+        linear_velocity.x += movement.x;
+        linear_velocity.y += movement.y;
+
+        for colliding_entity in collisions.iter() {
+            let Ok(layer) = layer_q.get(*colliding_entity) else {
+                return Ok(());
+            };
+
+            if layer.memberships.has_all(GameLayer::Default) {
+                charge_over = true;
             }
+
+            if layer.memberships.has_all(GameLayer::Player) {
+                commands.trigger(SprinterAbilityHitEvent(sprinter));
+                charge_over = true;
+            }
+        }
+
+        if (distance - RANGE_BUFFER) >= range.0 || charge_over {
+            commands.entity(sprinter).remove::<Charge>();
+            // let charget collide with enemies again
+            commands.entity(sprinter).insert(CollisionLayers::new(
+                GameLayer::Enemy,
+                [GameLayer::Enemy, GameLayer::Player, GameLayer::Default],
+            ));
         }
     }
 
@@ -212,6 +245,5 @@ fn sprinter_ability_hit(
     let Ok(damage) = sprinter_q.get(sprinter) else {
         return;
     };
-
     commands.trigger(PlayerHitEvent { dmg: damage.0 });
 }
