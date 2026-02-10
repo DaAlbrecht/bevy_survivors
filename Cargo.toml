@@ -39,7 +39,7 @@ rand = "0.9"
 # World inspector
 bevy-inspector-egui = "0.36"
 # Handling user input
-bevy_enhanced_input = "0.22"
+bevy_enhanced_input = "0.23"
 # Sound
 bevy_seedling = { version = "0.7.0", default-features = false, features = [
     "ogg",
