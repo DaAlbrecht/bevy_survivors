@@ -26,7 +26,7 @@ tracing = { version = "0.1", features = [
 ] }
 
 # Assets
-bevy_asset_loader = { version = "0.25", features = ["standard_dynamic_assets"] }
+bevy_asset_loader = { version = "0.26", features = ["standard_dynamic_assets"] }
 serde = { version = "1.0" }
 serde_ron = { version = "0.12", package = "ron" }
 thiserror = "2.0"
@@ -39,7 +39,7 @@ rand = "0.9"
 # World inspector
 bevy-inspector-egui = "0.36"
 # Handling user input
-bevy_enhanced_input = "0.23"
+bevy_enhanced_input = "0.24"
 # Sound
 bevy_seedling = { version = "0.7.0", default-features = false, features = [
     "ogg",
@@ -48,7 +48,7 @@ bevy_seedling = { version = "0.7.0", default-features = false, features = [
 ] }
 bevy_ecs_tiled = { version = "0.11", features = ["avian"] }
 # Physics engine 
-avian2d = { version = "0.5", default-features = false, features = [
+avian2d = { version = "0.6", default-features = false, features = [
     "2d",
     "f32",
     "default-collider",
@@ -69,6 +69,9 @@ dev = [
     "bevy_ecs_tiled/debug",
 ]
 dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
+
+[target.'cfg(all(target_family = "wasm", any(target_os = "unknown", target_os = "none")))'.dependencies]
+getrandom = { version = "^0.2", features = ["js"] }
 
 [package.metadata.bevy_cli.release]
 # Disable debug functionality in release builds.
