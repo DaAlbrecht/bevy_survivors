@@ -10,5 +10,4 @@ git clone --recurse-submodules git@github.com:DaAlbrecht/bevy_survivors.git
 
 # Existing clone
 git submodule update --init --recursive
-
 ```

@@ -19,7 +19,7 @@ use crate::{
 
 use avian2d::prelude::*;
 use bevy::prelude::*;
-use rand::Rng;
+use rand::RngExt;
 
 pub fn on_homing_attack(
     _homing_attack: On<HomingAttack>,

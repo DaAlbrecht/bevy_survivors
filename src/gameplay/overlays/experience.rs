@@ -74,9 +74,9 @@ fn collect_xp_gem(
     time: Res<Time>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-) -> Result {
+) {
     let Ok((player_position, collection_range)) = player_q.single() else {
-        return Ok(());
+        return;
     };
 
     for (mut gem_position, gem_speed, gem_entity) in &mut gem_q {
@@ -103,8 +103,6 @@ fn collect_xp_gem(
             commands.entity(gem_entity).despawn();
         }
     }
-
-    Ok(())
 }
 
 fn gain_xp(
@@ -194,7 +192,7 @@ fn update_xp_bar(
 
     let handle = xp_bar_material_q.single()?;
 
-    if let Some(material) = materials.get_mut(handle) {
+    if let Some(mut material) = materials.get_mut(handle) {
         material.factor = factor;
     }
 

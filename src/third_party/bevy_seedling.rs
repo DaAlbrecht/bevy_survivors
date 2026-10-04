@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use bevy_seedling::SeedlingPlugin;
+use bevy_seedling::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(SeedlingPlugin::default());
+    app.add_plugins(SeedlingPlugins);
 }

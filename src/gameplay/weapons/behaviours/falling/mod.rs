@@ -24,6 +24,8 @@ pub struct FallingSpec {
 }
 
 impl EntityCommand for FallingSpec {
+    type Out = ();
+
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             FallingAttack,

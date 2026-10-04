@@ -26,6 +26,8 @@ pub(crate) fn plugin(app: &mut App) {
 pub(crate) struct AddWeapon(WeaponSpec);
 
 impl Command for AddWeapon {
+    type Out = ();
+
     fn apply(self, world: &mut World) {
         let mut query = world.query_filtered::<Entity, With<Player>>();
         let Ok(player) = query.single(world) else {

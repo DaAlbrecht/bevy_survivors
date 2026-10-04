@@ -42,8 +42,8 @@ fn spawn_character_screen(
                 Spawn((
                     Text::new("Select Your Character"),
                     TextFont {
-                        font: font.clone(),
-                        font_size: 32.0,
+                        font: font.into(),
+                        font_size: FontSize::Px(32.0),
                         font_smoothing: FontSmoothing::None,
                         ..default()
                     },
@@ -139,7 +139,7 @@ fn spawn_character_cards(
                             border_radius: BorderRadius::MAX,
                             ..default()
                         },
-                        TextLayout::new_with_justify(Justify::Center),
+                        TextLayout::justify(Justify::Center),
                         character,
                         widget::label("Select"),
                         BackgroundColor(BUTTON_BACKGROUND.into()),

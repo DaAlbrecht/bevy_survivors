@@ -74,7 +74,7 @@ fn spawn_damage_numbers_from_messages(
             Color::WHITE
         };
 
-        let font_size = if msg.crit { 24.0 } else { 12.0 };
+        let font_size = FontSize::Px(if msg.crit { 24.0 } else { 12.0 });
 
         let base_pos = Vec3::new(msg.world_pos.x, msg.world_pos.y + 10.0, 20.0);
         let snapped = Vec3::new(base_pos.x.round(), base_pos.y.round(), base_pos.z);
@@ -89,12 +89,12 @@ fn spawn_damage_numbers_from_messages(
                 Transform::from_translation(snapped),
                 Text2d::new(format_damage_number(msg.amount)),
                 TextFont {
-                    font: damage_assets.font.clone(),
+                    font: damage_assets.font.clone().into(),
                     font_size,
                     font_smoothing: FontSmoothing::None,
                     ..default()
                 },
-                TextLayout::new_with_justify(Justify::Center),
+                TextLayout::justify(Justify::Center),
                 TextColor(color),
                 Text2dShadow {
                     color: Color::srgb(0.0, 0.0, 0.0),
@@ -108,7 +108,6 @@ fn spawn_damage_numbers_from_messages(
                 parent.spawn((
                     Sprite {
                         image: icon_handle,
-                        custom_size: Some(Vec2::splat(font_size)),
                         ..default()
                     },
                     Transform::from_translation(Vec3::new(10.0, 0.0, -0.1)),

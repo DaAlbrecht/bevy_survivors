@@ -39,7 +39,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(FpsOverlayPlugin {
         config: FpsOverlayConfig {
             text_config: TextFont {
-                font_size: 42.0,
+                font_size: FontSize::Px(42.0),
                 ..default()
             },
             refresh_interval: core::time::Duration::from_millis(100),
@@ -56,7 +56,7 @@ pub(super) fn plugin(app: &mut App) {
     });
 }
 
-fn toggle_debug_ui(mut options: ResMut<UiDebugOptions>) {
+fn toggle_debug_ui(mut options: Single<&mut UiDebugOptions>) {
     options.toggle();
 }
 

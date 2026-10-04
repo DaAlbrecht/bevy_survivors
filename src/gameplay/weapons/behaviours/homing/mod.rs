@@ -47,6 +47,8 @@ pub struct HomingSpec {
 }
 
 impl EntityCommand for HomingSpec {
+    type Out = ();
+
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             HomingAttack,

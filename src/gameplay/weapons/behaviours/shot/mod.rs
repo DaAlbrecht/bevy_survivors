@@ -24,6 +24,8 @@ pub struct ShotSpec {
 }
 
 impl EntityCommand for ShotSpec {
+    type Out = ();
+
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((ShotAttack, ProjectileSpeed(self.speed)));
 

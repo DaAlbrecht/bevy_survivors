@@ -25,7 +25,7 @@ impl FromWorld for WeaponMap {
     fn from_world(world: &mut World) -> Self {
         let mut system_state =
             SystemState::<(Res<WeaponAssets>, Res<Assets<WeaponSpec>>)>::new(world);
-        let (raw_assets, spec_assets) = system_state.get(world);
+        let (raw_assets, spec_assets) = system_state.get(world).unwrap();
 
         let mut map = HashMap::new();
         for (file_stem, handle) in &raw_assets.specs {

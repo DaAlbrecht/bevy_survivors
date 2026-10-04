@@ -44,7 +44,7 @@ fn on_use_heal(
     let per = health.0 / 100.;
 
     let handle = healthbar_material_q.single()?.clone();
-    let material = health_bar_materials.get_mut(&handle).unwrap();
+    let mut material = health_bar_materials.get_mut(&handle).unwrap();
     material.percent = per;
 
     damage_writer.write(DamageMessage {

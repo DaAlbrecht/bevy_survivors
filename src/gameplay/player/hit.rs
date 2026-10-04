@@ -38,7 +38,7 @@ pub(crate) fn player_hit(
                 let per = player_health.0 / 100.;
 
                 let handle = healthbar_material_q.single()?.clone();
-                let material = health_bar_materials.get_mut(&handle).unwrap();
+                let mut material = health_bar_materials.get_mut(&handle).unwrap();
                 material.percent = per;
             }
         }

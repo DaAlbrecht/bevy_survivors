@@ -48,6 +48,8 @@ pub struct HitSpec {
 }
 
 impl EntityCommand for HitSpec {
+    type Out = ();
+
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert(self);
     }
@@ -126,6 +128,7 @@ pub struct WeaponSfx {
 }
 
 impl EntityCommand for WeaponSfx {
+    type Out = ();
     fn apply(self, mut entity: EntityWorldMut) {
         if let Some(handle) = self.attack {
             entity.insert(WeaponAttackSfx(handle));
@@ -158,6 +161,8 @@ pub enum AttackSpec {
 }
 
 impl EntityCommand for AttackSpec {
+    type Out = ();
+
     fn apply(self, entity: EntityWorldMut) {
         match self {
             AttackSpec::Orbiters(s) => s.apply(entity),

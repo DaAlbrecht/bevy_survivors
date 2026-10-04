@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use avian2d::prelude::*;
 use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
+use rand::RngExt;
 
 use crate::{
     GameLayer, PLAYER_SIZE, PROJECTILE_SIZE, PausableSystems, PostPhysicsAppSystems,

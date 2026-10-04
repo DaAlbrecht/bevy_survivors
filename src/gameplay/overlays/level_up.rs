@@ -1,7 +1,7 @@
 //! The level up menu.
 use bevy::{color::palettes::basic, prelude::*, text::FontSmoothing};
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
+use rand::RngExt;
 
 use crate::{
     gameplay::{
@@ -119,12 +119,12 @@ fn item_desc(font: &Handle<Font>) -> impl Bundle {
         Children::spawn((Spawn((
             Text::new("Damage Increase"),
             TextFont {
-                font: font.clone(),
-                font_size: 24.0,
+                font: font.into(),
+                font_size: FontSize::Px(24.0),
                 font_smoothing: FontSmoothing::None,
                 ..default()
             },
-            TextLayout::new_with_justify(Justify::Center),
+            TextLayout::justify(Justify::Center),
             TextColor(Color::WHITE),
         )),)),
     )
@@ -144,12 +144,12 @@ fn item_txt(font: &Handle<Font>) -> impl Bundle {
         Children::spawn((Spawn((
             Text::new("Upgrade"),
             TextFont {
-                font: font.clone(),
-                font_size: 32.0,
+                font: font.into(),
+                font_size: FontSize::Px(32.0),
                 font_smoothing: FontSmoothing::None,
                 ..default()
             },
-            TextLayout::new_with_justify(Justify::Center),
+            TextLayout::justify(Justify::Center),
             TextColor(color.into()),
         )),)),
     )

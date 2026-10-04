@@ -27,6 +27,7 @@ pub struct ChainSpec {
 }
 
 impl EntityCommand for ChainSpec {
+    type Out = ();
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             ChainAttack,

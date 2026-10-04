@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rand::{global::GlobalRng, prelude::WyRand};
-use rand::Rng;
+use rand::RngExt;
 
 use crate::gameplay::{
     player::Player,

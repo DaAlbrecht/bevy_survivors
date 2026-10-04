@@ -42,6 +42,8 @@ pub struct ZoneSpec {
 }
 
 impl EntityCommand for ZoneSpec {
+    type Out = ();
+
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             ZoneAttack,

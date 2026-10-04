@@ -38,6 +38,7 @@ pub struct OrbitersSpec {
 }
 
 impl EntityCommand for OrbitersSpec {
+    type Out = ();
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             OrbitersAttack,
