@@ -10,7 +10,8 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        enter_gameplay_screen.run_if(in_state(AssetStates::Next).and(in_state(Screen::Loading))),
+        enter_gameplay_screen
+            .run_if(in_state(AssetStates::Next).and_then(in_state(Screen::Loading))),
     );
 }
 

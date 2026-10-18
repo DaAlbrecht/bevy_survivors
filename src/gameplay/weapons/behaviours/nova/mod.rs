@@ -25,6 +25,7 @@ pub struct NovaSpec {
 
 impl EntityCommand for NovaSpec {
     type Out = ();
+
     fn apply(self, mut entity: EntityWorldMut) {
         entity.insert((
             NovaAttack,
